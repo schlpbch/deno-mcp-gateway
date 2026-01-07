@@ -1,313 +1,440 @@
 # MCP Gateway Deployment Guide
 
-This guide covers deploying the MCP Gateway to Google Cloud Run.
+This guide covers deploying the MCP Gateway on Netlify Edge Functions.
 
 ## Prerequisites
 
-- Google Cloud SDK (`gcloud`) installed and configured
-- Access to the `journey-service-mcp` GCP project (or your target project)
-- Docker installed (for local builds)
-- Maven 3.9+ and Java 21 (for local development)
+- Git repository pushed to GitHub
+- Netlify CLI installed (`npm install -g netlify-cli`)
+- GitHub repository: https://github.com/schlpbch/netlify-mcp-gateway
+- pnpm package manager (v9.0.0+)
 
 ## Deployment Methods
 
-### Method 1: Cloud Build (Recommended)
+### Method 1: Automatic GitHub Integration (Recommended)
 
-Cloud Build automatically builds, tests, and deploys the gateway.
+Netlify automatically deploys on every push to the main branch.
 
-#### 1. Authenticate with Google Cloud
-
-```bash
-gcloud auth login
-gcloud config set project journey-service-mcp
-```
-
-#### 2. Submit Build
+#### 1. Link Repository to Netlify
 
 ```bash
-gcloud builds submit --config cloudbuild.yaml --substitutions=COMMIT_SHA=$(git rev-parse --short HEAD) .
+netlify link --repo=https://github.com/schlpbch/netlify-mcp-gateway
 ```
 
-This will:
+Or connect via Netlify dashboard:
+1. Go to https://app.netlify.com
+2. Click "New site from Git"
+3. Select your GitHub repository
+4. Netlify auto-detects build settings from `netlify.toml`
 
-- Build the project with Maven
-- Run all tests
-- Build a Docker image
-- Push to Google Container Registry
-- Deploy to Cloud Run
+#### 2. Configure Build Settings
 
-#### 3. Enable Public Access
+Build command: `pnpm install` (no build needed for edge functions)
+Publish directory: `public`
 
-If the IAM policy fails during deployment:
+#### 3. Environment Variables
+
+Set in Netlify dashboard > Site settings > Build & deploy > Environment:
+
+```
+BACKEND_MCP_SERVERS=["journey-service", "swiss-mobility", "aareguru", "open-meteo"]
+```
+
+The site automatically deploys on every `git push` to main branch.
+
+### Method 2: Manual CLI Deployment
+
+Deploy from your local machine using the Netlify CLI.
+
+#### 1. Authenticate
 
 ```bash
-gcloud run services add-iam-policy-binding mcp-gateway \
-  --region=europe-west6 \
-  --member=allUsers \
-  --role=roles/run.invoker \
-  --project=journey-service-mcp
+netlify login
 ```
 
-### Method 2: Local Build + Deploy
+This opens a browser to authorize your Netlify account.
 
-Build locally and deploy manually.
-
-#### 1. Build the Application
+#### 2. Deploy to Production
 
 ```bash
-mvn clean package -DskipTests
+netlify deploy --prod --dir=public
 ```
 
-#### 2. Build Docker Image
+Or use the shorthand npm script:
 
 ```bash
-docker build -t gcr.io/journey-service-mcp/mcp-gateway:latest .
+pnpm deploy
 ```
 
-#### 3. Push to Container Registry
+#### 3. View Deployment
 
 ```bash
-docker push gcr.io/journey-service-mcp/mcp-gateway:latest
+netlify open site
 ```
 
-#### 4. Deploy to Cloud Run
+Opens your site in the browser.
+
+### Method 3: Draft Deployments (Testing)
+
+Test changes before pushing to production.
 
 ```bash
-gcloud run deploy mcp-gateway \
-  --image=gcr.io/journey-service-mcp/mcp-gateway:latest \
-  --region=europe-west6 \
-  --platform=managed \
-  --allow-unauthenticated \
-  --set-env-vars=SPRING_PROFILES_ACTIVE=prod \
-  --memory=1Gi \
-  --cpu=2 \
-  --min-instances=0 \
-  --max-instances=10 \
-  --project=journey-service-mcp
+netlify deploy --dir=public
 ```
+
+This creates a draft deploy with a unique preview URL. Share for testing before promoting to production.
 
 ## Configuration
 
-### Required Environment Variables
+### netlify.toml
 
-The gateway needs URLs for backend MCP servers. Set these as Cloud Run environment variables:
+The project includes a `netlify.toml` configuration file:
 
-```bash
-gcloud run services update mcp-gateway \
-  --region=europe-west6 \
-  --project=journey-service-mcp \
-  --set-env-vars="\
-JOURNEY_SERVICE_URL=https://journey-service-mcp-XXXXX.run.app/mcp,\
-SWISS_MOBILITY_URL=https://swiss-mobility-mcp-XXXXX.run.app/mcp,\
-AAREGURU_URL=https://aareguru-mcp-XXXXX.run.app/mcp,\
-OPEN_METEO_URL=https://open-meteo-mcp-XXXXX.run.app/mcp"
+```toml
+[build]
+  publish = "public"
+
+[[edge_functions]]
+  function = "mcp"
+  path = "/mcp/*"
+
+[dev]
+  port = 8888
 ```
 
-### Get Backend Service URLs
+- **publish**: Directory containing static assets and edge function output
+- **edge_functions**: Configures the MCP edge function and its route pattern
+- **dev**: Local development server port
+
+### Environment Variables
+
+Set in Netlify dashboard or `.env` file locally:
+
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `NODE_ENV` | Environment (dev/prod) | `production` |
+| `DEBUG` | Enable debug logging | `true` |
+
+Local development with `.env`:
 
 ```bash
-# Journey Service
-gcloud run services describe journey-service-mcp \
-  --region=europe-west6 \
-  --project=journey-service-mcp \
-  --format="value(status.url)"
-
-# Swiss Mobility
-gcloud run services describe swiss-mobility-mcp \
-  --region=europe-west6 \
-  --project=journey-service-mcp \
-  --format="value(status.url)"
-
-# Aareguru
-gcloud run services describe aareguru-mcp \
-  --region=europe-west6 \
-  --project=journey-service-mcp \
-  --format="value(status.url)"
-
-# Open Meteo
-gcloud run services describe open-meteo-mcp \
-  --region=europe-west6 \
-  --project=journey-service-mcp \
-  --format="value(status.url)"
+# .env (not committed to git)
+NODE_ENV=development
 ```
-
-### Optional Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `LOG_LEVEL` | Application logging level | `INFO` |
-| `CACHE_TTL` | Default cache TTL | `5m` |
-| `CACHE_MAX_SIZE` | Max cache entries | `10000` |
-| `HEALTH_CHECK_INTERVAL` | Health check frequency | `60s` |
 
 ## Verification
 
 ### 1. Check Deployment Status
 
 ```bash
-gcloud run services describe mcp-gateway \
-  --region=europe-west6 \
-  --project=journey-service-mcp
+netlify status
 ```
 
-### 2. Test Health Endpoint
+### 2. View Live Site
 
 ```bash
-curl https://mcp-gateway-874479064416.europe-west6.run.app/actuator/health
+# Open deployed site
+netlify open site
+
+# Or use the URL directly
+open https://netliy-mcp-gateway.netlify.app
+```
+
+### 3. Test Health Endpoint
+
+```bash
+curl https://netliy-mcp-gateway.netlify.app/mcp/health
 ```
 
 Expected response:
 
 ```json
 {
-  "status": "UP"
+  "status": "UP",
+  "timestamp": "2026-01-07T12:34:56.789Z",
+  "servers": [...]
 }
 ```
 
-### 3. List Available Tools
+### 4. List Tools
 
 ```bash
-curl -X POST https://mcp-gateway-874479064416.europe-west6.run.app/mcp/tools/list \
-  -H "Content-Type: application/json"
+curl -X GET https://netliy-mcp-gateway.netlify.app/mcp/tools/list
 ```
 
-### 4. View Logs
+### 5. View Logs
 
 ```bash
-gcloud run services logs read mcp-gateway \
-  --region=europe-west6 \
-  --project=journey-service-mcp \
-  --limit=50
+# Stream logs from production
+netlify logs:deploy
+
+# Or via dashboard
+netlify open admin
 ```
 
-## Troubleshooting
+## Development
 
-### Gateway Returns 404
+### Local Development
 
-**Cause**: Application failed to start or routes not registered.
-
-**Solution**: Check logs for startup errors:
+Start the local Netlify dev server:
 
 ```bash
-gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=mcp-gateway" \
-  --limit=50 \
-  --project=journey-service-mcp
+pnpm dev
 ```
 
-### Configuration Error on Startup
+This runs at `http://localhost:8888` with:
+- Live reload on file changes
+- Full edge functions support
+- Environment variable support
 
-**Cause**: Missing or invalid backend URLs.
+### Testing Endpoints Locally
 
-**Solution**: Verify environment variables are set:
+Use the interactive web UI at `http://localhost:8888`:
 
 ```bash
-gcloud run services describe mcp-gateway \
-  --region=europe-west6 \
-  --format="value(spec.template.spec.containers[0].env)"
+# GET endpoints
+curl http://localhost:8888/mcp/tools/list
+curl http://localhost:8888/mcp/resources/list
+curl http://localhost:8888/mcp/prompts/list
+curl http://localhost:8888/mcp/health
+
+# POST endpoints
+curl -X POST http://localhost:8888/mcp/tools/call \
+  -H "Content-Type: application/json" \
+  -d '{"tool":"example","input":"test"}'
 ```
 
-### Backend Connection Failures
+## Deployment Workflow
 
-**Cause**: Backend services are down or URLs are incorrect.
-
-**Solution**:
-
-1. Verify backend services are running
-2. Check URLs are correct
-3. Ensure gateway has network access to backends
-
-### High Latency
-
-**Cause**: Cache not working or backends are slow.
-
-**Solution**:
-
-1. Check cache hit rate in logs
-2. Verify cache configuration
-3. Monitor backend response times
-
-## Rollback
-
-If deployment fails or causes issues:
+### 1. Development
 
 ```bash
-# List revisions
-gcloud run revisions list \
-  --service=mcp-gateway \
-  --region=europe-west6
+# Create feature branch
+git checkout -b feature/my-feature
 
-# Rollback to previous revision
-gcloud run services update-traffic mcp-gateway \
-  --region=europe-west6 \
-  --to-revisions=REVISION_NAME=100
+# Make changes and test locally
+pnpm dev
+
+# Commit changes
+git add .
+git commit -m "feat: my feature"
+```
+
+### 2. Staging (Draft Deploy)
+
+```bash
+# Deploy draft to test before production
+netlify deploy --dir=public
+
+# Preview URL is printed in output
+# Share with team for testing
+```
+
+### 3. Production
+
+```bash
+# Push to main branch triggers automatic deployment
+git push origin feature/my-feature
+git pull-request
+
+# After PR merge, automatic deploy to production
+```
+
+Or manual production deploy:
+
+```bash
+git push origin main
+# Netlify automatically deploys
 ```
 
 ## Monitoring
 
-### Cloud Monitoring Dashboard
+### View Deployment History
 
-Create a dashboard to monitor:
+```bash
+# List recent deploys
+netlify deploys:list --limit=10
 
-- Request count and latency (P50, P95, P99)
-- Error rate
-- Cache hit rate
-- Backend health status
-- Memory and CPU usage
+# View specific deploy details
+netlify deploy:info --filter={DEPLOY_ID}
+```
 
-### Alerts
+### View Logs
 
-Set up alerts for:
+```bash
+# Edge function logs
+netlify logs:edge-functions
 
-- Error rate > 5%
-- P95 latency > 1s
-- All backends unhealthy
-- Memory usage > 80%
+# Function execution logs
+netlify logs:functions
+
+# Deployment logs
+netlify logs:deploy
+```
+
+### Analytics
+
+Netlify dashboard shows:
+- Request count
+- Bandwidth usage
+- Error rates
+- Deploy success/failure
+
+## Troubleshooting
+
+### Deployment Fails
+
+**Check build logs**:
+
+```bash
+netlify logs:deploy
+```
+
+Common causes:
+- Missing `public` directory
+- Invalid `netlify.toml` syntax
+- Unresolved imports in edge function
+
+### Edge Function Not Responding
+
+**Verify edge function is bundled**:
+
+```bash
+# Check if mcp.ts is properly formatted
+deno lint netlify/edge-functions/mcp.ts
+
+# Verify function exists
+ls -la netlify/edge-functions/
+```
+
+**Check bundling logs**:
+
+```bash
+netlify logs:deploy | grep -i "edge function"
+```
+
+### Slow Response Times
+
+**Causes**:
+- Backend server is slow
+- Network latency
+
+**Solutions**:
+- Check backend service health
+- Use the interactive UI to test endpoints
+- Monitor edge function logs
+
+### 404 Routes
+
+**Verify route pattern in netlify.toml**:
+
+```toml
+[[edge_functions]]
+  function = "mcp"
+  path = "/mcp/*"
+```
+
+The `path` pattern must match your request URLs.
+
+## Rollback
+
+### Rollback to Previous Deploy
+
+```bash
+# List recent deploys
+netlify deploys:list
+
+# Rollback to specific deploy
+netlify deploy --alias={DEPLOY_ID}
+
+# Or use dashboard to manually revert
+netlify open admin
+```
 
 ## Security
 
-### Authentication
+### Public Endpoint
+
+The gateway is publicly accessible at:
+
+```
+https://netliy-mcp-gateway.netlify.app
+```
 
 For production, consider:
 
-- Removing `--allow-unauthenticated`
-- Using Cloud Run IAM for service-to-service auth
-- Adding API key validation
+- Adding authentication middleware
+- IP allowlisting
+- Rate limiting (via Cloud Functions or API gateway)
+- Request validation
 
-### Network Security
+### Secrets Management
 
-- Use VPC connector for private backend access
-- Configure Cloud Armor for DDoS protection
-- Enable Cloud Run security features
+Use Netlify environment variables for sensitive data:
 
-## Scaling
+1. Go to Site settings > Build & deploy > Environment
+2. Add sensitive variables as "Secrets"
+3. Reference in edge function via `context.env`
 
-The gateway is configured to:
+## Scaling & Performance
 
-- **Scale to zero**: Min instances = 0
-- **Auto-scale**: Up to 10 instances
-- **Resources**: 1Gi memory, 2 CPUs per instance
+### Edge Function Optimization
 
-Adjust based on load:
+The edge function automatically:
+- Scales globally across 100+ edge locations
+- Serves from nearest data center to user
+- Handles concurrent requests
 
-```bash
-gcloud run services update mcp-gateway \
-  --region=europe-west6 \
-  --min-instances=1 \
-  --max-instances=20 \
-  --memory=2Gi \
-  --cpu=4
-```
+### Bandwidth & Cost
 
-## Cost Optimization
+Netlify Edge Functions pricing:
+- **Included**: 1M requests per month
+- **Additional**: Pay-per-use beyond free tier
 
-- Use min-instances=0 for dev/staging
-- Set appropriate max-instances based on traffic
-- Monitor and optimize cache hit rate
-- Use Cloud Run's pay-per-use pricing
+Monitor usage in Netlify dashboard.
 
 ## Next Steps
 
-1. Configure backend URLs (see above)
-2. Set up monitoring and alerts
-3. Test with Claude Desktop
-4. Review [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for client migration
+1. ✅ Push code to GitHub
+2. ✅ Link repository to Netlify (automatic deploy on push)
+3. Test endpoints via interactive UI
+4. Monitor logs and performance
+5. Set up alerts for errors
+
+## Useful Commands
+
+```bash
+# Install Netlify CLI
+npm install -g netlify-cli
+
+# Login to Netlify account
+netlify login
+
+# Link local repo to Netlify
+netlify link
+
+# Deploy draft version
+netlify deploy --dir=public
+
+# Deploy to production
+netlify deploy --prod --dir=public
+
+# View local dev server
+pnpm dev
+
+# See deployment history
+netlify deploys:list
+
+# View logs
+netlify logs:edge-functions
+
+# Open Netlify dashboard
+netlify open admin
+```
+
+## Resources
+
+- [Netlify Edge Functions Docs](https://docs.netlify.com/edge-functions/overview/)
+- [Netlify CLI Reference](https://cli.netlify.com/)
+- [Project Repository](https://github.com/schlpbch/netlify-mcp-gateway)
+- [Live Site](https://netliy-mcp-gateway.netlify.app)
