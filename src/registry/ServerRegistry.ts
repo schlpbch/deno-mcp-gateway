@@ -56,11 +56,13 @@ export class ServerRegistry {
   }
 
   /**
-   * List only healthy servers
+   * List only healthy servers (includes UNKNOWN status for servers not yet checked)
    */
   listHealthyServers(): ServerRegistration[] {
     return this.listServers().filter(
-      (server) => server.health.status === HealthStatus.HEALTHY
+      (server) =>
+        server.health.status === HealthStatus.HEALTHY ||
+        server.health.status === HealthStatus.UNKNOWN
     );
   }
 
