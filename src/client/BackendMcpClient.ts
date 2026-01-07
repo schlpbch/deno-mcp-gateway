@@ -25,12 +25,80 @@ interface JsonRpcResponse<T> {
 }
 
 /**
- * HTTP client for communicating with backend MCP servers using JSON-RPC
+ * HTTP client for communicating with backend MCP servers using JSON-RPC.
+ * Supports both stateless and session-based (Streamable HTTP) MCP transports.
  */
 export class BackendMcpClient {
   private requestId = 0;
+  private sessions: Map<string, string> = new Map(); // serverId -> sessionId
 
   constructor(private config: RoutingConfig) {}
+
+  /**
+   * Initialize a session with a backend server (for Streamable HTTP transport)
+   */
+  private async initializeSession(
+    serverId: string,
+    endpoint: string,
+    timeoutMs?: number
+  ): Promise<string | null> {
+    const request: JsonRpcRequest = {
+      jsonrpc: '2.0',
+      method: 'initialize',
+      params: {
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: { name: 'netlify-mcp-gateway', version: '1.0.0' },
+      },
+      id: ++this.requestId,
+    };
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json, text/event-stream',
+        },
+        body: JSON.stringify(request),
+        signal: AbortSignal.timeout(timeoutMs || this.config.timeout.connect),
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      // Check for session ID in response header
+      const sessionId = response.headers.get('mcp-session-id');
+      if (sessionId) {
+        this.sessions.set(serverId, sessionId);
+        console.log(`Initialized session for ${serverId}: ${sessionId}`);
+      }
+
+      return sessionId;
+    } catch (error) {
+      console.warn(`Failed to initialize session for ${serverId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Get or create a session for a server
+   */
+  private async getSession(
+    serverId: string,
+    endpoint: string,
+    timeoutMs?: number
+  ): Promise<string | null> {
+    // Return existing session if available
+    const existingSession = this.sessions.get(serverId);
+    if (existingSession) {
+      return existingSession;
+    }
+
+    // Try to initialize a new session
+    return await this.initializeSession(serverId, endpoint, timeoutMs);
+  }
 
   /**
    * Send JSON-RPC request and parse SSE response
@@ -39,7 +107,8 @@ export class BackendMcpClient {
     endpoint: string,
     method: string,
     params?: Record<string, unknown>,
-    timeoutMs?: number
+    timeoutMs?: number,
+    serverId?: string
   ): Promise<T> {
     const request: JsonRpcRequest = {
       jsonrpc: '2.0',
@@ -48,17 +117,53 @@ export class BackendMcpClient {
       id: ++this.requestId,
     };
 
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'application/json, text/event-stream',
+    };
+
+    // Add session ID if server requires it
+    if (serverId) {
+      const sessionId = await this.getSession(serverId, endpoint, timeoutMs);
+      if (sessionId) {
+        headers['Mcp-Session-Id'] = sessionId;
+      }
+    }
+
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json, text/event-stream',
-      },
+      headers,
       body: JSON.stringify(request),
       signal: AbortSignal.timeout(timeoutMs || this.config.timeout.read),
     });
 
     if (!response.ok) {
+      // If we get a session error, clear the session and retry once
+      if (serverId && response.status === 400) {
+        const text = await response.text();
+        if (text.includes('Mcp-Session-Id') || text.includes('session')) {
+          console.log(`Session expired for ${serverId}, re-initializing...`);
+          this.sessions.delete(serverId);
+          const newSessionId = await this.initializeSession(serverId, endpoint, timeoutMs);
+          if (newSessionId) {
+            headers['Mcp-Session-Id'] = newSessionId;
+            const retryResponse = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(request),
+              signal: AbortSignal.timeout(timeoutMs || this.config.timeout.read),
+            });
+            if (retryResponse.ok) {
+              const retryText = await retryResponse.text();
+              const retryJsonRpc = this.parseSSEResponse<T>(retryText);
+              if (retryJsonRpc.error) {
+                throw new Error(`JSON-RPC error: ${retryJsonRpc.error.message}`);
+              }
+              return retryJsonRpc.result!;
+            }
+          }
+        }
+      }
       throw new Error(`Request failed: ${response.status} ${response.statusText}`);
     }
 
@@ -113,7 +218,9 @@ export class BackendMcpClient {
       return await this.sendJsonRpc<McpToolCallResponse>(
         server.endpoint,
         'tools/call',
-        { name: toolName, arguments: args }
+        { name: toolName, arguments: args },
+        undefined,
+        server.id
       );
     });
   }
@@ -129,7 +236,9 @@ export class BackendMcpClient {
       return await this.sendJsonRpc<McpResourceReadResponse>(
         server.endpoint,
         'resources/read',
-        { uri }
+        { uri },
+        undefined,
+        server.id
       );
     });
   }
@@ -146,7 +255,9 @@ export class BackendMcpClient {
       return await this.sendJsonRpc<McpPromptGetResponse>(
         server.endpoint,
         'prompts/get',
-        { name: promptName, arguments: args }
+        { name: promptName, arguments: args },
+        undefined,
+        server.id
       );
     });
   }
@@ -159,7 +270,8 @@ export class BackendMcpClient {
       server.endpoint,
       'tools/list',
       {},
-      5000
+      5000,
+      server.id
     );
   }
 
@@ -173,7 +285,8 @@ export class BackendMcpClient {
       server.endpoint,
       'resources/list',
       {},
-      5000
+      5000,
+      server.id
     );
   }
 
@@ -187,7 +300,8 @@ export class BackendMcpClient {
       server.endpoint,
       'prompts/list',
       {},
-      5000
+      5000,
+      server.id
     );
   }
 

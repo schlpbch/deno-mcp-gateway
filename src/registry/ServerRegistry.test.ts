@@ -73,7 +73,7 @@ Deno.test('ServerRegistry - listServers returns all servers', () => {
   assertEquals(servers.length, 3);
 });
 
-Deno.test('ServerRegistry - listHealthyServers filters unhealthy servers', () => {
+Deno.test('ServerRegistry - listHealthyServers excludes only DOWN servers', () => {
   const registry = ServerRegistry.getInstance();
   registry.clear();
 
@@ -82,9 +82,10 @@ Deno.test('ServerRegistry - listHealthyServers filters unhealthy servers', () =>
   registry.register(createMockServer('down-1', HealthStatus.DOWN));
   registry.register(createMockServer('healthy-2', HealthStatus.HEALTHY));
 
-  const healthyServers = registry.listHealthyServers();
-  assertEquals(healthyServers.length, 2);
-  assertEquals(healthyServers.every((s) => s.health.status === HealthStatus.HEALTHY), true);
+  const availableServers = registry.listHealthyServers();
+  // Should include HEALTHY and DEGRADED, exclude only DOWN
+  assertEquals(availableServers.length, 3);
+  assertEquals(availableServers.every((s) => s.health.status !== HealthStatus.DOWN), true);
 });
 
 Deno.test('ServerRegistry - resolveToolServer finds correct server', () => {
