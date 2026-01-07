@@ -56,13 +56,14 @@ export class ServerRegistry {
   }
 
   /**
-   * List only healthy servers (includes UNKNOWN status for servers not yet checked)
+   * List servers available for MCP operations.
+   * Includes HEALTHY, UNKNOWN, and DEGRADED servers.
+   * Only excludes DOWN servers (completely unreachable).
+   * Note: DEGRADED means health endpoint failed but MCP may still work.
    */
   listHealthyServers(): ServerRegistration[] {
     return this.listServers().filter(
-      (server) =>
-        server.health.status === HealthStatus.HEALTHY ||
-        server.health.status === HealthStatus.UNKNOWN
+      (server) => server.health.status !== HealthStatus.DOWN
     );
   }
 
