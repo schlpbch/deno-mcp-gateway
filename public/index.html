@@ -4,7 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Unified MCP Gateway - Edge-powered gateway for Model Context Protocol integrations" />
+    <meta name="color-scheme" content="light dark" />
     <title>MCP Gateway</title>
+    <script>
+      // Prevent flash of wrong theme
+      (function() {
+        const stored = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (stored === 'dark' || (!stored && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -14,6 +25,7 @@
             colors: {
               accent: '#00c7b7',
               'accent-dark': '#00a99d',
+              'accent-light': '#00e6d3',
             },
             fontFamily: {
               sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
@@ -25,24 +37,51 @@
     </script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-      .gradient-bg {
+
+      /* Dark mode styles */
+      .dark .gradient-bg {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
       }
-      .glass {
+      .dark .glass {
         background: rgba(255, 255, 255, 0.03);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.05);
       }
+
+      /* Light mode styles */
+      .gradient-bg {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f8fafc 100%);
+      }
+      .glass {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      }
+
       .glow {
         box-shadow: 0 0 40px rgba(0, 199, 183, 0.15);
       }
+
+      /* Scrollbar styles */
       pre::-webkit-scrollbar { width: 8px; height: 8px; }
-      pre::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
-      pre::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-      pre::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+      pre::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
+      pre::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+      pre::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); }
+      .dark pre::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+      .dark pre::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+      .dark pre::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+      /* Theme toggle animation */
+      .theme-toggle {
+        transition: transform 0.3s ease;
+      }
+      .theme-toggle:hover {
+        transform: rotate(15deg);
+      }
     </style>
   </head>
-  <body class="gradient-bg min-h-full text-slate-200 antialiased">
+  <body class="gradient-bg min-h-full text-slate-800 dark:text-slate-200 antialiased transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-accent text-slate-900 px-4 py-2 rounded-lg font-semibold z-50">
       Skip to main content
     </a>
@@ -55,11 +94,28 @@
             MCP
           </div>
           <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-white">MCP Gateway</h1>
-            <p class="text-slate-400 mt-1">Unified edge gateway for MCP integrations</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">MCP Gateway</h1>
+            <p class="text-slate-600 dark:text-slate-400 mt-1">Unified edge gateway for MCP integrations</p>
           </div>
         </div>
         <div class="flex items-center gap-3">
+          <!-- Theme Toggle -->
+          <button
+            id="theme-toggle"
+            type="button"
+            class="theme-toggle p-2.5 rounded-lg bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900"
+            aria-label="Toggle dark mode"
+            title="Toggle theme"
+          >
+            <!-- Sun icon (shown in dark mode) -->
+            <svg class="w-5 h-5 text-yellow-500 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <!-- Moon icon (shown in light mode) -->
+            <svg class="w-5 h-5 text-slate-700 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+          </button>
           <span id="online-status" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-semibold" role="status" aria-live="polite">
             <span class="w-2 h-2 rounded-full bg-accent animate-pulse" aria-hidden="true"></span>
             Online
@@ -71,28 +127,28 @@
       <main id="main-content" class="mt-8 space-y-6">
         <!-- Quick Actions -->
         <section aria-labelledby="quick-actions-heading" class="glass rounded-2xl p-6">
-          <h2 id="quick-actions-heading" class="text-lg font-semibold text-white mb-4">Quick Actions</h2>
+          <h2 id="quick-actions-heading" class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Quick Actions</h2>
           <div class="flex flex-wrap gap-3" role="group" aria-label="API endpoint buttons">
-            <button id="btn-tools" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-slate-900">
+            <button id="btn-tools" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900">
               <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
               List Tools
             </button>
-            <button id="btn-resources" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-slate-900">
+            <button id="btn-resources" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900">
               <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
               </svg>
               List Resources
             </button>
-            <button id="btn-prompts" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-slate-900">
+            <button id="btn-prompts" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900">
               <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
               </svg>
               List Prompts
             </button>
-            <button id="btn-health" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-slate-900">
+            <button id="btn-health" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900">
               <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
@@ -103,20 +159,20 @@
 
         <!-- API Tester -->
         <section aria-labelledby="api-tester-heading" class="glass rounded-2xl p-6">
-          <h2 id="api-tester-heading" class="text-lg font-semibold text-white mb-4">API Tester</h2>
+          <h2 id="api-tester-heading" class="text-lg font-semibold text-slate-900 dark:text-white mb-4">API Tester</h2>
 
           <div class="grid lg:grid-cols-2 gap-6">
             <!-- Request Form -->
             <form id="post-form" class="space-y-4">
               <div>
-                <label for="post-endpoint" class="block text-sm font-medium text-slate-300 mb-2">
+                <label for="post-endpoint" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Endpoint
                 </label>
                 <input
                   id="post-endpoint"
                   type="text"
                   value="/mcp/tools/call"
-                  class="w-full px-4 py-2.5 rounded-lg bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-colors font-mono text-sm"
+                  class="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-colors font-mono text-sm"
                   placeholder="/mcp/tools/call"
                   aria-describedby="endpoint-hint"
                 />
@@ -124,13 +180,13 @@
               </div>
 
               <div>
-                <label for="post-body" class="block text-sm font-medium text-slate-300 mb-2">
+                <label for="post-body" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Request Body (JSON)
                 </label>
                 <textarea
                   id="post-body"
                   rows="6"
-                  class="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-colors font-mono text-sm resize-y"
+                  class="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-colors font-mono text-sm resize-y"
                   placeholder='{"name": "journey.findTrips", "arguments": {"from": "Zurich", "to": "Geneva"}}'
                   aria-describedby="body-hint"
                 ></textarea>
@@ -139,7 +195,7 @@
 
               <button
                 type="submit"
-                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-accent hover:bg-accent-dark text-slate-900 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-slate-900"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-accent hover:bg-accent-dark text-slate-900 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -151,20 +207,20 @@
             <!-- Response Panel -->
             <div class="flex flex-col">
               <div class="flex items-center justify-between mb-2">
-                <label class="text-sm font-medium text-slate-300">Response</label>
+                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Response</label>
                 <span id="net-status" class="text-xs font-medium text-slate-500" role="status" aria-live="polite">Ready</span>
               </div>
               <div class="flex-1 relative">
                 <pre
                   id="response"
-                  class="h-full min-h-[240px] max-h-[400px] overflow-auto p-4 rounded-lg bg-slate-900/50 border border-slate-700/50 text-sm text-teal-300 font-mono"
+                  class="h-full min-h-[240px] max-h-[400px] overflow-auto p-4 rounded-lg bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/50 text-sm text-teal-700 dark:text-teal-300 font-mono"
                   aria-label="API response output"
                   tabindex="0"
                 ></pre>
                 <button
                   id="copy-response"
                   type="button"
-                  class="absolute top-2 right-2 p-2 rounded-md bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
+                  class="absolute top-2 right-2 p-2 rounded-md bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
                   aria-label="Copy response to clipboard"
                   title="Copy to clipboard"
                 >
@@ -179,42 +235,42 @@
 
         <!-- Backend Services -->
         <section aria-labelledby="services-heading" class="glass rounded-2xl p-6">
-          <h2 id="services-heading" class="text-lg font-semibold text-white mb-4">Connected Services</h2>
+          <h2 id="services-heading" class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Connected Services</h2>
           <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+            <div class="p-4 rounded-xl bg-white/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
               <div class="flex items-center gap-3 mb-2">
                 <div class="w-2 h-2 rounded-full bg-accent" aria-hidden="true"></div>
-                <span class="font-medium text-white">Journey Service</span>
+                <span class="font-medium text-slate-900 dark:text-white">Journey Service</span>
               </div>
-              <p class="text-sm text-slate-400">Swiss public transport trips and connections</p>
+              <p class="text-sm text-slate-600 dark:text-slate-400">Swiss public transport trips and connections</p>
             </div>
-            <div class="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+            <div class="p-4 rounded-xl bg-white/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
               <div class="flex items-center gap-3 mb-2">
                 <div class="w-2 h-2 rounded-full bg-accent" aria-hidden="true"></div>
-                <span class="font-medium text-white">Swiss Mobility</span>
+                <span class="font-medium text-slate-900 dark:text-white">Swiss Mobility</span>
               </div>
-              <p class="text-sm text-slate-400">Bike sharing and mobility services</p>
+              <p class="text-sm text-slate-600 dark:text-slate-400">Bike sharing and mobility services</p>
             </div>
-            <div class="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+            <div class="p-4 rounded-xl bg-white/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
               <div class="flex items-center gap-3 mb-2">
                 <div class="w-2 h-2 rounded-full bg-accent" aria-hidden="true"></div>
-                <span class="font-medium text-white">Aareguru</span>
+                <span class="font-medium text-slate-900 dark:text-white">Aareguru</span>
               </div>
-              <p class="text-sm text-slate-400">Aare river conditions and temperatures</p>
+              <p class="text-sm text-slate-600 dark:text-slate-400">Aare river conditions and temperatures</p>
             </div>
-            <div class="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+            <div class="p-4 rounded-xl bg-white/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
               <div class="flex items-center gap-3 mb-2">
                 <div class="w-2 h-2 rounded-full bg-accent" aria-hidden="true"></div>
-                <span class="font-medium text-white">Open Meteo</span>
+                <span class="font-medium text-slate-900 dark:text-white">Open Meteo</span>
               </div>
-              <p class="text-sm text-slate-400">Weather forecasts and conditions</p>
+              <p class="text-sm text-slate-600 dark:text-slate-400">Weather forecasts and conditions</p>
             </div>
           </div>
         </section>
       </main>
 
       <!-- Footer -->
-      <footer class="mt-12 pt-6 border-t border-slate-800">
+      <footer class="mt-12 pt-6 border-t border-slate-200 dark:border-slate-800">
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p class="text-sm text-slate-500">
             Powered by <a href="https://www.netlify.com" class="text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-accent rounded">Netlify Edge Functions</a>
@@ -224,7 +280,7 @@
               <li>
                 <a
                   href="https://github.com/schlpbch/netlify-mcp-gateway"
-                  class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-accent rounded"
+                  class="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-accent rounded"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -237,7 +293,7 @@
               <li>
                 <a
                   href="https://modelcontextprotocol.io"
-                  class="text-sm text-slate-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-accent rounded"
+                  class="text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-accent rounded"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
