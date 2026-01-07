@@ -1,13 +1,15 @@
 # MCP Gateway Deployment Guide
 
-This guide covers deploying the MCP Gateway on Netlify Edge Functions.
+This guide covers deploying the MCP Gateway on Netlify Edge Functions and alternative platforms.
 
 ## Prerequisites
 
-- Git repository pushed to GitHub
-- Netlify CLI installed (`npm install -g netlify-cli`)
-- GitHub repository: https://github.com/schlpbch/netlify-mcp-gateway
-- pnpm package manager (v9.0.0+)
+- **Deno** 1.40+ installed ([deno.land](https://deno.land))
+- **Git** repository pushed to GitHub
+- **Netlify account** (for Netlify deployment)
+- **GitHub repository**: https://github.com/schlpbch/netlify-mcp-gateway
+
+> **Note**: No Node.js or package managers needed! This is a pure Deno project.
 
 ## Deployment Methods
 
@@ -17,27 +19,38 @@ Netlify automatically deploys on every push to the main branch.
 
 #### 1. Link Repository to Netlify
 
-```bash
-netlify link --repo=https://github.com/schlpbch/netlify-mcp-gateway
-```
-
-Or connect via Netlify dashboard:
+Connect via Netlify dashboard:
 1. Go to https://app.netlify.com
 2. Click "New site from Git"
 3. Select your GitHub repository
 4. Netlify auto-detects build settings from `netlify.toml`
 
+Or use CLI:
+
+```bash
+# Install Netlify CLI (if needed)
+deno install --allow-all https://deno.land/x/netlify_cli/netlify.ts
+# Or: npm install -g netlify-cli
+
+# Link repository
+netlify link --repo=https://github.com/schlpbch/netlify-mcp-gateway
+```
+
 #### 2. Configure Build Settings
 
-Build command: `pnpm install` (no build needed for edge functions)
-Publish directory: `public`
+- **Build command**: _(none needed - Deno code runs directly)_
+- **Publish directory**: `public`
+- **Edge Functions**: Auto-detected from `netlify/edge-functions/`
 
 #### 3. Environment Variables
 
 Set in Netlify dashboard > Site settings > Build & deploy > Environment:
 
-```
-BACKEND_MCP_SERVERS=["journey-service", "swiss-mobility", "aareguru", "open-meteo"]
+```bash
+JOURNEY_SERVICE_URL=https://journey-service.example.com
+SWISS_MOBILITY_URL=https://mobility.example.com
+AAREGURU_URL=https://aareguru.example.com
+OPEN_METEO_URL=https://meteo.example.com
 ```
 
 The site automatically deploys on every `git push` to main branch.
@@ -60,10 +73,10 @@ This opens a browser to authorize your Netlify account.
 netlify deploy --prod --dir=public
 ```
 
-Or use the shorthand npm script:
+Or with Deno (if using Deno-based Netlify CLI):
 
 ```bash
-pnpm deploy
+deno task deploy  # If configured in deno.json
 ```
 
 #### 3. View Deployment
@@ -84,6 +97,70 @@ netlify deploy --dir=public
 
 This creates a draft deploy with a unique preview URL. Share for testing before promoting to production.
 
+## Alternative Deployment Platforms
+
+### Deploy to Deno Deploy
+
+[Deno Deploy](https://deno.com/deploy) is the native Deno cloud platform with global edge network.
+
+#### 1. Connect Repository
+
+1. Go to https://dash.deno.com/new
+2. Connect your GitHub repository
+3. Select branch: `master` or `main`
+4. Set entry point: `dev.ts`
+
+#### 2. Configure Environment
+
+Add environment variables in Deno Deploy dashboard:
+- `JOURNEY_SERVICE_URL`
+- `SWISS_MOBILITY_URL`
+- `AAREGURU_URL`
+- `OPEN_METEO_URL`
+
+#### 3. Deploy
+
+Push to GitHub → Automatic deployment
+
+**Benefits**:
+- ✅ Native Deno platform (zero config)
+- ✅ Global edge network
+- ✅ Built-in analytics
+- ✅ Fast cold starts
+- ✅ Free tier: 100K requests/day
+
+### Deploy to Cloudflare Workers
+
+Can be adapted for Cloudflare Workers with minimal changes.
+
+#### Required Changes:
+
+1. Create `wrangler.toml`:
+   ```toml
+   name = "mcp-gateway"
+   main = "worker.ts"
+   compatibility_date = "2024-01-01"
+   ```
+
+2. Adapt `dev.ts` to Workers format:
+   ```typescript
+   export default {
+     async fetch(request: Request): Promise<Response> {
+       // Handler logic
+     }
+   }
+   ```
+
+3. Deploy:
+   ```bash
+   npx wrangler deploy
+   ```
+
+**Benefits**:
+- ✅ Larger edge network (275+ cities)
+- ✅ Generous free tier
+- ✅ Deno compatibility via workerd
+
 ## Configuration
 
 ### netlify.toml
@@ -102,9 +179,9 @@ The project includes a `netlify.toml` configuration file:
   port = 8888
 ```
 
-- **publish**: Directory containing static assets and edge function output
+- **publish**: Directory containing static assets
 - **edge_functions**: Configures the MCP edge function and its route pattern
-- **dev**: Local development server port
+- **dev**: Local development server port (used by `netlify dev`)
 
 ### Environment Variables
 
@@ -112,14 +189,27 @@ Set in Netlify dashboard or `.env` file locally:
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
-| `NODE_ENV` | Environment (dev/prod) | `production` |
+| `JOURNEY_SERVICE_URL` | Journey Service backend | `https://journey.example.com` |
+| `SWISS_MOBILITY_URL` | Swiss Mobility backend | `https://mobility.example.com` |
+| `AAREGURU_URL` | Aareguru backend | `https://aareguru.example.com` |
+| `OPEN_METEO_URL` | Open Meteo backend | `https://meteo.example.com` |
+| `PORT` | Local dev server port | `8888` |
 | `DEBUG` | Enable debug logging | `true` |
 
 Local development with `.env`:
 
 ```bash
-# .env (not committed to git)
-NODE_ENV=development
+# Create .env file
+cat > .env << 'EOF'
+JOURNEY_SERVICE_URL=http://localhost:3001
+SWISS_MOBILITY_URL=http://localhost:3002
+AAREGURU_URL=http://localhost:3003
+OPEN_METEO_URL=http://localhost:3004
+DEBUG=true
+EOF
+
+# Run dev server
+deno task dev
 ```
 
 ## Verification
@@ -143,16 +233,17 @@ open https://netliy-mcp-gateway.netlify.app
 ### 3. Test Health Endpoint
 
 ```bash
-curl https://netliy-mcp-gateway.netlify.app/mcp/health
+curl https://netliy-mcp-gateway.netlify.app/health
 ```
 
 Expected response:
 
 ```json
 {
-  "status": "UP",
+  "status": "healthy",
   "timestamp": "2026-01-07T12:34:56.789Z",
-  "servers": [...]
+  "gateway": "mcp-gateway",
+  "version": "0.2.0"
 }
 ```
 
@@ -172,36 +263,67 @@ netlify logs:deploy
 netlify open admin
 ```
 
-## Development
+## Local Development
 
-### Local Development
-
-Start the local Netlify dev server:
+### Start Dev Server
 
 ```bash
-pnpm dev
+# Using Deno (recommended)
+deno task dev
+
+# Or using Netlify CLI (includes edge function simulation)
+netlify dev
 ```
 
-This runs at `http://localhost:8888` with:
-- Live reload on file changes
-- Full edge functions support
-- Environment variable support
+**Deno dev server** runs at `http://localhost:8888` with:
+- ✅ Hot reload on file changes
+- ✅ Native Deno runtime (exact production behavior)
+- ✅ Fast startup
+- ✅ Environment variable support
+
+**Netlify CLI** provides:
+- ✅ Full edge functions support
+- ✅ Netlify Blobs simulation
+- ✅ Production-like environment
 
 ### Testing Endpoints Locally
 
-Use the interactive web UI at `http://localhost:8888`:
+Use the interactive web UI at `http://localhost:8888` or curl:
 
 ```bash
 # GET endpoints
 curl http://localhost:8888/mcp/tools/list
 curl http://localhost:8888/mcp/resources/list
 curl http://localhost:8888/mcp/prompts/list
-curl http://localhost:8888/mcp/health
+curl http://localhost:8888/health
 
 # POST endpoints
 curl -X POST http://localhost:8888/mcp/tools/call \
   -H "Content-Type: application/json" \
-  -d '{"tool":"example","input":"test"}'
+  -d '{"name":"journey.findTrips","arguments":{"from":"Bern","to":"Zurich"}}'
+```
+
+### Type Checking
+
+```bash
+# Check all TypeScript files
+deno task check
+
+# Or check specific files
+deno check netlify/edge-functions/mcp.ts
+```
+
+### Formatting & Linting
+
+```bash
+# Format code
+deno task fmt
+
+# Check formatting
+deno task fmt:check
+
+# Lint code
+deno task lint
 ```
 
 ## Deployment Workflow

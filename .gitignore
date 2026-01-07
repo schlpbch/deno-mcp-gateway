@@ -1,9 +1,27 @@
+# Netlify
 .netlify/
-node_modules/
+
+# Environment
 .env
 .env.local
+
+# Deno
+deno.lock
+
+# Logs
 *.log
+
+# OS
 .DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build outputs (if any)
 dist/
-pnpm-lock.yaml
-.pnpm-store/
+build/
+node_modules

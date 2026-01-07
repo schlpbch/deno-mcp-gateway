@@ -266,11 +266,17 @@ function renderMetrics(data) {
   const requests = body.requests || {};
   const latency = body.latency || {};
   const cache = body.cache || {};
-  const endpoints = body.endpoints || [];
+  const endpointsObj = body.endpoints || {};
 
-  // Calculate error rate display
-  const errorRate = requests.errorRate != null ? requests.errorRate.toFixed(1) : '0.0';
-  const cacheHitRate = cache.hitRate != null ? cache.hitRate.toFixed(1) : '0.0';
+  // Convert endpoints object to array: { "GET:/path": {...} } -> [{ key: "GET:/path", ... }]
+  const endpoints = Object.entries(endpointsObj).map(([key, value]) => ({
+    key,
+    ...value
+  }));
+
+  // Values are already formatted strings from the API
+  const errorRate = requests.errorRate || '0%';
+  const cacheHitRate = cache.hitRate || '0%';
 
   let html = `
     <div class="space-y-4">
@@ -286,28 +292,28 @@ function renderMetrics(data) {
         <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
           <div class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Requests</div>
           <div class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">${requests.total || 0}</div>
-          <div class="text-xs ${requests.errors > 0 ? 'text-red-500' : 'text-green-500'}">${requests.errors || 0} errors (${errorRate}%)</div>
+          <div class="text-xs ${requests.errors > 0 ? 'text-red-500' : 'text-green-500'}">${requests.errors || 0} errors (${errorRate})</div>
         </div>
 
         <!-- Cache Hit Rate -->
         <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
           <div class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Cache Hit Rate</div>
-          <div class="mt-1 text-2xl font-bold ${parseFloat(cacheHitRate) > 50 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}">${cacheHitRate}%</div>
-          <div class="text-xs text-slate-500">${cache.memorySize || '0 B'} cached</div>
+          <div class="mt-1 text-2xl font-bold ${parseFloat(cacheHitRate) > 50 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}">${cacheHitRate}</div>
+          <div class="text-xs text-slate-500">${cache.memorySize || 0} bytes cached</div>
         </div>
 
         <!-- P50 Latency -->
         <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
           <div class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">P50 Latency</div>
-          <div class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">${latency.p50 || 0}ms</div>
-          <div class="text-xs text-slate-500">avg: ${latency.avg || 0}ms</div>
+          <div class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">${latency.p50 || '0ms'}</div>
+          <div class="text-xs text-slate-500">avg: ${latency.avg || '0ms'}</div>
         </div>
 
         <!-- P95/P99 Latency -->
         <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
           <div class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">P95 / P99</div>
-          <div class="mt-1 text-2xl font-bold ${(latency.p99 || 0) > 1000 ? 'text-yellow-600 dark:text-yellow-400' : 'text-slate-900 dark:text-white'}">${latency.p95 || 0}ms</div>
-          <div class="text-xs text-slate-500">p99: ${latency.p99 || 0}ms</div>
+          <div class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">${latency.p95 || '0ms'}</div>
+          <div class="text-xs text-slate-500">p99: ${latency.p99 || '0ms'}</div>
         </div>
       </div>
 
@@ -316,23 +322,19 @@ function renderMetrics(data) {
       <div class="space-y-2">
         <h4 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Endpoint Breakdown</h4>
         <div class="space-y-2 max-h-48 overflow-y-auto">
-          ${endpoints.map(ep => {
-            const epErrorRate = ep.totalRequests > 0 ? ((ep.errorCount / ep.totalRequests) * 100).toFixed(1) : '0.0';
-            const epCacheRate = (ep.cacheHits + ep.cacheMisses) > 0 ? ((ep.cacheHits / (ep.cacheHits + ep.cacheMisses)) * 100).toFixed(1) : '0.0';
-            return `
+          ${endpoints.map(ep => `
               <div class="p-2 rounded-lg bg-white/30 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between">
-                  <span class="text-xs font-mono text-slate-600 dark:text-slate-300">${ep.method} ${ep.endpoint}</span>
-                  <span class="text-xs text-slate-500">${ep.totalRequests} req</span>
+                  <span class="text-xs font-mono text-slate-600 dark:text-slate-300">${ep.key}</span>
+                  <span class="text-xs text-slate-500">${ep.requests || 0} req</span>
                 </div>
                 <div class="flex items-center gap-4 mt-1 text-xs text-slate-500">
-                  <span>avg: ${Math.round(ep.avgDuration || 0)}ms</span>
-                  <span>cache: ${epCacheRate}%</span>
-                  <span class="${ep.errorCount > 0 ? 'text-red-500' : ''}">errors: ${epErrorRate}%</span>
+                  <span>avg: ${ep.avgLatency || 0}ms</span>
+                  <span>cache: ${ep.cacheHitRate || 0}%</span>
+                  <span class="${ep.errors > 0 ? 'text-red-500' : ''}">errors: ${ep.errors || 0}</span>
                 </div>
               </div>
-            `;
-          }).join('')}
+            `).join('')}
         </div>
       </div>
       ` : ''}
