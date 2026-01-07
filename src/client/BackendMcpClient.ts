@@ -306,23 +306,81 @@ export class BackendMcpClient {
   }
 
   /**
-   * Check health of a backend server
+   * Check health of a backend server.
+   * Uses a two-tier strategy:
+   * 1. Try Spring Boot actuator endpoint first (fast, standard)
+   * 2. Fall back to MCP ping if actuator fails (works for FastMCP/non-Spring servers)
    */
   async checkHealth(server: ServerRegistration): Promise<ServerHealth> {
     const startTime = Date.now();
 
+    // First, try Spring Boot actuator health endpoint
     try {
-      const response = await fetch(
-        `${server.endpoint.replace('/mcp', '')}/actuator/health`,
-        {
-          method: 'GET',
-          signal: AbortSignal.timeout(this.config.timeout.connect),
-        }
-      );
+      const actuatorUrl = server.endpoint.endsWith('/mcp')
+        ? server.endpoint.replace('/mcp', '/actuator/health')
+        : `${server.endpoint}/actuator/health`;
+
+      const response = await fetch(actuatorUrl, {
+        method: 'GET',
+        signal: AbortSignal.timeout(this.config.timeout.connect),
+      });
 
       const latency = Date.now() - startTime;
 
       if (response.ok) {
+        return {
+          status: HealthStatus.HEALTHY,
+          lastCheck: new Date(),
+          latency,
+          consecutiveFailures: 0,
+        };
+      }
+    } catch {
+      // Actuator failed, try MCP-based health check
+    }
+
+    // Fall back to MCP-based health check (ping via initialize or tools/list)
+    return await this.checkHealthViaMcp(server, startTime);
+  }
+
+  /**
+   * Check health by sending an MCP request (initialize or tools/list)
+   */
+  private async checkHealthViaMcp(
+    server: ServerRegistration,
+    startTime: number
+  ): Promise<ServerHealth> {
+    try {
+      const request: JsonRpcRequest = {
+        jsonrpc: '2.0',
+        method: 'initialize',
+        params: {
+          protocolVersion: '2024-11-05',
+          capabilities: {},
+          clientInfo: { name: 'netlify-mcp-gateway-health', version: '1.0.0' },
+        },
+        id: ++this.requestId,
+      };
+
+      const response = await fetch(server.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json, text/event-stream',
+        },
+        body: JSON.stringify(request),
+        signal: AbortSignal.timeout(this.config.timeout.connect),
+      });
+
+      const latency = Date.now() - startTime;
+
+      if (response.ok) {
+        // Store session if returned (for session-based servers)
+        const sessionId = response.headers.get('mcp-session-id');
+        if (sessionId) {
+          this.sessions.set(server.id, sessionId);
+        }
+
         return {
           status: HealthStatus.HEALTHY,
           lastCheck: new Date(),
@@ -334,7 +392,7 @@ export class BackendMcpClient {
           status: HealthStatus.DEGRADED,
           lastCheck: new Date(),
           latency,
-          errorMessage: `HTTP ${response.status}`,
+          errorMessage: `MCP HTTP ${response.status}`,
           consecutiveFailures: server.health.consecutiveFailures + 1,
         };
       }
