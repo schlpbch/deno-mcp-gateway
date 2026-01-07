@@ -1,5 +1,6 @@
 import type { Context } from '@netlify/edge-functions';
 import { initializeGateway } from '../../src/init.ts';
+import { RequestTimer, RequestMetrics } from '../../src/monitoring/RequestMetrics.ts';
 
 // Router helper for cleaner routing
 type Handler = (c: RouteContext) => Promise<Response>;
@@ -7,14 +8,21 @@ interface RouteContext {
   request: Request;
   context: Context;
   gateway: any;
+  timer: RequestTimer;
   json: (data: any, status?: number) => Response;
   text: (text: string, status?: number) => Response;
 }
 
-const createRouteContext = (request: Request, context: Context, gateway: any): RouteContext => ({
+const createRouteContext = (
+  request: Request,
+  context: Context,
+  gateway: any,
+  timer: RequestTimer
+): RouteContext => ({
   request,
   context,
   gateway,
+  timer,
   json: (data: any, status = 200) =>
     new Response(JSON.stringify(data), {
       status,
@@ -82,6 +90,37 @@ const routes: Array<{
   },
   {
     method: 'GET',
+    path: /^\/mcp\/metrics$|^\/metrics$/,
+    handler: async (c) => {
+      const metrics = RequestMetrics.getInstance().getSummary();
+      const cacheStats = c.gateway.cache.getStats();
+
+      return c.json({
+        timestamp: new Date().toISOString(),
+        uptime: `${Math.round(metrics.uptime / 1000)}s`,
+        requests: {
+          total: metrics.totalRequests,
+          errors: metrics.totalErrors,
+          errorRate: metrics.totalRequests > 0
+            ? `${((metrics.totalErrors / metrics.totalRequests) * 100).toFixed(2)}%`
+            : '0%',
+        },
+        latency: {
+          avg: `${metrics.avgLatency}ms`,
+          p50: `${metrics.p50Latency}ms`,
+          p95: `${metrics.p95Latency}ms`,
+          p99: `${metrics.p99Latency}ms`,
+        },
+        cache: {
+          hitRate: `${metrics.cacheHitRate}%`,
+          memorySize: cacheStats.memorySize,
+        },
+        endpoints: metrics.endpoints,
+      });
+    },
+  },
+  {
+    method: 'GET',
     path: /^\/mcp\/health$|^\/health$/,
     handler: async (c) => {
       const servers = c.gateway.registry.listServers();
@@ -134,19 +173,26 @@ export default async (request: Request, context: Context) => {
   const path = url.pathname;
   const method = request.method;
 
+  // Start timing for metrics
+  const timer = new RequestTimer(path, method);
+
   try {
     const gateway = await initializeGateway(context);
-    const routeContext = createRouteContext(request, context, gateway);
+    const routeContext = createRouteContext(request, context, gateway, timer);
 
     // Find matching route
     for (const route of routes) {
       if (route.method === method && route.path.test(path)) {
-        return await route.handler(routeContext);
+        const response = await route.handler(routeContext);
+        timer.finish('success');
+        return response;
       }
     }
 
+    timer.finish('error');
     return routeContext.text('Not Found', 404);
   } catch (error) {
+    timer.finish('error');
     console.error('Edge function error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return new Response(

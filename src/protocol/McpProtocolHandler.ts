@@ -16,12 +16,18 @@ import { ServerRegistry } from '../registry/ServerRegistry.ts';
 import { IntelligentRouter } from '../routing/IntelligentRouter.ts';
 import { addNamespace } from '../registry/NamespaceResolver.ts';
 import { BackendMcpClient } from '../client/BackendMcpClient.ts';
+import { ResponseCache } from '../cache/ResponseCache.ts';
 import { aggregateFromServers } from '../utils/aggregateFromServers.ts';
+
+// Cache TTLs for list operations (in seconds)
+const LIST_CACHE_TTL = 60; // 1 minute for list responses
 
 /**
  * MCP protocol handler - aggregates capabilities and routes requests
  */
 export class McpProtocolHandler {
+  private cache: ResponseCache | null = null;
+
   constructor(
     private registry: ServerRegistry,
     private router: IntelligentRouter,
@@ -29,9 +35,28 @@ export class McpProtocolHandler {
   ) {}
 
   /**
+   * Set cache instance for list response caching
+   */
+  setCache(cache: ResponseCache): void {
+    this.cache = cache;
+  }
+
+  /**
    * List all tools from all healthy servers (fetched in parallel)
+   * Results are cached for 1 minute to improve performance
    */
   async listTools(): Promise<McpListToolsResponse> {
+    const cacheKey = 'list:tools';
+
+    // Check cache first
+    if (this.cache) {
+      const cached = await this.cache.get<McpListToolsResponse>(cacheKey);
+      if (cached) {
+        console.log('Cache hit for tools list');
+        return cached;
+      }
+    }
+
     const servers = this.registry.listHealthyServers();
 
     const tools = await aggregateFromServers<McpTool>(
@@ -48,7 +73,14 @@ export class McpProtocolHandler {
       'tools'
     );
 
-    return { tools };
+    const result = { tools };
+
+    // Cache the result
+    if (this.cache) {
+      await this.cache.set(cacheKey, result, LIST_CACHE_TTL);
+    }
+
+    return result;
   }
 
   /**
@@ -60,8 +92,20 @@ export class McpProtocolHandler {
 
   /**
    * List all resources from all healthy servers (fetched in parallel)
+   * Results are cached for 1 minute to improve performance
    */
   async listResources(): Promise<McpListResourcesResponse> {
+    const cacheKey = 'list:resources';
+
+    // Check cache first
+    if (this.cache) {
+      const cached = await this.cache.get<McpListResourcesResponse>(cacheKey);
+      if (cached) {
+        console.log('Cache hit for resources list');
+        return cached;
+      }
+    }
+
     const servers = this.registry.listHealthyServers();
 
     const resources = await aggregateFromServers<McpResource>(
@@ -73,7 +117,14 @@ export class McpProtocolHandler {
       'resources'
     );
 
-    return { resources };
+    const result = { resources };
+
+    // Cache the result
+    if (this.cache) {
+      await this.cache.set(cacheKey, result, LIST_CACHE_TTL);
+    }
+
+    return result;
   }
 
   /**
@@ -87,8 +138,20 @@ export class McpProtocolHandler {
 
   /**
    * List all prompts from all healthy servers (fetched in parallel)
+   * Results are cached for 1 minute to improve performance
    */
   async listPrompts(): Promise<McpListPromptsResponse> {
+    const cacheKey = 'list:prompts';
+
+    // Check cache first
+    if (this.cache) {
+      const cached = await this.cache.get<McpListPromptsResponse>(cacheKey);
+      if (cached) {
+        console.log('Cache hit for prompts list');
+        return cached;
+      }
+    }
+
     const servers = this.registry.listHealthyServers();
 
     const prompts = await aggregateFromServers<McpPrompt>(
@@ -106,7 +169,14 @@ export class McpProtocolHandler {
       'prompts'
     );
 
-    return { prompts };
+    const result = { prompts };
+
+    // Cache the result
+    if (this.cache) {
+      await this.cache.set(cacheKey, result, LIST_CACHE_TTL);
+    }
+
+    return result;
   }
 
   /**

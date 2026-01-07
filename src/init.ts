@@ -4,6 +4,7 @@ import { BackendMcpClient } from './client/BackendMcpClient.ts';
 import { ResponseCache } from './cache/ResponseCache.ts';
 import { IntelligentRouter } from './routing/IntelligentRouter.ts';
 import { McpProtocolHandler } from './protocol/McpProtocolHandler.ts';
+import { HealthMonitor } from './monitoring/HealthMonitor.ts';
 import { loadConfig } from './config.ts';
 import { HealthStatus } from './types/server.ts';
 
@@ -13,6 +14,7 @@ export interface Gateway {
   cache: ResponseCache;
   router: IntelligentRouter;
   protocolHandler: McpProtocolHandler;
+  healthMonitor: HealthMonitor;
 }
 
 let cachedGateway: Gateway | null = null;
@@ -38,6 +40,12 @@ export async function initializeGateway(_context: Context): Promise<Gateway> {
   const router = new IntelligentRouter(registry, client, cache);
   const protocolHandler = new McpProtocolHandler(registry, router, client);
 
+  // Wire up cache for list response caching
+  protocolHandler.setCache(cache);
+
+  // Create health monitor
+  const healthMonitor = new HealthMonitor(registry, client, config.health);
+
   // Register servers
   for (const serverConfig of config.servers) {
     registry.register({
@@ -53,25 +61,11 @@ export async function initializeGateway(_context: Context): Promise<Gateway> {
     });
   }
 
-  // Perform initial health checks (async, don't wait)
-  Promise.all(
-    config.servers.map(async (serverConfig) => {
-      try {
-        const server = registry.getServer(serverConfig.id);
-        if (server) {
-          const health = await client.checkHealth(server);
-          registry.updateHealth(serverConfig.id, health);
-          console.log(`Health check for ${serverConfig.id}: ${health.status}`);
-        }
-      } catch (error) {
-        console.error(`Health check failed for ${serverConfig.id}:`, error);
-      }
-    })
-  ).catch((error) =>
-    console.error('Health check initialization failed:', error)
-  );
+  // Start periodic health monitoring
+  // Note: In edge functions, this runs for the lifetime of the container
+  healthMonitor.start();
 
-  cachedGateway = { registry, client, cache, router, protocolHandler };
+  cachedGateway = { registry, client, cache, router, protocolHandler, healthMonitor };
 
   console.log(`Gateway initialized with ${config.servers.length} servers`);
 
