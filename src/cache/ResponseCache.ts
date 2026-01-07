@@ -23,14 +23,14 @@ export class ResponseCache {
    */
   generateKey(toolName: string, args?: unknown): string {
     const data = JSON.stringify({ toolName, args });
-    const encoder = new TextEncoder();
-    const hashBuffer = crypto.subtle.digestSync(
-      'SHA-256',
-      encoder.encode(data)
-    );
-    return Array.from(new Uint8Array(hashBuffer))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
+    // Simple hash function for cache keys
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+      const char = data.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString(16).padStart(8, '0');
   }
 
   /**
