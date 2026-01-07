@@ -2,25 +2,25 @@ import type { Context } from '@netlify/edge-functions';
 import { Hono } from 'hono';
 import { initializeGateway } from '../../src/init.ts';
 
-const app = new Hono();
+const app = new Hono<{ Bindings: Context }>();
 
 // Middleware to attach gateway to context
 app.use('*', async (c, next) => {
-  const gateway = await initializeGateway(c.env as Context);
+  const gateway = await initializeGateway(c.env);
   c.set('gateway', gateway);
   await next();
 });
 
 // GET /mcp/tools/list
 app.get('/mcp/tools/list', async (c) => {
-  const gateway = c.get('gateway');
+  const gateway = c.get('gateway') as any;
   const result = await gateway.protocolHandler.listTools();
   return c.json(result);
 });
 
 // POST /mcp/tools/call
 app.post('/mcp/tools/call', async (c) => {
-  const gateway = c.get('gateway');
+  const gateway = c.get('gateway') as any;
   const body = await c.req.json();
   const result = await gateway.protocolHandler.callTool(body);
   return c.json(result);
@@ -28,14 +28,14 @@ app.post('/mcp/tools/call', async (c) => {
 
 // GET /mcp/resources/list
 app.get('/mcp/resources/list', async (c) => {
-  const gateway = c.get('gateway');
+  const gateway = c.get('gateway') as any;
   const result = await gateway.protocolHandler.listResources();
   return c.json(result);
 });
 
 // POST /mcp/resources/read
 app.post('/mcp/resources/read', async (c) => {
-  const gateway = c.get('gateway');
+  const gateway = c.get('gateway') as any;
   const body = await c.req.json();
   const result = await gateway.protocolHandler.readResource(body);
   return c.json(result);
@@ -43,25 +43,22 @@ app.post('/mcp/resources/read', async (c) => {
 
 // GET /mcp/prompts/list
 app.get('/mcp/prompts/list', async (c) => {
-  const gateway = c.get('gateway');
+  const gateway = c.get('gateway') as any;
   const result = await gateway.protocolHandler.listPrompts();
   return c.json(result);
 });
 
 // POST /mcp/prompts/get
 app.post('/mcp/prompts/get', async (c) => {
-  const gateway = c.get('gateway');
+  const gateway = c.get('gateway') as any;
   const body = await c.req.json();
   const result = await gateway.protocolHandler.getPrompt(body);
   return c.json(result);
 });
 
 // GET /mcp/health or /health
-app.get('/mcp/health', healthHandler);
-app.get('/health', healthHandler);
-
-async function healthHandler(c: any) {
-  const gateway = c.get('gateway');
+const healthHandler = async (c: any) => {
+  const gateway = c.get('gateway') as any;
   const servers = gateway.registry.listServers();
 
   const healthChecks = await Promise.allSettled(
@@ -104,7 +101,10 @@ async function healthHandler(c: any) {
     timestamp: new Date().toISOString(),
     servers: serverStatuses,
   });
-}
+};
+
+app.get('/mcp/health', healthHandler);
+app.get('/health', healthHandler);
 
 // 404 handler
 app.notFound((c) => c.text('Not Found', 404));
