@@ -5,7 +5,9 @@
   },
   "imports": {
     "@netlify/edge-functions": "https://edge.netlify.com/v1/index.ts",
-    "@netlify/blobs": "https://edge.netlify.com/blobs/index.ts"
+    "@netlify/blobs": "https://edge.netlify.com/blobs/index.ts",
+    "hono": "https://deno.land/x/hono@4.0.0/mod.ts",
+    "hono/netlify": "https://deno.land/x/hono@4.0.0/adapter/netlify.ts"
   },
   "lint": {
     "rules": {

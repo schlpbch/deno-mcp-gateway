@@ -1,123 +1,126 @@
 import type { Context } from '@netlify/edge-functions';
+import { Hono } from 'hono';
 import { initializeGateway } from '../../src/init.ts';
 
-export default async (request: Request, context: Context) => {
-  const url = new URL(request.url);
-  const path = url.pathname;
+const app = new Hono();
 
-  try {
-    const gateway = await initializeGateway(context);
+// Middleware to attach gateway to context
+app.use('*', async (c, next) => {
+  const gateway = await initializeGateway(c.env as Context);
+  c.set('gateway', gateway);
+  await next();
+});
 
-    // Route based on path and method
-    if (path === '/mcp/tools/list' && request.method === 'GET') {
-      const result = await gateway.protocolHandler.listTools();
-      return new Response(JSON.stringify(result), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+// GET /mcp/tools/list
+app.get('/mcp/tools/list', async (c) => {
+  const gateway = c.get('gateway');
+  const result = await gateway.protocolHandler.listTools();
+  return c.json(result);
+});
 
-    if (path === '/mcp/tools/call' && request.method === 'POST') {
-      const body = await request.json();
-      const result = await gateway.protocolHandler.callTool(body);
-      return new Response(JSON.stringify(result), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+// POST /mcp/tools/call
+app.post('/mcp/tools/call', async (c) => {
+  const gateway = c.get('gateway');
+  const body = await c.req.json();
+  const result = await gateway.protocolHandler.callTool(body);
+  return c.json(result);
+});
 
-    if (path === '/mcp/resources/list' && request.method === 'GET') {
-      const result = await gateway.protocolHandler.listResources();
-      return new Response(JSON.stringify(result), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+// GET /mcp/resources/list
+app.get('/mcp/resources/list', async (c) => {
+  const gateway = c.get('gateway');
+  const result = await gateway.protocolHandler.listResources();
+  return c.json(result);
+});
 
-    if (path === '/mcp/resources/read' && request.method === 'POST') {
-      const body = await request.json();
-      const result = await gateway.protocolHandler.readResource(body);
-      return new Response(JSON.stringify(result), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+// POST /mcp/resources/read
+app.post('/mcp/resources/read', async (c) => {
+  const gateway = c.get('gateway');
+  const body = await c.req.json();
+  const result = await gateway.protocolHandler.readResource(body);
+  return c.json(result);
+});
 
-    if (path === '/mcp/prompts/list' && request.method === 'GET') {
-      const result = await gateway.protocolHandler.listPrompts();
-      return new Response(JSON.stringify(result), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+// GET /mcp/prompts/list
+app.get('/mcp/prompts/list', async (c) => {
+  const gateway = c.get('gateway');
+  const result = await gateway.protocolHandler.listPrompts();
+  return c.json(result);
+});
 
-    if (path === '/mcp/prompts/get' && request.method === 'POST') {
-      const body = await request.json();
-      const result = await gateway.protocolHandler.getPrompt(body);
-      return new Response(JSON.stringify(result), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+// POST /mcp/prompts/get
+app.post('/mcp/prompts/get', async (c) => {
+  const gateway = c.get('gateway');
+  const body = await c.req.json();
+  const result = await gateway.protocolHandler.getPrompt(body);
+  return c.json(result);
+});
 
-    // Health check endpoint (supports both /mcp/health and /health)
-    if ((path === '/mcp/health' || path === '/health') && request.method === 'GET') {
-      const servers = gateway.registry.listServers();
+// GET /mcp/health or /health
+app.get('/mcp/health', healthHandler);
+app.get('/health', healthHandler);
 
-      // Check health of each server in parallel
-      const healthChecks = await Promise.allSettled(
-        servers.map(async (server) => {
-          const health = await gateway.client.checkHealth(server);
-          return { server, health };
-        })
-      );
+async function healthHandler(c: any) {
+  const gateway = c.get('gateway');
+  const servers = gateway.registry.listServers();
 
-      const serverStatuses = healthChecks.map((result, index) => {
-        if (result.status === 'fulfilled') {
-          const { server, health } = result.value;
-          return {
-            id: server.id,
-            name: server.name,
-            endpoint: server.endpoint,
-            status: health.status,
-            latency: health.latency,
-            lastCheck: health.lastCheck,
-            errorMessage: health.errorMessage,
-          };
-        } else {
-          const server = servers[index];
-          return {
-            id: server.id,
-            name: server.name,
-            endpoint: server.endpoint,
-            status: 'DOWN',
-            latency: 0,
-            errorMessage: result.reason?.message || 'Health check failed',
-          };
-        }
-      });
+  const healthChecks = await Promise.allSettled(
+    servers.map(async (server: any) => {
+      const health = await gateway.client.checkHealth(server);
+      return { server, health };
+    })
+  );
 
-      const allHealthy = serverStatuses.every((s) => s.status === 'HEALTHY');
-      const anyHealthy = serverStatuses.some((s) => s.status === 'HEALTHY');
-
-      const healthStatus = {
-        status: allHealthy ? 'UP' : anyHealthy ? 'DEGRADED' : 'DOWN',
-        timestamp: new Date().toISOString(),
-        servers: serverStatuses,
+  const serverStatuses = healthChecks.map((result: any, index: number) => {
+    if (result.status === 'fulfilled') {
+      const { server, health } = result.value;
+      return {
+        id: server.id,
+        name: server.name,
+        endpoint: server.endpoint,
+        status: health.status,
+        latency: health.latency,
+        lastCheck: health.lastCheck,
+        errorMessage: health.errorMessage,
       };
-
-      return new Response(JSON.stringify(healthStatus), {
-        headers: { 'Content-Type': 'application/json' },
-      });
+    } else {
+      const server = servers[index];
+      return {
+        id: server.id,
+        name: server.name,
+        endpoint: server.endpoint,
+        status: 'DOWN',
+        latency: 0,
+        errorMessage: result.reason?.message || 'Health check failed',
+      };
     }
+  });
 
-    return new Response('Not Found', { status: 404 });
-  } catch (error) {
-    console.error('Edge function error:', error);
-    return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : 'Internal server error',
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
-  }
-};
+  const allHealthy = serverStatuses.every((s: any) => s.status === 'HEALTHY');
+  const anyHealthy = serverStatuses.some((s: any) => s.status === 'HEALTHY');
+
+  return c.json({
+    status: allHealthy ? 'UP' : anyHealthy ? 'DEGRADED' : 'DOWN',
+    timestamp: new Date().toISOString(),
+    servers: serverStatuses,
+  });
+}
+
+// 404 handler
+app.notFound((c) => c.text('Not Found', 404));
+
+// Error handler
+app.onError((err, c) => {
+  console.error('Edge function error:', err);
+  return c.json(
+    {
+      error: err instanceof Error ? err.message : 'Internal server error',
+    },
+    500
+  );
+});
+
+export default async (request: Request, context: Context) =>
+  app.handle(request, context);
 
 export const config = { path: '/mcp/*' };
