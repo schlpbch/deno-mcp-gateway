@@ -496,33 +496,34 @@ async function handler(req: Request): Promise<Response> {
     // Serve static files from Astro dist/ folder
     // Try to serve the file, falling back to index.html for SPA routing
     const filePath = path === '/' ? '/index.html' : path;
-    const content = await Deno.readTextFile(`./dist${filePath}`);
-    
-    // Determine content type
-    let contentType = 'text/html; charset=utf-8';
-    if (filePath.endsWith('.js')) contentType = 'application/javascript; charset=utf-8';
-    else if (filePath.endsWith('.css')) contentType = 'text/css; charset=utf-8';
-    else if (filePath.endsWith('.json')) contentType = 'application/json';
-    else if (filePath.endsWith('.svg')) contentType = 'image/svg+xml';
-    else if (filePath.endsWith('.png')) contentType = 'image/png';
-    else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) contentType = 'image/jpeg';
-    
-    return new Response(content, {
-      headers: { 'Content-Type': contentType, ...corsHeaders },
-    });
-  } catch {
-    // File not found, try index.html for SPA routing (unless it's an API route)
-    if (!path.startsWith('/mcp') && !path.startsWith('/health') && !path.startsWith('/metrics')) {
-      try {
-        const content = await Deno.readTextFile('./dist/index.html');
-        return new Response(content, {
-          headers: { 'Content-Type': 'text/html; charset=utf-8', ...corsHeaders },
-        });
-      } catch {
-        // Fall through to API routes
+    try {
+      const content = await Deno.readTextFile(`./dist${filePath}`);
+      
+      // Determine content type
+      let contentType = 'text/html; charset=utf-8';
+      if (filePath.endsWith('.js')) contentType = 'application/javascript; charset=utf-8';
+      else if (filePath.endsWith('.css')) contentType = 'text/css; charset=utf-8';
+      else if (filePath.endsWith('.json')) contentType = 'application/json';
+      else if (filePath.endsWith('.svg')) contentType = 'image/svg+xml';
+      else if (filePath.endsWith('.png')) contentType = 'image/png';
+      else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) contentType = 'image/jpeg';
+      
+      return new Response(content, {
+        headers: { 'Content-Type': contentType, ...corsHeaders },
+      });
+    } catch {
+      // File not found, try index.html for SPA routing (unless it's an API route)
+      if (!path.startsWith('/mcp') && !path.startsWith('/health') && !path.startsWith('/metrics')) {
+        try {
+          const content = await Deno.readTextFile('./dist/index.html');
+          return new Response(content, {
+            headers: { 'Content-Type': 'text/html; charset=utf-8', ...corsHeaders },
+          });
+        } catch {
+          // Fall through to API routes
+        }
       }
     }
-  }
 
     // Health check endpoint
     if (path === '/health') {
