@@ -11,10 +11,10 @@
     "dev": "deno run --allow-net --allow-env --allow-read --allow-import --watch dev.ts",
     "start": "deno run --allow-net --allow-env --allow-read --allow-import dev.ts",
     "test": "deno test --allow-net --allow-env --allow-read --allow-import",
-    "check": "deno check deno/edge-functions/mcp.ts src/**/*.ts dev.ts",
-    "lint": "deno lint src/ deno/",
-    "fmt": "deno fmt src/ deno/ dev.ts",
-    "fmt:check": "deno fmt --check src/ deno/ dev.ts"
+    "check": "deno check src/**/*.ts dev.ts main.ts",
+    "lint": "deno lint src/",
+    "fmt": "deno fmt src/ dev.ts main.ts",
+    "fmt:check": "deno fmt --check src/ dev.ts main.ts"
   },
   "lint": {
     "rules": {

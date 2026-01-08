@@ -125,8 +125,8 @@ const mcpHandler = async (request: Request): Promise<Response> => {
 
   // MCP endpoints
   if (url.pathname.startsWith('/mcp/')) {
-    // Load and execute the edge function
-    const { default: handler } = await import('./netlify/edge-functions/mcp.ts');
+    // Load and execute the MCP handler
+    const { default: handler } = await import('./src/handlers/mcpHandler.ts');
     return handler(request, {} as unknown as Parameters<typeof handler>[1]);
   }
 

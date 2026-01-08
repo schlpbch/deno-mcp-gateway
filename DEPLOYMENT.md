@@ -31,7 +31,7 @@ Or use CLI:
 
 ```bash
 # Install deno CLI (if needed)
-deno install --allow-all https://deno.land/x/netlify_cli/deno.ts
+# Use deployctl for Deno Deploy (included with Deno)
 # Or: npm install -g deno-cli
 
 # Link repository

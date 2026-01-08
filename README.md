@@ -176,7 +176,7 @@ deno-mcp-gateway/
 
 ```bash
 # Install deno CLI (one-time)
-deno install --allow-all https://deno.land/x/netlify_cli/deno.ts
+# Use deployctl for Deno Deploy (included with Deno)
 
 # Or use npm (if you have Node.js)
 npm install -g deno-cli

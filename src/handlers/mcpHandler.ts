@@ -1,9 +1,9 @@
 import type { Context } from '@deno/edge-functions';
-import { initializeGateway } from '../../src/init.ts';
+import { initializeGateway } from '../init.ts';
 import {
   RequestTimer,
   RequestMetrics,
-} from '../../src/monitoring/RequestMetrics.ts';
+} from '../monitoring/RequestMetrics.ts';
 
 // Router helper for cleaner routing
 type Handler = (c: RouteContext) => Promise<Response>;
