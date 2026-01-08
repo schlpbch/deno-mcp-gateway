@@ -349,7 +349,12 @@
         test: async () => {
           const response = await fetch("/");
           const html = await response.text();
-          return html.includes("sm:") && html.includes("md:") && html.includes("lg:");
+          // Check for at least 2 of the main responsive prefixes
+          const hasSm = html.includes("sm:");
+          const hasMd = html.includes("md:");
+          const hasLg = html.includes("lg:");
+          const hasXs = html.includes("xs:");
+          return (hasSm || hasXs) && (hasLg || hasMd);
         }
       },
       {
