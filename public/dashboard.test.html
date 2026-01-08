@@ -275,7 +275,7 @@
         test: async () => {
           const response = await fetch("/");
           const html = await response.text();
-          return html.includes("<footer") && html.includes("nav");
+          return html.includes("<footer") && html.includes("<nav");
         }
       },
       {
@@ -317,7 +317,7 @@
         test: async () => {
           const response = await fetch("/");
           const html = await response.text();
-          return html.includes("bg-accent") && html.includes("rounded-lg") && html.includes("px-") && html.includes("py-");
+          return html.includes("rounded-lg") && html.includes("px-") && html.includes("py-") && html.includes("focus:ring-accent");
         }
       },
       {
