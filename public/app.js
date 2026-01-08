@@ -603,28 +603,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-health')?.addEventListener('click', () => callGet('/mcp/health'));
   document.getElementById('btn-metrics')?.addEventListener('click', () => callGet('/mcp/metrics'));
 
-  // Copy button
-  document.getElementById('copy-response')?.addEventListener('click', copyToClipboard);
-
-  // POST form
-  const postForm = document.getElementById('post-form');
-  postForm?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    let endpoint = document.getElementById('post-endpoint').value.trim();
-    const bodyText = document.getElementById('post-body').value.trim();
-    let json = {};
-    try {
-      json = bodyText ? JSON.parse(bodyText) : {};
-    } catch (err) {
-      show({ error: 'Invalid JSON: ' + err.message });
-      return;
-    }
-    if (!endpoint.startsWith('/')) {
-      endpoint = '/' + endpoint;
-    }
-    callPost(endpoint, json);
-  });
-
   // Resources Reader
   initResourcesDropdown();
   document.getElementById('resource-select')?.addEventListener('change', (e) => {
