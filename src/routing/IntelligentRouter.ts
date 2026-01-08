@@ -68,7 +68,12 @@ export class IntelligentRouter {
       );
     }
 
-    return await this.client.readResource(server, uri);
+    // Strip the scheme prefix from the URI before sending to the server
+    // (e.g., "about://service" -> "service")
+    // The server will add its own namespace prefix, so we only need the path
+    const pathOnly = uri.includes('://') ? uri.split('://')[1] : uri;
+
+    return await this.client.readResource(server, pathOnly);
   }
 
   /**
