@@ -1,11 +1,11 @@
-// Netlify Blobs is only available on Netlify Edge
+// deno Blobs is only available on deno Edge
 // For local dev, we'll use in-memory cache only
 let getStore: unknown;
 try {
-  const blobs = await import('@netlify/blobs');
+  const blobs = await import('@deno/blobs');
   getStore = blobs.getStore;
 } catch {
-  // Running locally - Netlify Blobs not available
+  // Running locally - deno Blobs not available
   getStore = null;
 }
 
@@ -17,7 +17,7 @@ interface CacheEntry<T> {
 }
 
 /**
- * Response cache using Netlify Blobs for persistent edge storage
+ * Response cache using deno Blobs for persistent edge storage
  * Falls back to memory-only cache for local development
  */
 export class ResponseCache {
@@ -38,7 +38,7 @@ export class ResponseCache {
     let hash = 0;
     for (let i = 0; i < data.length; i++) {
       const char = data.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32bit integer
     }
     return Math.abs(hash).toString(16).padStart(8, '0');
@@ -54,7 +54,7 @@ export class ResponseCache {
       return cached.value as T;
     }
 
-    // Check blob storage (only on Netlify)
+    // Check blob storage (only on deno)
     if (this.blobStore) {
       try {
         const blob = await this.blobStore.get(key, { type: 'json' });
@@ -85,7 +85,7 @@ export class ResponseCache {
     // Set in memory cache
     this.memoryCache.set(key, entry);
 
-    // Set in blob storage (async, don't wait) - only on Netlify
+    // Set in blob storage (async, don't wait) - only on deno
     if (this.blobStore) {
       try {
         await this.blobStore.setJSON(key, entry);
@@ -106,7 +106,7 @@ export class ResponseCache {
       }
     }
 
-    // Note: Netlify Blobs doesn't support pattern-based deletion
+    // Note: deno Blobs doesn't support pattern-based deletion
     // We'd need to list all keys and delete individually, which is expensive
     console.log(`Invalidated memory cache for pattern: ${_pattern}`);
     return Promise.resolve();

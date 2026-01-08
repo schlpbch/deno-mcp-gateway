@@ -81,7 +81,10 @@ class HealthCheckTestClient {
     this.responseIndex = 0;
   }
 
-  private mockFetch(url: string, options: RequestInit): Promise<{
+  private mockFetch(
+    url: string,
+    options: RequestInit
+  ): Promise<{
     ok: boolean;
     status: number;
     headers: { get: (name: string) => string | null };
@@ -152,7 +155,7 @@ class HealthCheckTestClient {
         params: {
           protocolVersion: '2024-11-05',
           capabilities: {},
-          clientInfo: { name: 'netlify-mcp-gateway-health', version: '1.0.0' },
+          clientInfo: { name: 'deno-mcp-gateway-health', version: '1.0.0' },
         },
         id: ++this.requestId,
       };
@@ -236,53 +239,62 @@ Deno.test('Health - returns HEALTHY when actuator returns 200', async () => {
   );
 });
 
-Deno.test('Health - constructs correct actuator URL for /mcp endpoint', async () => {
-  const client = new HealthCheckTestClient(createMockConfig());
-  const server = createMockServer('test', 'https://server.example.com/mcp');
+Deno.test(
+  'Health - constructs correct actuator URL for /mcp endpoint',
+  async () => {
+    const client = new HealthCheckTestClient(createMockConfig());
+    const server = createMockServer('test', 'https://server.example.com/mcp');
 
-  client.setMockResponses([
-    {
-      ok: true,
-      status: 200,
-      headers: new Map(),
-      body: JSON.stringify({ status: 'UP' }),
-    },
-  ]);
+    client.setMockResponses([
+      {
+        ok: true,
+        status: 200,
+        headers: new Map(),
+        body: JSON.stringify({ status: 'UP' }),
+      },
+    ]);
 
-  await client.checkHealth(server);
+    await client.checkHealth(server);
 
-  assertEquals(
-    client.fetchCalls[0].url,
-    'https://server.example.com/actuator/health'
-  );
-});
+    assertEquals(
+      client.fetchCalls[0].url,
+      'https://server.example.com/actuator/health'
+    );
+  }
+);
 
-Deno.test('Health - constructs correct actuator URL for root endpoint', async () => {
-  const client = new HealthCheckTestClient(createMockConfig());
-  const server = createMockServer('test', 'https://server.example.com');
+Deno.test(
+  'Health - constructs correct actuator URL for root endpoint',
+  async () => {
+    const client = new HealthCheckTestClient(createMockConfig());
+    const server = createMockServer('test', 'https://server.example.com');
 
-  client.setMockResponses([
-    {
-      ok: true,
-      status: 200,
-      headers: new Map(),
-      body: JSON.stringify({ status: 'UP' }),
-    },
-  ]);
+    client.setMockResponses([
+      {
+        ok: true,
+        status: 200,
+        headers: new Map(),
+        body: JSON.stringify({ status: 'UP' }),
+      },
+    ]);
 
-  await client.checkHealth(server);
+    await client.checkHealth(server);
 
-  assertEquals(
-    client.fetchCalls[0].url,
-    'https://server.example.com/actuator/health'
-  );
-});
+    assertEquals(
+      client.fetchCalls[0].url,
+      'https://server.example.com/actuator/health'
+    );
+  }
+);
 
 // ================== MCP FALLBACK TESTS ==================
 
 Deno.test('Health - falls back to MCP when actuator returns 404', async () => {
   const client = new HealthCheckTestClient(createMockConfig());
-  const server = createMockServer('aareguru-mcp', 'https://aareguru.fastmcp.app/mcp');
+  const server = createMockServer(
+    'aareguru-mcp',
+    'https://aareguru.fastmcp.app/mcp'
+  );
 
   client.setMockResponses([
     // Actuator returns 404
@@ -309,10 +321,7 @@ Deno.test('Health - falls back to MCP when actuator returns 404', async () => {
 
   assertEquals(health.status, HealthStatus.HEALTHY);
   assertEquals(client.fetchCalls.length, 2);
-  assertEquals(
-    client.fetchCalls[1].url,
-    'https://aareguru.fastmcp.app/mcp'
-  );
+  assertEquals(client.fetchCalls[1].url, 'https://aareguru.fastmcp.app/mcp');
 });
 
 Deno.test('Health - falls back to MCP when actuator throws error', async () => {
@@ -384,33 +393,36 @@ Deno.test('Health - MCP fallback stores session ID when returned', async () => {
   );
 });
 
-Deno.test('Health - returns DEGRADED when MCP returns non-OK response', async () => {
-  const client = new HealthCheckTestClient(createMockConfig());
-  const server = createMockServer('test', 'https://test.example.com/mcp', 1);
+Deno.test(
+  'Health - returns DEGRADED when MCP returns non-OK response',
+  async () => {
+    const client = new HealthCheckTestClient(createMockConfig());
+    const server = createMockServer('test', 'https://test.example.com/mcp', 1);
 
-  client.setMockResponses([
-    // Actuator fails
-    {
-      ok: false,
-      status: 404,
-      headers: new Map(),
-      body: 'Not Found',
-    },
-    // MCP returns 503
-    {
-      ok: false,
-      status: 503,
-      headers: new Map(),
-      body: JSON.stringify({ error: 'Service unavailable' }),
-    },
-  ]);
+    client.setMockResponses([
+      // Actuator fails
+      {
+        ok: false,
+        status: 404,
+        headers: new Map(),
+        body: 'Not Found',
+      },
+      // MCP returns 503
+      {
+        ok: false,
+        status: 503,
+        headers: new Map(),
+        body: JSON.stringify({ error: 'Service unavailable' }),
+      },
+    ]);
 
-  const health = await client.checkHealth(server);
+    const health = await client.checkHealth(server);
 
-  assertEquals(health.status, HealthStatus.DEGRADED);
-  assertEquals(health.errorMessage, 'MCP HTTP 503');
-  assertEquals(health.consecutiveFailures, 2); // Was 1, now 2
-});
+    assertEquals(health.status, HealthStatus.DEGRADED);
+    assertEquals(health.errorMessage, 'MCP HTTP 503');
+    assertEquals(health.consecutiveFailures, 2); // Was 1, now 2
+  }
+);
 
 Deno.test('Health - returns DOWN when MCP throws error', async () => {
   const client = new HealthCheckTestClient(createMockConfig());
@@ -531,7 +543,7 @@ Deno.test('Health - sends correct MCP initialize request', async () => {
   assertEquals(body.jsonrpc, '2.0');
   assertEquals(body.method, 'initialize');
   assertEquals(body.params.protocolVersion, '2024-11-05');
-  assertEquals(body.params.clientInfo.name, 'netlify-mcp-gateway-health');
+  assertEquals(body.params.clientInfo.name, 'deno-mcp-gateway-health');
 });
 
 Deno.test('Health - includes correct headers in MCP request', async () => {

@@ -1,5 +1,5 @@
-# Netlify
-.netlify/
+# deno
+.deno/
 
 # Environment
 .env

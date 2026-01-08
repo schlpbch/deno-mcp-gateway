@@ -1,4 +1,4 @@
-import type { Context } from '@netlify/edge-functions';
+import type { Context } from '@deno/edge-functions';
 import { ServerRegistry } from './registry/ServerRegistry.ts';
 import { BackendMcpClient } from './client/BackendMcpClient.ts';
 import { ResponseCache } from './cache/ResponseCache.ts';
@@ -65,7 +65,14 @@ export function initializeGateway(_context: Context): Promise<Gateway> {
   // Note: In edge functions, this runs for the lifetime of the container
   healthMonitor.start();
 
-  cachedGateway = { registry, client, cache, router, protocolHandler, healthMonitor };
+  cachedGateway = {
+    registry,
+    client,
+    cache,
+    router,
+    protocolHandler,
+    healthMonitor,
+  };
 
   console.log(`Gateway initialized with ${config.servers.length} servers`);
 

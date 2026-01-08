@@ -1,6 +1,4 @@
-import {
-  assertEquals,
-} from 'https://deno.land/std@0.208.0/assert/mod.ts';
+import { assertEquals } from 'https://deno.land/std@0.208.0/assert/mod.ts';
 import { HealthStatus, TransportType } from '../types/server.ts';
 import type { ServerRegistration } from '../types/server.ts';
 import type { RoutingConfig } from '../types/config.ts';
@@ -79,7 +77,10 @@ class SessionTestClient {
     this.responseIndex = 0;
   }
 
-  private mockFetch(url: string, options: RequestInit): Promise<{
+  private mockFetch(
+    url: string,
+    options: RequestInit
+  ): Promise<{
     ok: boolean;
     status: number;
     headers: { get: (name: string) => string | null };
@@ -114,7 +115,7 @@ class SessionTestClient {
       params: {
         protocolVersion: '2024-11-05',
         capabilities: {},
-        clientInfo: { name: 'netlify-mcp-gateway', version: '1.0.0' },
+        clientInfo: { name: 'deno-mcp-gateway', version: '1.0.0' },
       },
       id: ++this.requestId,
     };
@@ -227,63 +228,69 @@ Deno.test('Session - initializes session on first request', async () => {
   );
 
   assertEquals(result.sessionUsed, 'session-abc123');
-  assertEquals(client.getStoredSession('journey-service-mcp'), 'session-abc123');
+  assertEquals(
+    client.getStoredSession('journey-service-mcp'),
+    'session-abc123'
+  );
 });
 
-Deno.test('Session - reuses existing session for subsequent requests', async () => {
-  const client = new SessionTestClient(createMockConfig());
+Deno.test(
+  'Session - reuses existing session for subsequent requests',
+  async () => {
+    const client = new SessionTestClient(createMockConfig());
 
-  client.setMockResponses([
-    {
-      ok: true,
-      status: 200,
-      headers: new Map([['mcp-session-id', 'session-xyz789']]),
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        result: { protocolVersion: '2024-11-05' },
-      }),
-    },
-    {
-      ok: true,
-      status: 200,
-      headers: new Map(),
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 2,
-        result: { tools: [] },
-      }),
-    },
-    {
-      ok: true,
-      status: 200,
-      headers: new Map(),
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 3,
-        result: { resources: [] },
-      }),
-    },
-  ]);
+    client.setMockResponses([
+      {
+        ok: true,
+        status: 200,
+        headers: new Map([['mcp-session-id', 'session-xyz789']]),
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          result: { protocolVersion: '2024-11-05' },
+        }),
+      },
+      {
+        ok: true,
+        status: 200,
+        headers: new Map(),
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 2,
+          result: { tools: [] },
+        }),
+      },
+      {
+        ok: true,
+        status: 200,
+        headers: new Map(),
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 3,
+          result: { resources: [] },
+        }),
+      },
+    ]);
 
-  // First request
-  await client.sendRequest(
-    'journey-service-mcp',
-    'https://journey.example.com',
-    'tools/list'
-  );
+    // First request
+    await client.sendRequest(
+      'journey-service-mcp',
+      'https://journey.example.com',
+      'tools/list'
+    );
 
-  // Second request should reuse session
-  const result2 = await client.sendRequest(
-    'journey-service-mcp',
-    'https://journey.example.com',
-    'resources/list'
-  );
+    // Second request should reuse session
+    const result2 = await client.sendRequest(
+      'journey-service-mcp',
+      'https://journey.example.com',
+      'resources/list'
+    );
 
-  assertEquals(result2.sessionUsed, 'session-xyz789');
-  // Should have made 3 fetch calls (init + first + second), not 4 (with re-init)
-  assertEquals(client.fetchCalls.length, 3);
-});
+    assertEquals(result2.sessionUsed, 'session-xyz789');
+    // Should have made 3 fetch calls (init + first + second), not 4 (with re-init)
+    assertEquals(client.fetchCalls.length, 3);
+  }
+);
 
 Deno.test('Session - handles servers without session support', async () => {
   const client = new SessionTestClient(createMockConfig());
@@ -451,46 +458,49 @@ Deno.test('Session - clears session when explicitly requested', async () => {
   assertEquals(client.getStoredSession('test-server'), undefined);
 });
 
-Deno.test('Session - includes correct headers in JSON-RPC request', async () => {
-  const client = new SessionTestClient(createMockConfig());
+Deno.test(
+  'Session - includes correct headers in JSON-RPC request',
+  async () => {
+    const client = new SessionTestClient(createMockConfig());
 
-  client.setMockResponses([
-    {
-      ok: true,
-      status: 200,
-      headers: new Map([['mcp-session-id', 'session-header-test']]),
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        result: { protocolVersion: '2024-11-05' },
-      }),
-    },
-    {
-      ok: true,
-      status: 200,
-      headers: new Map(),
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 2,
-        result: { tools: [] },
-      }),
-    },
-  ]);
+    client.setMockResponses([
+      {
+        ok: true,
+        status: 200,
+        headers: new Map([['mcp-session-id', 'session-header-test']]),
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          result: { protocolVersion: '2024-11-05' },
+        }),
+      },
+      {
+        ok: true,
+        status: 200,
+        headers: new Map(),
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 2,
+          result: { tools: [] },
+        }),
+      },
+    ]);
 
-  await client.sendRequest(
-    'test-server',
-    'https://test.example.com',
-    'tools/list'
-  );
+    await client.sendRequest(
+      'test-server',
+      'https://test.example.com',
+      'tools/list'
+    );
 
-  // Check the second call (after initialization) has the session header
-  const toolsListCall = client.fetchCalls[1];
-  const headers = toolsListCall.options.headers as Record<string, string>;
+    // Check the second call (after initialization) has the session header
+    const toolsListCall = client.fetchCalls[1];
+    const headers = toolsListCall.options.headers as Record<string, string>;
 
-  assertEquals(headers['Mcp-Session-Id'], 'session-header-test');
-  assertEquals(headers['Content-Type'], 'application/json');
-  assertEquals(headers['Accept'], 'application/json, text/event-stream');
-});
+    assertEquals(headers['Mcp-Session-Id'], 'session-header-test');
+    assertEquals(headers['Content-Type'], 'application/json');
+    assertEquals(headers['Accept'], 'application/json, text/event-stream');
+  }
+);
 
 Deno.test('Session - sends proper initialize request body', async () => {
   const client = new SessionTestClient(createMockConfig());
@@ -516,6 +526,6 @@ Deno.test('Session - sends proper initialize request body', async () => {
   assertEquals(body.jsonrpc, '2.0');
   assertEquals(body.method, 'initialize');
   assertEquals(body.params.protocolVersion, '2024-11-05');
-  assertEquals(body.params.clientInfo.name, 'netlify-mcp-gateway');
+  assertEquals(body.params.clientInfo.name, 'deno-mcp-gateway');
   assertEquals(typeof body.id, 'number');
 });

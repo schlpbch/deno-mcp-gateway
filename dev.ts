@@ -2,7 +2,7 @@
 
 /**
  * Local development server for MCP Gateway
- * Mimics Netlify Edge Functions locally using native Deno HTTP server
+ * Mimics deno Edge Functions locally using native Deno HTTP server
  */
 
 import type { Gateway } from './src/init.ts';
@@ -83,16 +83,15 @@ const mcpHandler = async (request: Request): Promise<Response> => {
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-      },
+      }
     );
   }
 
   // Static files from public/
   if (url.pathname === '/' || url.pathname.startsWith('/public/')) {
     try {
-      const filePath = url.pathname === '/'
-        ? './public/index.html'
-        : '.' + url.pathname;
+      const filePath =
+        url.pathname === '/' ? './public/index.html' : '.' + url.pathname;
 
       const file = await Deno.readFile(filePath);
       const contentType = filePath.endsWith('.html')
@@ -115,7 +114,7 @@ const mcpHandler = async (request: Request): Promise<Response> => {
   // MCP endpoints
   if (url.pathname.startsWith('/mcp/')) {
     // Load and execute the edge function
-    const { default: handler } = await import('./netlify/edge-functions/mcp.ts');
+    const { default: handler } = await import('./deno/edge-functions/mcp.ts');
     return handler(request, { gateway });
   }
 

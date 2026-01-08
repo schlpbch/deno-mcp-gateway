@@ -1,18 +1,19 @@
-# Netlify MCP Gateway
+# deno MCP Gateway
 
-**Unified MCP Gateway** deployed on Netlify Edge Functions, providing a single
+**Unified MCP Gateway** deployed on deno Edge Functions, providing a single
 entry point for AI assistants to access federated Model Context Protocol (MCP)
 servers.
 
 ## 🚀 Features
 
-- **Global Edge Deployment**: Sub-50ms latency worldwide via Netlify Edge
+- **Global Edge Deployment**: Sub-50ms latency worldwide via deno Edge
 - **Intelligent Routing**: Namespace-based routing to backend servers
-- **Persistent Caching**: Two-tier cache (memory + Netlify Blobs)
+- **Persistent Caching**: Two-tier cache (memory + deno Blobs)
 - **Health Monitoring**: Automatic health checks and failover
 - **Retry Logic**: Exponential backoff for resilient backend calls
 - **TypeScript**: Fully typed with Deno runtime
-- **Mobile-Optimized UI**: Responsive design for all screen sizes (44px touch targets, mobile-first)
+- **Mobile-Optimized UI**: Responsive design for all screen sizes (44px touch
+  targets, mobile-first)
 - **Interactive Web Console**: Test MCP endpoints directly from your browser
 
 ## 🏗️ Architecture
@@ -20,7 +21,7 @@ servers.
 ```text
 Claude Desktop
      ↓
-Netlify Edge Functions (Global)
+deno Edge Functions (Global)
      ↓
 MCP Gateway
      ├── journey-service-mcp
@@ -42,17 +43,17 @@ Example: `journey.findTrips` routes to Journey Service's `findTrips` tool.
 
 ## 🛠️ Technology Stack
 
-- **Runtime**: Deno (via Netlify Edge Functions)
+- **Runtime**: Deno (via deno Edge Functions)
 - **Language**: TypeScript 5.x (strict mode)
-- **Caching**: Netlify Blobs + in-memory
-- **Deployment**: Netlify Edge Functions
+- **Caching**: deno Blobs + in-memory
+- **Deployment**: deno Edge Functions
 
 ## 📋 Prerequisites
 
 - [Deno](https://deno.land/) 1.40+ installed
-- [Netlify CLI](https://docs.netlify.com/cli/get-started/) (optional, only for
+- [deno CLI](https://docs.deno.com/cli/get-started/) (optional, only for
   deployment)
-- Netlify account (for production deployment)
+- deno account (for production deployment)
 
 ## 🏃 Quick Start
 
@@ -132,8 +133,8 @@ deno task fmt:check  # Check formatting
 deno-mcp-gateway/
 ├── dev.ts                    # Local dev server (Deno HTTP)
 ├── deno.json                 # Deno config & tasks
-├── netlify.toml              # Netlify deployment config
-├── netlify/
+├── deno.toml              # deno deployment config
+├── deno/
 │   └── edge-functions/
 │       └── mcp.ts           # Main edge function handler
 ├── src/
@@ -153,7 +154,7 @@ deno-mcp-gateway/
 
 ## 🚀 Deployment
 
-### Deploy to Netlify
+### Deploy to deno
 
 #### Option 1: Automatic Git Deployment (Recommended)
 
@@ -163,9 +164,9 @@ deno-mcp-gateway/
    git push origin master
    ```
 
-2. **Netlify auto-deploys** from GitHub (if connected)
+2. **deno auto-deploys** from GitHub (if connected)
 
-3. **Set environment variables** in Netlify dashboard:
+3. **Set environment variables** in deno dashboard:
    - `JOURNEY_SERVICE_URL`
    - `SWISS_MOBILITY_URL`
    - `AAREGURU_URL`
@@ -174,14 +175,14 @@ deno-mcp-gateway/
 #### Option 2: Manual CLI Deployment
 
 ```bash
-# Install Netlify CLI (one-time)
-deno install --allow-all https://deno.land/x/netlify_cli/netlify.ts
+# Install deno CLI (one-time)
+deno install --allow-all https://deno.land/x/netlify_cli/deno.ts
 
 # Or use npm (if you have Node.js)
-npm install -g netlify-cli
+npm install -g deno-cli
 
 # Deploy
-netlify deploy --prod
+deno deploy --prod
 ```
 
 ### Deploy to Deno Deploy (Alternative)
@@ -236,16 +237,16 @@ export const loadConfig = (): GatewayConfig => ({
 ```
 
 ```bash
-# Login to Netlify
-netlify login
+# Login to deno
+deno login
 
 # Deploy to production
-netlify deploy --prod
+deno deploy --prod
 ```
 
 ### Environment Variables
 
-Configure these in Netlify UI (Site settings → Environment variables):
+Configure these in deno UI (Site settings → Environment variables):
 
 - `JOURNEY_SERVICE_URL`
 - `SWISS_MOBILITY_URL`
@@ -274,17 +275,17 @@ Configure these in Netlify UI (Site settings → Environment variables):
 deno test --allow-net --allow-env
 
 # Lint code
-deno lint src/ netlify/
+deno lint src/ deno/
 
 # Format code
-deno fmt src/ netlify/
+deno fmt src/ deno/
 ```
 
 ## 📁 Project Structure
 
 ```text
 deno-mcp-gateway/
-├── netlify/
+├── deno/
 │   └── edge-functions/
 │       └── mcp.ts              # Main edge function
 ├── src/
@@ -306,7 +307,7 @@ deno-mcp-gateway/
 │   ├── config.ts               # Configuration loader
 │   └── init.ts                 # Gateway initialization
 ├── deno.json                   # Deno configuration
-├── netlify.toml                # Netlify configuration
+├── deno.toml                # deno configuration
 └── package.json                # NPM scripts
 ```
 
@@ -332,7 +333,7 @@ The gateway uses dynamic TTL based on data characteristics:
 Current implementation:
 
 - Public access (no authentication)
-- HTTPS enforced by Netlify
+- HTTPS enforced by deno
 - No rate limiting
 
 **Recommended for production:**

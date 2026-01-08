@@ -64,10 +64,13 @@ function restoreFetch() {
 
 // ================== SESSION MANAGER TESTS ==================
 
-Deno.test('SessionManager - getSession returns undefined for unknown server', () => {
-  const manager = new SessionManager(createMockConfig());
-  assertEquals(manager.getSession('unknown-server'), undefined);
-});
+Deno.test(
+  'SessionManager - getSession returns undefined for unknown server',
+  () => {
+    const manager = new SessionManager(createMockConfig());
+    assertEquals(manager.getSession('unknown-server'), undefined);
+  }
+);
 
 Deno.test('SessionManager - setSession stores session', () => {
   const manager = new SessionManager(createMockConfig());
@@ -89,12 +92,15 @@ Deno.test('SessionManager - clearSession removes session', () => {
   assertEquals(manager.getSession('server-1'), undefined);
 });
 
-Deno.test('SessionManager - clearSession does not throw for unknown server', () => {
-  const manager = new SessionManager(createMockConfig());
-  // Should not throw
-  manager.clearSession('unknown-server');
-  assertEquals(manager.getSession('unknown-server'), undefined);
-});
+Deno.test(
+  'SessionManager - clearSession does not throw for unknown server',
+  () => {
+    const manager = new SessionManager(createMockConfig());
+    // Should not throw
+    manager.clearSession('unknown-server');
+    assertEquals(manager.getSession('unknown-server'), undefined);
+  }
+);
 
 Deno.test('SessionManager - maintains separate sessions per server', () => {
   const manager = new SessionManager(createMockConfig());
@@ -129,170 +135,194 @@ Deno.test('SessionManager - nextRequestId is unique across calls', () => {
   assertEquals(ids.size, 100);
 });
 
-Deno.test('SessionManager - getOrInitializeSession returns existing session', async () => {
-  const manager = new SessionManager(createMockConfig());
-  manager.setSession('server-1', 'existing-session');
-
-  const session = await manager.getOrInitializeSession(
-    'server-1',
-    'https://example.com/mcp'
-  );
-
-  assertEquals(session, 'existing-session');
-});
-
-Deno.test('SessionManager - initializeSession sends correct request', async () => {
-  setupMockFetch();
-  try {
-    mockFetchResponse = {
-      ok: true,
-      status: 200,
-      headers: new Map([['mcp-session-id', 'new-session-123']]),
-    };
-
+Deno.test(
+  'SessionManager - getOrInitializeSession returns existing session',
+  async () => {
     const manager = new SessionManager(createMockConfig());
-    const session = await manager.initializeSession(
-      'server-1',
-      'https://example.com/mcp'
-    );
+    manager.setSession('server-1', 'existing-session');
 
-    assertEquals(session, 'new-session-123');
-    assertEquals(lastFetchRequest?.url, 'https://example.com/mcp');
-    assertEquals(lastFetchRequest?.options.method, 'POST');
-
-    const body = JSON.parse(lastFetchRequest?.options.body as string);
-    assertEquals(body.jsonrpc, '2.0');
-    assertEquals(body.method, 'initialize');
-    assertEquals(body.params.protocolVersion, '2024-11-05');
-    assertEquals(body.params.clientInfo.name, 'netlify-mcp-gateway');
-  } finally {
-    restoreFetch();
-  }
-});
-
-Deno.test('SessionManager - initializeSession stores session on success', async () => {
-  setupMockFetch();
-  try {
-    mockFetchResponse = {
-      ok: true,
-      status: 200,
-      headers: new Map([['mcp-session-id', 'stored-session']]),
-    };
-
-    const manager = new SessionManager(createMockConfig());
-    await manager.initializeSession('server-1', 'https://example.com/mcp');
-
-    assertEquals(manager.getSession('server-1'), 'stored-session');
-  } finally {
-    restoreFetch();
-  }
-});
-
-Deno.test('SessionManager - initializeSession returns null on HTTP error', async () => {
-  setupMockFetch();
-  try {
-    mockFetchResponse = {
-      ok: false,
-      status: 500,
-      headers: new Map(),
-    };
-
-    const manager = new SessionManager(createMockConfig());
-    const session = await manager.initializeSession(
-      'server-1',
-      'https://example.com/mcp'
-    );
-
-    assertEquals(session, null);
-  } finally {
-    restoreFetch();
-  }
-});
-
-Deno.test('SessionManager - initializeSession returns null on network error', async () => {
-  setupMockFetch();
-  try {
-    globalThis.fetch = async () => {
-      throw new Error('Network error');
-    };
-
-    const manager = new SessionManager(createMockConfig());
-    const session = await manager.initializeSession(
-      'server-1',
-      'https://example.com/mcp'
-    );
-
-    assertEquals(session, null);
-  } finally {
-    restoreFetch();
-  }
-});
-
-Deno.test('SessionManager - initializeSession returns null when no session header', async () => {
-  setupMockFetch();
-  try {
-    mockFetchResponse = {
-      ok: true,
-      status: 200,
-      headers: new Map(), // No mcp-session-id header
-    };
-
-    const manager = new SessionManager(createMockConfig());
-    const session = await manager.initializeSession(
-      'server-1',
-      'https://example.com/mcp'
-    );
-
-    assertEquals(session, null);
-  } finally {
-    restoreFetch();
-  }
-});
-
-Deno.test('SessionManager - getOrInitializeSession initializes when no session', async () => {
-  setupMockFetch();
-  try {
-    mockFetchResponse = {
-      ok: true,
-      status: 200,
-      headers: new Map([['mcp-session-id', 'initialized-session']]),
-    };
-
-    const manager = new SessionManager(createMockConfig());
     const session = await manager.getOrInitializeSession(
       'server-1',
       'https://example.com/mcp'
     );
 
-    assertEquals(session, 'initialized-session');
-    assertEquals(manager.getSession('server-1'), 'initialized-session');
-  } finally {
-    restoreFetch();
+    assertEquals(session, 'existing-session');
   }
-});
+);
 
-Deno.test('SessionManager - initializeSession uses custom timeout', async () => {
-  setupMockFetch();
-  try {
-    mockFetchResponse = {
-      ok: true,
-      status: 200,
-      headers: new Map([['mcp-session-id', 'test-session']]),
-    };
+Deno.test(
+  'SessionManager - initializeSession sends correct request',
+  async () => {
+    setupMockFetch();
+    try {
+      mockFetchResponse = {
+        ok: true,
+        status: 200,
+        headers: new Map([['mcp-session-id', 'new-session-123']]),
+      };
 
-    const manager = new SessionManager(createMockConfig());
-    await manager.initializeSession(
-      'server-1',
-      'https://example.com/mcp',
-      10000
-    );
+      const manager = new SessionManager(createMockConfig());
+      const session = await manager.initializeSession(
+        'server-1',
+        'https://example.com/mcp'
+      );
 
-    // Verify fetch was called (timeout is internal to AbortSignal)
-    assertEquals(lastFetchRequest !== null, true);
-  } finally {
-    restoreFetch();
+      assertEquals(session, 'new-session-123');
+      assertEquals(lastFetchRequest?.url, 'https://example.com/mcp');
+      assertEquals(lastFetchRequest?.options.method, 'POST');
+
+      const body = JSON.parse(lastFetchRequest?.options.body as string);
+      assertEquals(body.jsonrpc, '2.0');
+      assertEquals(body.method, 'initialize');
+      assertEquals(body.params.protocolVersion, '2024-11-05');
+      assertEquals(body.params.clientInfo.name, 'deno-mcp-gateway');
+    } finally {
+      restoreFetch();
+    }
   }
-});
+);
+
+Deno.test(
+  'SessionManager - initializeSession stores session on success',
+  async () => {
+    setupMockFetch();
+    try {
+      mockFetchResponse = {
+        ok: true,
+        status: 200,
+        headers: new Map([['mcp-session-id', 'stored-session']]),
+      };
+
+      const manager = new SessionManager(createMockConfig());
+      await manager.initializeSession('server-1', 'https://example.com/mcp');
+
+      assertEquals(manager.getSession('server-1'), 'stored-session');
+    } finally {
+      restoreFetch();
+    }
+  }
+);
+
+Deno.test(
+  'SessionManager - initializeSession returns null on HTTP error',
+  async () => {
+    setupMockFetch();
+    try {
+      mockFetchResponse = {
+        ok: false,
+        status: 500,
+        headers: new Map(),
+      };
+
+      const manager = new SessionManager(createMockConfig());
+      const session = await manager.initializeSession(
+        'server-1',
+        'https://example.com/mcp'
+      );
+
+      assertEquals(session, null);
+    } finally {
+      restoreFetch();
+    }
+  }
+);
+
+Deno.test(
+  'SessionManager - initializeSession returns null on network error',
+  async () => {
+    setupMockFetch();
+    try {
+      globalThis.fetch = async () => {
+        throw new Error('Network error');
+      };
+
+      const manager = new SessionManager(createMockConfig());
+      const session = await manager.initializeSession(
+        'server-1',
+        'https://example.com/mcp'
+      );
+
+      assertEquals(session, null);
+    } finally {
+      restoreFetch();
+    }
+  }
+);
+
+Deno.test(
+  'SessionManager - initializeSession returns null when no session header',
+  async () => {
+    setupMockFetch();
+    try {
+      mockFetchResponse = {
+        ok: true,
+        status: 200,
+        headers: new Map(), // No mcp-session-id header
+      };
+
+      const manager = new SessionManager(createMockConfig());
+      const session = await manager.initializeSession(
+        'server-1',
+        'https://example.com/mcp'
+      );
+
+      assertEquals(session, null);
+    } finally {
+      restoreFetch();
+    }
+  }
+);
+
+Deno.test(
+  'SessionManager - getOrInitializeSession initializes when no session',
+  async () => {
+    setupMockFetch();
+    try {
+      mockFetchResponse = {
+        ok: true,
+        status: 200,
+        headers: new Map([['mcp-session-id', 'initialized-session']]),
+      };
+
+      const manager = new SessionManager(createMockConfig());
+      const session = await manager.getOrInitializeSession(
+        'server-1',
+        'https://example.com/mcp'
+      );
+
+      assertEquals(session, 'initialized-session');
+      assertEquals(manager.getSession('server-1'), 'initialized-session');
+    } finally {
+      restoreFetch();
+    }
+  }
+);
+
+Deno.test(
+  'SessionManager - initializeSession uses custom timeout',
+  async () => {
+    setupMockFetch();
+    try {
+      mockFetchResponse = {
+        ok: true,
+        status: 200,
+        headers: new Map([['mcp-session-id', 'test-session']]),
+      };
+
+      const manager = new SessionManager(createMockConfig());
+      await manager.initializeSession(
+        'server-1',
+        'https://example.com/mcp',
+        10000
+      );
+
+      // Verify fetch was called (timeout is internal to AbortSignal)
+      assertEquals(lastFetchRequest !== null, true);
+    } finally {
+      restoreFetch();
+    }
+  }
+);
 
 Deno.test('SessionManager - request IDs are positive integers', () => {
   const manager = new SessionManager(createMockConfig());

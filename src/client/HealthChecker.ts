@@ -86,7 +86,7 @@ export class HealthChecker {
         params: {
           protocolVersion: '2024-11-05',
           capabilities: {},
-          clientInfo: { name: 'netlify-mcp-gateway-health', version: '1.0.0' },
+          clientInfo: { name: 'deno-mcp-gateway-health', version: '1.0.0' },
         },
         id: this.sessionManager.nextRequestId(),
       };

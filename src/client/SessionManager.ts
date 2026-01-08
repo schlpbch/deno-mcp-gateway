@@ -70,7 +70,7 @@ export class SessionManager {
       params: {
         protocolVersion: '2024-11-05',
         capabilities: {},
-        clientInfo: { name: 'netlify-mcp-gateway', version: '1.0.0' },
+        clientInfo: { name: 'deno-mcp-gateway', version: '1.0.0' },
       },
       id: ++this.requestId,
     };

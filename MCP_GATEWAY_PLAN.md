@@ -3,12 +3,12 @@
 ## Status: ✅ ACTIVELY DEVELOPED
 
 **Last Updated**: 2026-01-07  
-**Current Implementation**: Netlify Edge Functions + TypeScript/Deno  
-**Deployment**: Live at https://netliy-mcp-gateway.netlify.app
+**Current Implementation**: deno Edge Functions + TypeScript/Deno  
+**Deployment**: Live at https://netliy-mcp-gateway.deno.app
 
 ### Implementation Summary
 
-- ✅ MCP Gateway deployed on Netlify Edge Functions (globally distributed)
+- ✅ MCP Gateway deployed on deno Edge Functions (globally distributed)
 - ✅ TypeScript + Deno runtime for fast, secure execution
 - ✅ Interactive web UI for testing API endpoints
 - ✅ Refactored routing with clean handler pattern
@@ -35,14 +35,14 @@ monitoring, and capability aggregation across backend servers.
 ### Current Implementation (Production)
 
 - **Deno** - Secure, modern TypeScript runtime
-- **Netlify Edge Functions** - Globally distributed, serverless compute
+- **deno Edge Functions** - Globally distributed, serverless compute
 - **TypeScript** - Type-safe application logic
 - **No external dependencies** - Native Web APIs only (Request, Response, fetch)
 
 ### Key Files
 
 ```
-netlify/edge-functions/
+deno/edge-functions/
 ├── mcp.ts                    # Edge function handler with route table pattern
 
 public/
@@ -65,7 +65,7 @@ src/
 
 #### Edge-First Design
 
-- **Zero cold starts** — Netlify Edge Functions pre-warm globally
+- **Zero cold starts** — deno Edge Functions pre-warm globally
 - **Sub-100ms latency** — Requests routed to nearest edge location
 - **Automatic scaling** — Built-in auto-scaling, no servers to manage
 - **Global CDN** — Automatic edge caching for assets
@@ -94,7 +94,7 @@ Benefits:
 ## Executive Summary
 
 The MCP Gateway transforms the architecture where Claude connects to multiple
-MCP servers into a streamlined, globally-distributed model using **Netlify Edge
+MCP servers into a streamlined, globally-distributed model using **deno Edge
 Functions**.
 
 **Key Benefits**:
@@ -110,17 +110,17 @@ Functions**.
 
 ## Technology Stack Decision
 
-> [!IMPORTANT] > **Netlify Edge Functions + Deno Selected**
+> [!IMPORTANT] > **deno Edge Functions + Deno Selected**
 >
 > The gateway is implemented using:
 >
 > - **Deno** — Secure, modern TypeScript runtime
-> - **Netlify Edge Functions** — Globally distributed serverless compute
+> - **deno Edge Functions** — Globally distributed serverless compute
 > - **TypeScript** — Type-safe application code
 > - **Native Web APIs** — Request, Response, fetch (no external dependencies)
 >
 > **Rationale**: Edge-first deployment for global low-latency access, type
-> safety, modern runtime, and complete infrastructure management by Netlify.
+> safety, modern runtime, and complete infrastructure management by deno.
 
 > [!NOTE] > **Future Migration Path**
 >
@@ -138,7 +138,7 @@ Functions**.
 
 ### Component 1: Edge Function Handler
 
-#### [IMPLEMENTED] [netlify/edge-functions/mcp.ts](netlify/edge-functions/mcp.ts)
+#### [IMPLEMENTED] [deno/edge-functions/mcp.ts](deno/edge-functions/mcp.ts)
 
 **Purpose**: Main MCP protocol endpoint serving all requests from global edge
 locations
@@ -146,7 +146,7 @@ locations
 **Implementation**:
 
 ```typescript
-import type { Context } from '@netlify/edge-functions';
+import type { Context } from '@deno/edge-functions';
 import { initializeGateway } from '../../src/init.ts';
 
 // Route table pattern for lightweight, framework-free routing
@@ -909,7 +909,7 @@ timeout: 1200s
 
 ### Current Deployment Status
 
-**Live at**: https://netliy-mcp-gateway.netlify.app
+**Live at**: https://netliy-mcp-gateway.deno.app
 
 **Endpoints Tested**:
 
@@ -921,7 +921,8 @@ timeout: 1200s
 - ✅ POST /mcp/prompts/get
 - ✅ GET /health
 
-**Interactive Testing**: Use the web UI at https://netliy-mcp-gateway.netlify.app to test endpoints in real-time
+**Interactive Testing**: Use the web UI at https://netliy-mcp-gateway.deno.app
+to test endpoints in real-time
 
 ## Migration Path
 
@@ -929,27 +930,30 @@ timeout: 1200s
 
 **Deliverables**:
 
-- ✅ Netlify Edge Functions setup
+- ✅ deno Edge Functions setup
 - ✅ Route table with all MCP endpoints
 - ✅ Interactive web UI
 - ✅ Protocol handlers (tools, resources, prompts, health)
 - ✅ Live deployment to production
 
-**Result**: Gateway live and operational at https://netliy-mcp-gateway.netlify.app
+**Result**: Gateway live and operational at https://netliy-mcp-gateway.deno.app
 
 ### Phase 2: ✅ Optimization (Completed Jan 2026)
 
 **Deliverables**:
 
-- ✅ Refactored BackendMcpClient into focused modules (SessionManager, JsonRpcClient, HealthChecker)
-- ✅ Performance monitoring with request timing and metrics endpoint (GET /mcp/metrics)
+- ✅ Refactored BackendMcpClient into focused modules (SessionManager,
+  JsonRpcClient, HealthChecker)
+- ✅ Performance monitoring with request timing and metrics endpoint (GET
+  /mcp/metrics)
 - ✅ Caching layer for list responses (tools, resources, prompts) with 60s TTL
 - ✅ Periodic health monitoring with configurable check intervals
 - ✅ 195 tests covering all components
 
 **New Endpoints**:
 
-- GET /mcp/metrics - Performance metrics (latency percentiles, cache hit rate, error rate)
+- GET /mcp/metrics - Performance metrics (latency percentiles, cache hit rate,
+  error rate)
 
 ### Phase 3: Advanced Features (Q1 2026)
 
@@ -1000,7 +1004,7 @@ timeout: 1200s
 
 **Mitigation**:
 
-- ✅ Netlify Edge Functions serve from nearest location automatically
+- ✅ deno Edge Functions serve from nearest location automatically
 - Implement aggressive caching at edge
 - Monitor performance continuously
 
@@ -1036,7 +1040,7 @@ timeout: 1200s
 
 ---
 
-**Document Version**: 3.0 (Updated to reflect Netlify Edge Functions)  
+**Document Version**: 3.0 (Updated to reflect deno Edge Functions)  
 **Last Updated**: 2026-01-07  
 **Author**: Andreas Schlapbach  
 **Status**: In Production

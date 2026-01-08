@@ -1,34 +1,25 @@
 {
   "compilerOptions": {
-    "lib": [
-      "deno.window",
-      "deno.unstable"
-    ],
+    "lib": ["deno.window", "deno.unstable"],
     "strict": true
   },
   "imports": {
-    "@netlify/edge-functions": "https://edge.netlify.com/v1/index.ts",
-    "@netlify/blobs": "https://edge.netlify.com/blobs/index.ts"
+    "@deno/edge-functions": "https://edge.deno.com/v1/index.ts",
+    "@deno/blobs": "https://edge.deno.com/blobs/index.ts"
   },
   "tasks": {
     "dev": "deno run --allow-net --allow-env --allow-read --allow-import --watch dev.ts",
     "start": "deno run --allow-net --allow-env --allow-read --allow-import dev.ts",
     "test": "deno test --allow-net --allow-env --allow-read --allow-import",
-    "check": "deno check netlify/edge-functions/mcp.ts src/**/*.ts dev.ts",
-    "lint": "deno lint src/ netlify/",
-    "fmt": "deno fmt src/ netlify/ dev.ts",
-    "fmt:check": "deno fmt --check src/ netlify/ dev.ts"
+    "check": "deno check deno/edge-functions/mcp.ts src/**/*.ts dev.ts",
+    "lint": "deno lint src/ deno/",
+    "fmt": "deno fmt src/ deno/ dev.ts",
+    "fmt:check": "deno fmt --check src/ deno/ dev.ts"
   },
   "lint": {
     "rules": {
-      "tags": [
-        "recommended"
-      ],
-      "exclude": [
-        "require-await",
-        "no-unused-vars",
-        "prefer-const"
-      ]
+      "tags": ["recommended"],
+      "exclude": ["require-await", "no-unused-vars", "prefer-const"]
     }
   },
   "fmt": {
@@ -40,9 +31,7 @@
   },
   "deploy": {
     "project": "68804361-45b9-4e7e-b6db-2225d5290470",
-    "exclude": [
-      "**/node_modules"
-    ],
+    "exclude": ["**/node_modules"],
     "include": [],
     "entrypoint": "main.ts"
   }

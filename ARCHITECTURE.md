@@ -6,8 +6,8 @@ details of the MCP Gateway.
 ## Overview
 
 The MCP Gateway is a globally-distributed edge function that serves as a unified
-entry point for MCP protocol requests. Deployed on **Netlify Edge Functions**,
-it provides:
+entry point for MCP protocol requests. Deployed on **deno Edge Functions**, it
+provides:
 
 - **Global Low-Latency Access**: Requests served from 100+ edge locations
   worldwide
@@ -31,7 +31,7 @@ it provides:
        │
        ↓
 ┌──────────────────────────────────────────────────────┐
-│  Netlify Edge Function (Deno)                        │
+│  deno Edge Function (Deno)                        │
 │                                                      │
 │  ┌────────────────────────────────────────────────┐ │
 │  │ Route Table Pattern                            │ │
@@ -271,7 +271,7 @@ export class ServerRegistry {
 
 **Purpose**: Response caching with TTL management
 
-**Note**: Currently implemented as in-memory Map. Can be extended with Netlify
+**Note**: Currently implemented as in-memory Map. Can be extended with deno
 Blobs or Redis.
 
 **Implementation**:
@@ -310,7 +310,7 @@ export class ResponseCache {
 
 **Future Enhancements**:
 
-- Use Netlify Blobs for persistent cache
+- Use deno Blobs for persistent cache
 - Implement Cache-Control headers
 - Add cache invalidation strategies
 - Support Redis for multi-instance deployments
@@ -374,10 +374,10 @@ export interface Prompt {
 
 ## Design Decisions
 
-### 1. Netlify Edge Functions
+### 1. deno Edge Functions
 
-**Decision**: Deploy on Netlify Edge Functions instead of traditional
-container/VM infrastructure
+**Decision**: Deploy on deno Edge Functions instead of traditional container/VM
+infrastructure
 
 **Rationale**:
 
@@ -391,7 +391,7 @@ container/VM infrastructure
 
 - Limited to synchronous request/response model
 - Edge Function execution timeout (few seconds)
-- No persistent storage on edge (use Netlify Blobs or backend)
+- No persistent storage on edge (use deno Blobs or backend)
 - Deno runtime limitations (subset of Node.js APIs)
 
 ### 2. Framework-Free Routing (Route Table Pattern)
@@ -477,7 +477,7 @@ const BACKOFF_MULTIPLIER = 2;
 
 ## Configuration
 
-### netlify.toml
+### deno.toml
 
 ```toml
 [build]
@@ -526,7 +526,7 @@ export const loadConfig = (): GatewayConfig => ({
 
 ### Environment Variables
 
-Set in Netlify dashboard > Site settings > Build & deploy > Environment:
+Set in deno dashboard > Site settings > Build & deploy > Environment:
 
 - `JOURNEY_SERVICE_URL`: Journey Service backend endpoint
 - `SWISS_MOBILITY_URL`: Swiss Mobility backend endpoint
@@ -545,23 +545,23 @@ Set in Netlify dashboard > Site settings > Build & deploy > Environment:
 
 ### Throughput
 
-- **Concurrent Requests**: Limited by Netlify Edge Functions quotas
-- **Scalability**: Automatic, handled by Netlify infrastructure
+- **Concurrent Requests**: Limited by deno Edge Functions quotas
+- **Scalability**: Automatic, handled by deno infrastructure
 - **No manual scaling needed**: Serverless auto-scales with traffic
 
 ### Resource Usage
 
 - **Memory**: Minimal (Deno runtime optimized)
-- **CPU**: Pay-per-use, metered by Netlify
+- **CPU**: Pay-per-use, metered by deno
 - **Bandwidth**: Charged per GB egress
 
-### Netlify Pricing Tier
+### deno Pricing Tier
 
 - **Free**: 1M requests/month included
 - **Pro**: $19/month + overages
 - **Enterprise**: Custom pricing
 
-See [Netlify Pricing](https://www.netlify.com/pricing/) for details.
+See [deno Pricing](https://www.deno.com/pricing/) for details.
 
 ## Security Considerations
 
@@ -578,12 +578,12 @@ See [Netlify Pricing](https://www.netlify.com/pricing/) for details.
 
    - Add API key header validation
    - Implement OAuth if needed
-   - Use Netlify Functions for auth middleware
+   - Use deno Functions for auth middleware
 
 2. **Rate Limiting**:
 
    - Implement per-IP rate limiting
-   - Use Netlify Functions or external service
+   - Use deno Functions or external service
 
 3. **Input Validation**:
 
@@ -593,12 +593,12 @@ See [Netlify Pricing](https://www.netlify.com/pricing/) for details.
 
 4. **Secrets Management**:
 
-   - Use Netlify environment variables for backend URLs
+   - Use deno environment variables for backend URLs
    - Never commit secrets to git
    - Use separate credentials per environment
 
 5. **Network Security**:
-   - Restrict backend endpoints to Netlify IP ranges
+   - Restrict backend endpoints to deno IP ranges
    - Use HTTPS for all backend communication
    - Consider VPN/private networks for sensitive backends
 
@@ -627,9 +627,9 @@ if (Deno.env.get('DEBUG')) {
 }
 ```
 
-### Access via Netlify Dashboard
+### Access via deno Dashboard
 
-- View logs in Netlify dashboard
+- View logs in deno dashboard
 - Monitor usage and bandwidth
 - Track error rates
 - Check deployment history
@@ -660,7 +660,7 @@ if (Deno.env.get('DEBUG')) {
 
 ### Medium Term (Q2 2026)
 
-1. ⬜ Implement distributed caching (Netlify Blobs)
+1. ⬜ Implement distributed caching (deno Blobs)
 2. ⬜ Add authentication/API keys
 3. ⬜ Support backend server health dashboards
 4. ⬜ Implement circuit breaker pattern
@@ -675,11 +675,11 @@ if (Deno.env.get('DEBUG')) {
 ## References
 
 - [Model Context Protocol](https://modelcontextprotocol.io)
-- [Netlify Edge Functions](https://docs.netlify.com/edge-functions/overview/)
+- [deno Edge Functions](https://docs.deno.com/edge-functions/overview/)
 - [Deno Runtime](https://deno.land/)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 - [Project Repository](https://github.com/schlpbch/deno-mcp-gateway)
-- [Live Deployment](https://netliy-deno-mcp-gateway.netlify.app)
+- [Live Deployment](https://netliy-deno-mcp-gateway.deno.app)
 
 ```
 - [Google Cloud Run](https://cloud.google.com/run)

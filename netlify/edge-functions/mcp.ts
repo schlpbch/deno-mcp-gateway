@@ -1,6 +1,9 @@
-import type { Context } from '@netlify/edge-functions';
+import type { Context } from '@deno/edge-functions';
 import { initializeGateway } from '../../src/init.ts';
-import { RequestTimer, RequestMetrics } from '../../src/monitoring/RequestMetrics.ts';
+import {
+  RequestTimer,
+  RequestMetrics,
+} from '../../src/monitoring/RequestMetrics.ts';
 
 // Router helper for cleaner routing
 type Handler = (c: RouteContext) => Promise<Response>;
@@ -103,9 +106,13 @@ const routes: Array<{
         requests: {
           total: metrics.totalRequests,
           errors: metrics.totalErrors,
-          errorRate: metrics.totalRequests > 0
-            ? `${((metrics.totalErrors / metrics.totalRequests) * 100).toFixed(2)}%`
-            : '0%',
+          errorRate:
+            metrics.totalRequests > 0
+              ? `${(
+                  (metrics.totalErrors / metrics.totalRequests) *
+                  100
+                ).toFixed(2)}%`
+              : '0%',
         },
         latency: {
           avg: `${metrics.avgLatency}ms`,
@@ -125,10 +132,18 @@ const routes: Array<{
     method: 'GET',
     path: /^\/mcp\/health$|^\/health$/,
     handler: (c) => {
-      const servers = (c.gateway as Record<string, unknown>).registry.listServers() as Array<{id: string; name: string; endpoint: string}>;
+      const servers = (
+        c.gateway as Record<string, unknown>
+      ).registry.listServers() as Array<{
+        id: string;
+        name: string;
+        endpoint: string;
+      }>;
       const healthChecks = Promise.allSettled(
         servers.map((server: unknown) => {
-          const health = Promise.resolve((c.gateway as Record<string, unknown>).client).then(async (client: unknown) =>
+          const health = Promise.resolve(
+            (c.gateway as Record<string, unknown>).client
+          ).then(async (client: unknown) =>
             (client as Record<string, unknown>).checkHealth(server)
           );
           return health.then((h: unknown) => ({ server, health: h }));
@@ -136,36 +151,58 @@ const routes: Array<{
       );
 
       return healthChecks.then((results: unknown) => {
-        const healthChecks = results as Array<PromiseSettledResult<{server: unknown; health: unknown}>>;
-        const serverStatuses = healthChecks.map((result: PromiseSettledResult<{server: unknown; health: unknown}>, index: number) => {
-          if (result.status === 'fulfilled') {
-            const { server, health } = result.value;
-            const s = server as {id: string; name: string; endpoint: string};
-            const h = health as {status: string; latency: number; lastCheck: number; errorMessage?: string};
-            return {
-              id: s.id,
-              name: s.name,
-              endpoint: s.endpoint,
-              status: h.status,
-              latency: h.latency,
-              lastCheck: h.lastCheck,
-              errorMessage: h.errorMessage,
-            };
-          } else {
-            const server = servers[index];
-            return {
-              id: server.id,
-              name: server.name,
-              endpoint: server.endpoint,
-              status: 'DOWN',
-              latency: 0,
-              errorMessage: (result as PromiseRejectedResult).reason?.message || 'Health check failed',
-            };
+        const healthChecks = results as Array<
+          PromiseSettledResult<{ server: unknown; health: unknown }>
+        >;
+        const serverStatuses = healthChecks.map(
+          (
+            result: PromiseSettledResult<{ server: unknown; health: unknown }>,
+            index: number
+          ) => {
+            if (result.status === 'fulfilled') {
+              const { server, health } = result.value;
+              const s = server as {
+                id: string;
+                name: string;
+                endpoint: string;
+              };
+              const h = health as {
+                status: string;
+                latency: number;
+                lastCheck: number;
+                errorMessage?: string;
+              };
+              return {
+                id: s.id,
+                name: s.name,
+                endpoint: s.endpoint,
+                status: h.status,
+                latency: h.latency,
+                lastCheck: h.lastCheck,
+                errorMessage: h.errorMessage,
+              };
+            } else {
+              const server = servers[index];
+              return {
+                id: server.id,
+                name: server.name,
+                endpoint: server.endpoint,
+                status: 'DOWN',
+                latency: 0,
+                errorMessage:
+                  (result as PromiseRejectedResult).reason?.message ||
+                  'Health check failed',
+              };
+            }
           }
-        });
+        );
 
-        const allHealthy = serverStatuses.every((s: unknown) => (s as {status: string}).status === 'HEALTHY');
-        const anyHealthy = serverStatuses.some((s: unknown) => (s as {status: string}).status === 'HEALTHY');
+        const allHealthy = serverStatuses.every(
+          (s: unknown) => (s as { status: string }).status === 'HEALTHY'
+        );
+        const anyHealthy = serverStatuses.some(
+          (s: unknown) => (s as { status: string }).status === 'HEALTHY'
+        );
 
         return c.json({
           status: allHealthy ? 'UP' : anyHealthy ? 'DEGRADED' : 'DOWN',
@@ -203,14 +240,12 @@ export default async (request: Request, context: Context) => {
   } catch (error) {
     timer.finish('error');
     console.error('Edge function error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : 'Internal server error';
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 };
 

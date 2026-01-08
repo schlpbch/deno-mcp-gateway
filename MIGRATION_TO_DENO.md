@@ -1,20 +1,24 @@
 # Migration to Pure Deno - Complete! ✅
 
-The project has been successfully ported to **pure Deno** with zero Node.js dependencies.
+The project has been successfully ported to **pure Deno** with zero Node.js
+dependencies.
 
 ## What Changed
 
 ### ✅ Removed
+
 - ❌ `package.json` - No longer needed
 - ❌ `pnpm-lock.yaml` - No package manager required
 - ❌ `node_modules/` - Dependencies now cached globally by Deno
 - ❌ Node.js/pnpm dependency
 
 ### ✅ Added
+
 - ✅ `dev.ts` - Native Deno HTTP server for local development
 - ✅ `deno.json` tasks - Built-in task runner
 
 ### ✅ Updated
+
 - ✅ `.gitignore` - Deno-specific patterns
 - ✅ `README.md` - Deno-first instructions
 - ✅ `DEPLOYMENT.md` - Added Deno Deploy and Cloudflare Workers options
@@ -75,7 +79,7 @@ deno task fmt:check  # Check formatting
 ### Development Workflow
 
 ```bash
-# 1. Make changes to src/ or netlify/edge-functions/
+# 1. Make changes to src/ or deno/edge-functions/
 # 2. Dev server automatically reloads (--watch flag)
 # 3. Test endpoints at http://localhost:8888
 
@@ -102,17 +106,17 @@ open http://localhost:8888
 
 ## Deployment
 
-### Netlify (Current)
+### deno (Current)
 
 ```bash
 # Automatic on git push (GitHub integration)
 git push origin master
 
 # Or manual CLI deploy
-netlify deploy --prod
+deno deploy --prod
 ```
 
-**No build step needed** - Deno code runs directly on Netlify Edge Functions!
+**No build step needed** - Deno code runs directly on deno Edge Functions!
 
 ### Deno Deploy (Alternative)
 
@@ -122,6 +126,7 @@ netlify deploy --prod
 4. Deploy!
 
 Benefits:
+
 - Native Deno platform
 - Global edge network
 - Built-in analytics
@@ -138,22 +143,26 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for full details.
 ## Benefits of Pure Deno
 
 ### 🚀 Simplicity
+
 - **No package manager** - No npm, pnpm, yarn
 - **No node_modules** - Dependencies cached globally
 - **No build step** - TypeScript runs directly
 - **Single binary** - Just `deno` command
 
 ### ⚡ Performance
+
 - **Faster startup** - No npm install
 - **Faster CI/CD** - No dependency installation
 - **Faster dev loop** - No compilation needed
 
 ### 🔒 Security
-- **Permission-based** - Explicit --allow-* flags
+
+- **Permission-based** - Explicit --allow-\* flags
 - **No surprise dependencies** - All imports are explicit URLs
 - **Lockfile integrity** - `deno.lock` for reproducible builds
 
 ### 🛠️ Tooling
+
 - **Built-in formatter** - `deno fmt`
 - **Built-in linter** - `deno lint`
 - **Built-in test runner** - `deno test`
@@ -161,8 +170,10 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for full details.
 - **Built-in type checker** - `deno check`
 
 ### 🌍 Deployment Flexibility
+
 Deploy to any platform:
-- ✅ Netlify Edge Functions (current)
+
+- ✅ deno Edge Functions (current)
 - ✅ Deno Deploy (native)
 - ✅ Cloudflare Workers (easy port)
 - ✅ AWS Lambda (Deno layer)
@@ -171,11 +182,11 @@ Deploy to any platform:
 ## Project Structure
 
 ```
-netlify-mcp-gateway/
+deno-mcp-gateway/
 ├── dev.ts                    # 🆕 Local dev server (Deno HTTP)
 ├── deno.json                 # 🆕 Deno config & tasks
-├── netlify.toml              # Netlify config
-├── netlify/
+├── deno.toml              # deno config
+├── deno/
 │   └── edge-functions/
 │       └── mcp.ts           # Main edge function
 ├── src/
@@ -196,6 +207,7 @@ netlify-mcp-gateway/
 ## Before & After
 
 ### Before (Node.js + pnpm)
+
 ```bash
 # Install dependencies
 pnpm install
@@ -214,6 +226,7 @@ pnpm lint
 ```
 
 ### After (Pure Deno) ✨
+
 ```bash
 # No installation needed! (dependencies auto-cached)
 
@@ -233,6 +246,7 @@ deno task lint
 ## CI/CD Simplification
 
 ### Before
+
 ```yaml
 - uses: pnpm/action-setup@v2
 - run: pnpm install --frozen-lockfile
@@ -241,6 +255,7 @@ deno task lint
 ```
 
 ### After ✨
+
 ```yaml
 - uses: denoland/setup-deno@v1
 - run: deno task test
@@ -267,14 +282,14 @@ deno task lint
 1. **Install Deno** (see Installation section above)
 2. **Test locally**: `deno task dev`
 3. **Verify endpoints** work at http://localhost:8888
-4. **Deploy**: Git push auto-deploys to Netlify
+4. **Deploy**: Git push auto-deploys to deno
 
 ## Questions?
 
 - **Deno Docs**: https://deno.land/manual
-- **Netlify Edge Functions**: https://docs.netlify.com/edge-functions/overview/
-- **Project Repository**: https://github.com/schlpbch/netlify-mcp-gateway
-- **Live Site**: https://netliy-mcp-gateway.netlify.app
+- **deno Edge Functions**: https://docs.deno.com/edge-functions/overview/
+- **Project Repository**: https://github.com/schlpbch/deno-mcp-gateway
+- **Live Site**: https://netliy-mcp-gateway.deno.app
 
 ---
 

@@ -130,11 +130,13 @@
           MCP
         </div>
         <div class="min-w-0 flex-1">
-          <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white leading-tight">MCP Gateway</h1>
-          <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-0.5 sm:mt-1">Unified edge gateway for MCP integrations</p>
+          <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white leading-tight">MCP Gateway
+          </h1>
+          <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-0.5 sm:mt-1">Unified edge gateway for MCP
+            integrations</p>
         </div>
       </div>
-      
+
       <!-- Bottom row: Controls -->
       <div class="flex items-center justify-between gap-3">
         <span id="online-status"
@@ -144,20 +146,20 @@
           <span class="hidden xs:inline">Online</span>
           <span class="xs:hidden">●</span>
         </span>
-        
+
         <!-- Theme Toggle -->
         <button id="theme-toggle" type="button"
           class="theme-toggle p-2 sm:p-2.5 rounded-lg bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900"
           aria-label="Toggle dark mode" title="Toggle theme">
           <!-- Sun icon (shown in dark mode) -->
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            aria-hidden="true">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 hidden dark:block" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
           <!-- Moon icon (shown in light mode) -->
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            aria-hidden="true">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 block dark:hidden" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
           </svg>
@@ -169,12 +171,15 @@
     <main id="main-content" class="mt-6 sm:mt-8 space-y-4 sm:space-y-6">
       <!-- Quick Actions -->
       <section aria-labelledby="quick-actions-heading" class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6">
-        <h2 id="quick-actions-heading" class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white mb-3 sm:mb-4">Quick Actions
+        <h2 id="quick-actions-heading"
+          class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white mb-3 sm:mb-4">Quick Actions
         </h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap gap-2 sm:gap-3" role="group" aria-label="API endpoint buttons">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap gap-2 sm:gap-3" role="group"
+          aria-label="API endpoint buttons">
           <button id="btn-tools" type="button"
             class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 min-h-[44px] touch-manipulation">
-            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -184,7 +189,8 @@
           </button>
           <button id="btn-resources" type="button"
             class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 min-h-[44px] touch-manipulation">
-            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
             </svg>
@@ -192,7 +198,8 @@
           </button>
           <button id="btn-prompts" type="button"
             class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 min-h-[44px] touch-manipulation">
-            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
             </svg>
@@ -200,7 +207,8 @@
           </button>
           <button id="btn-health" type="button"
             class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 min-h-[44px] touch-manipulation">
-            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -208,7 +216,8 @@
           </button>
           <button id="btn-metrics" type="button"
             class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 min-h-[44px] touch-manipulation col-span-2 sm:col-span-1">
-            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
@@ -219,13 +228,15 @@
 
       <!-- API Tester -->
       <section aria-labelledby="api-tester-heading" class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6">
-        <h2 id="api-tester-heading" class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white mb-3 sm:mb-4">API Tester</h2>
+        <h2 id="api-tester-heading"
+          class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white mb-3 sm:mb-4">API Tester</h2>
 
         <div class="grid xl:grid-cols-2 gap-4 sm:gap-6">
           <!-- Request Form -->
           <form id="post-form" class="space-y-3 sm:space-y-4">
             <div>
-              <label for="post-endpoint" class="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 sm:mb-2">
+              <label for="post-endpoint"
+                class="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 sm:mb-2">
                 Endpoint
               </label>
               <input id="post-endpoint" type="text" value="/mcp/tools/call"
@@ -235,7 +246,8 @@
             </div>
 
             <div>
-              <label for="post-body" class="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 sm:mb-2">
+              <label for="post-body"
+                class="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 sm:mb-2">
                 Request Body (JSON)
               </label>
               <textarea id="post-body" rows="5"
@@ -280,7 +292,8 @@
               <button id="copy-response" type="button"
                 class="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 p-1.5 sm:p-2 rounded-md bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-accent min-h-[36px] sm:min-h-[40px] touch-manipulation"
                 aria-label="Copy response to clipboard" title="Copy to clipboard">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
@@ -292,36 +305,47 @@
 
       <!-- Backend Services -->
       <section aria-labelledby="services-heading" class="glass rounded-xl sm:rounded-2xl p-4 sm:p-6">
-        <h2 id="services-heading" class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white mb-3 sm:mb-4">Connected Services
+        <h2 id="services-heading"
+          class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white mb-3 sm:mb-4">Connected Services
         </h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
-          <div class="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+          <div
+            class="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
             <div class="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
               <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent flex-shrink-0" aria-hidden="true"></div>
-              <span class="font-medium text-slate-900 dark:text-white text-sm sm:text-base truncate">Journey Service</span>
+              <span class="font-medium text-slate-900 dark:text-white text-sm sm:text-base truncate">Journey
+                Service</span>
             </div>
-            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">Swiss public transport trips and connections</p>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">Swiss public transport
+              trips and connections</p>
           </div>
-          <div class="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+          <div
+            class="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
             <div class="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
               <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent flex-shrink-0" aria-hidden="true"></div>
-              <span class="font-medium text-slate-900 dark:text-white text-sm sm:text-base truncate">Swiss Mobility</span>
+              <span class="font-medium text-slate-900 dark:text-white text-sm sm:text-base truncate">Swiss
+                Mobility</span>
             </div>
-            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">Bike sharing and mobility services</p>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">Bike sharing and mobility
+              services</p>
           </div>
-          <div class="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+          <div
+            class="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
             <div class="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
               <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent flex-shrink-0" aria-hidden="true"></div>
               <span class="font-medium text-slate-900 dark:text-white text-sm sm:text-base truncate">Aareguru</span>
             </div>
-            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">Aare river conditions and temperatures</p>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">Aare river conditions and
+              temperatures</p>
           </div>
-          <div class="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+          <div
+            class="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
             <div class="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
               <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent flex-shrink-0" aria-hidden="true"></div>
               <span class="font-medium text-slate-900 dark:text-white text-sm sm:text-base truncate">Open Meteo</span>
             </div>
-            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">Weather forecasts and conditions</p>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">Weather forecasts and
+              conditions</p>
           </div>
         </div>
       </section>
@@ -331,8 +355,8 @@
     <footer class="mt-8 sm:mt-12 pt-4 sm:pt-6 border-t border-slate-200 dark:border-slate-800">
       <div class="flex flex-col items-center justify-center gap-3 sm:gap-4 text-center">
         <p class="text-xs sm:text-sm text-slate-500">
-          Powered by <a href="https://www.netlify.com"
-            class="text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-accent rounded">Netlify Edge
+          Powered by <a href="https://www.deno.com"
+            class="text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-accent rounded">deno Edge
             Functions</a>
         </p>
         <nav aria-label="Footer navigation">
@@ -341,7 +365,8 @@
               <a href="https://github.com/schlpbch/deno-mcp-gateway"
                 class="inline-flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-accent rounded p-1"
                 target="_blank" rel="noopener noreferrer">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"
+                  aria-hidden="true">
                   <path fill-rule="evenodd"
                     d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
                     clip-rule="evenodd" />

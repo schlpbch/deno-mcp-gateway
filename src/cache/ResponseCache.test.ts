@@ -4,14 +4,14 @@ import {
 } from 'https://deno.land/std@0.208.0/assert/mod.ts';
 // import { stub } from 'https://deno.land/std@0.208.0/testing/mock.ts';
 
-// Mock the @netlify/blobs module before importing ResponseCache
+// Mock the @deno/blobs module before importing ResponseCache
 // const mockBlobStore = {
 //   get: () => Promise.resolve(null),
 //   setJSON: () => Promise.resolve(),
 // };
 
 // We need to test ResponseCache with mocked blob store
-// Since the module imports @netlify/blobs at the top level,
+// Since the module imports @deno/blobs at the top level,
 // we'll create a simplified test version
 
 class TestableResponseCache {
@@ -28,7 +28,7 @@ class TestableResponseCache {
     let hash = 0;
     for (let i = 0; i < data.length; i++) {
       const char = data.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32bit integer
     }
     return Math.abs(hash).toString(16).padStart(8, '0');
@@ -71,20 +71,35 @@ class TestableResponseCache {
 Deno.test('ResponseCache - generateKey produces consistent hash', () => {
   const cache = new TestableResponseCache({ defaultTtl: 300, maxSize: 1000 });
 
-  const key1 = cache.generateKey('journey.findTrips', { from: 'Zurich', to: 'Geneva' });
-  const key2 = cache.generateKey('journey.findTrips', { from: 'Zurich', to: 'Geneva' });
+  const key1 = cache.generateKey('journey.findTrips', {
+    from: 'Zurich',
+    to: 'Geneva',
+  });
+  const key2 = cache.generateKey('journey.findTrips', {
+    from: 'Zurich',
+    to: 'Geneva',
+  });
 
   assertEquals(key1, key2);
 });
 
-Deno.test('ResponseCache - generateKey produces different hashes for different inputs', () => {
-  const cache = new TestableResponseCache({ defaultTtl: 300, maxSize: 1000 });
+Deno.test(
+  'ResponseCache - generateKey produces different hashes for different inputs',
+  () => {
+    const cache = new TestableResponseCache({ defaultTtl: 300, maxSize: 1000 });
 
-  const key1 = cache.generateKey('journey.findTrips', { from: 'Zurich', to: 'Geneva' });
-  const key2 = cache.generateKey('journey.findTrips', { from: 'Bern', to: 'Geneva' });
+    const key1 = cache.generateKey('journey.findTrips', {
+      from: 'Zurich',
+      to: 'Geneva',
+    });
+    const key2 = cache.generateKey('journey.findTrips', {
+      from: 'Bern',
+      to: 'Geneva',
+    });
 
-  assertNotEquals(key1, key2);
-});
+    assertNotEquals(key1, key2);
+  }
+);
 
 Deno.test('ResponseCache - generateKey handles undefined args', () => {
   const cache = new TestableResponseCache({ defaultTtl: 300, maxSize: 1000 });
@@ -95,22 +110,28 @@ Deno.test('ResponseCache - generateKey handles undefined args', () => {
   assertEquals(key1, key2);
 });
 
-Deno.test('ResponseCache - set and get stores and retrieves value', async () => {
-  const cache = new TestableResponseCache({ defaultTtl: 300, maxSize: 1000 });
+Deno.test(
+  'ResponseCache - set and get stores and retrieves value',
+  async () => {
+    const cache = new TestableResponseCache({ defaultTtl: 300, maxSize: 1000 });
 
-  const testData = { content: [{ type: 'text', text: 'test response' }] };
-  await cache.set('test-key', testData);
+    const testData = { content: [{ type: 'text', text: 'test response' }] };
+    await cache.set('test-key', testData);
 
-  const result = await cache.get('test-key');
-  assertEquals(result, testData);
-});
+    const result = await cache.get('test-key');
+    assertEquals(result, testData);
+  }
+);
 
-Deno.test('ResponseCache - get returns undefined for non-existent key', async () => {
-  const cache = new TestableResponseCache({ defaultTtl: 300, maxSize: 1000 });
+Deno.test(
+  'ResponseCache - get returns undefined for non-existent key',
+  async () => {
+    const cache = new TestableResponseCache({ defaultTtl: 300, maxSize: 1000 });
 
-  const result = await cache.get('non-existent-key');
-  assertEquals(result, undefined);
-});
+    const result = await cache.get('non-existent-key');
+    assertEquals(result, undefined);
+  }
+);
 
 Deno.test('ResponseCache - expired entries return undefined', async () => {
   const cache = new TestableResponseCache({ defaultTtl: 1, maxSize: 1000 });

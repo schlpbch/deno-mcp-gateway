@@ -1,6 +1,7 @@
 # Contributing to MCP Gateway
 
-Thank you for your interest in contributing to the MCP Gateway! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to the MCP Gateway! This document
+provides guidelines and instructions for contributing.
 
 ## Code of Conduct
 
@@ -24,8 +25,8 @@ Thank you for your interest in contributing to the MCP Gateway! This document pr
 1. **Clone the Repository**
 
 ```bash
-git clone https://github.com/schlpbch/netlify-mcp-gateway.git
-cd netlify-mcp-gateway
+git clone https://github.com/schlpbch/deno-mcp-gateway.git
+cd deno-mcp-gateway
 ```
 
 1. **Build the Project**
@@ -49,7 +50,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ## Project Structure
 
 ```
-netlify-mcp-gateway/
+deno-mcp-gateway/
 ├── src/
 │   ├── main/
 │   │   ├── java/ch/sbb/mcp/gateway/
@@ -111,11 +112,11 @@ netlify-mcp-gateway/
 ```java
 /**
  * Resolves the appropriate backend server for a given tool name.
- * 
+ *
  * <p>Tool names are expected to be namespaced (e.g., "journey.findTrips").
  * This method extracts the server ID from the namespace and verifies
  * the server actually provides the requested tool.</p>
- * 
+ *
  * @param toolName the namespaced tool name
  * @return the server registration
  * @throws ServerNotFoundException if no server is found or tool not supported
@@ -222,21 +223,26 @@ Template:
 
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Motivation
+
 Why these changes are needed
 
 ## Changes
+
 - Change 1
 - Change 2
 
 ## Testing
+
 - [ ] Unit tests added/updated
 - [ ] Integration tests added/updated
 - [ ] Manual testing performed
 
 ## Checklist
+
 - [ ] Code follows style guidelines
 - [ ] Tests pass locally
 - [ ] Documentation updated
@@ -267,10 +273,10 @@ void shouldResolveToolServerByNamespace() {
     // Arrange
     ServerRegistration server = createTestServer("journey-service-mcp");
     registry.register(server);
-    
+
     // Act
     ServerRegistration found = registry.resolveToolServer("journey.findTrips");
-    
+
     // Assert
     assertThat(found).isNotNull();
     assertThat(found.id()).isEqualTo("journey-service-mcp");
@@ -356,7 +362,8 @@ Contributors will be:
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the same license as the project.
+By contributing, you agree that your contributions will be licensed under the
+same license as the project.
 
 ## Questions?
 

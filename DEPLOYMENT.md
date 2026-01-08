@@ -1,13 +1,14 @@
 # MCP Gateway Deployment Guide
 
-This guide covers deploying the MCP Gateway on Netlify Edge Functions and alternative platforms.
+This guide covers deploying the MCP Gateway on deno Edge Functions and
+alternative platforms.
 
 ## Prerequisites
 
 - **Deno** 1.40+ installed ([deno.land](https://deno.land))
 - **Git** repository pushed to GitHub
-- **Netlify account** (for Netlify deployment)
-- **GitHub repository**: https://github.com/schlpbch/netlify-mcp-gateway
+- **deno account** (for deno deployment)
+- **GitHub repository**: https://github.com/schlpbch/deno-mcp-gateway
 
 > **Note**: No Node.js or package managers needed! This is a pure Deno project.
 
@@ -15,36 +16,37 @@ This guide covers deploying the MCP Gateway on Netlify Edge Functions and altern
 
 ### Method 1: Automatic GitHub Integration (Recommended)
 
-Netlify automatically deploys on every push to the main branch.
+deno automatically deploys on every push to the main branch.
 
-#### 1. Link Repository to Netlify
+#### 1. Link Repository to deno
 
-Connect via Netlify dashboard:
-1. Go to https://app.netlify.com
+Connect via deno dashboard:
+
+1. Go to https://app.deno.com
 2. Click "New site from Git"
 3. Select your GitHub repository
-4. Netlify auto-detects build settings from `netlify.toml`
+4. deno auto-detects build settings from `deno.toml`
 
 Or use CLI:
 
 ```bash
-# Install Netlify CLI (if needed)
-deno install --allow-all https://deno.land/x/netlify_cli/netlify.ts
-# Or: npm install -g netlify-cli
+# Install deno CLI (if needed)
+deno install --allow-all https://deno.land/x/netlify_cli/deno.ts
+# Or: npm install -g deno-cli
 
 # Link repository
-netlify link --repo=https://github.com/schlpbch/netlify-mcp-gateway
+deno link --repo=https://github.com/schlpbch/deno-mcp-gateway
 ```
 
 #### 2. Configure Build Settings
 
 - **Build command**: _(none needed - Deno code runs directly)_
 - **Publish directory**: `public`
-- **Edge Functions**: Auto-detected from `netlify/edge-functions/`
+- **Edge Functions**: Auto-detected from `deno/edge-functions/`
 
 #### 3. Environment Variables
 
-Set in Netlify dashboard > Site settings > Build & deploy > Environment:
+Set in deno dashboard > Site settings > Build & deploy > Environment:
 
 ```bash
 JOURNEY_SERVICE_URL=https://journey-service.example.com
@@ -57,23 +59,23 @@ The site automatically deploys on every `git push` to main branch.
 
 ### Method 2: Manual CLI Deployment
 
-Deploy from your local machine using the Netlify CLI.
+Deploy from your local machine using the deno CLI.
 
 #### 1. Authenticate
 
 ```bash
-netlify login
+deno login
 ```
 
-This opens a browser to authorize your Netlify account.
+This opens a browser to authorize your deno account.
 
 #### 2. Deploy to Production
 
 ```bash
-netlify deploy --prod --dir=public
+deno deploy --prod --dir=public
 ```
 
-Or with Deno (if using Deno-based Netlify CLI):
+Or with Deno (if using Deno-based deno CLI):
 
 ```bash
 deno task deploy  # If configured in deno.json
@@ -82,7 +84,7 @@ deno task deploy  # If configured in deno.json
 #### 3. View Deployment
 
 ```bash
-netlify open site
+deno open site
 ```
 
 Opens your site in the browser.
@@ -92,16 +94,18 @@ Opens your site in the browser.
 Test changes before pushing to production.
 
 ```bash
-netlify deploy --dir=public
+deno deploy --dir=public
 ```
 
-This creates a draft deploy with a unique preview URL. Share for testing before promoting to production.
+This creates a draft deploy with a unique preview URL. Share for testing before
+promoting to production.
 
 ## Alternative Deployment Platforms
 
 ### Deploy to Deno Deploy
 
-[Deno Deploy](https://deno.com/deploy) is the native Deno cloud platform with global edge network.
+[Deno Deploy](https://deno.com/deploy) is the native Deno cloud platform with
+global edge network.
 
 #### 1. Connect Repository
 
@@ -113,6 +117,7 @@ This creates a draft deploy with a unique preview URL. Share for testing before 
 #### 2. Configure Environment
 
 Add environment variables in Deno Deploy dashboard:
+
 - `JOURNEY_SERVICE_URL`
 - `SWISS_MOBILITY_URL`
 - `AAREGURU_URL`
@@ -123,6 +128,7 @@ Add environment variables in Deno Deploy dashboard:
 Push to GitHub → Automatic deployment
 
 **Benefits**:
+
 - ✅ Native Deno platform (zero config)
 - ✅ Global edge network
 - ✅ Built-in analytics
@@ -136,6 +142,7 @@ Can be adapted for Cloudflare Workers with minimal changes.
 #### Required Changes:
 
 1. Create `wrangler.toml`:
+
    ```toml
    name = "mcp-gateway"
    main = "worker.ts"
@@ -143,12 +150,13 @@ Can be adapted for Cloudflare Workers with minimal changes.
    ```
 
 2. Adapt `dev.ts` to Workers format:
+
    ```typescript
    export default {
      async fetch(request: Request): Promise<Response> {
        // Handler logic
-     }
-   }
+     },
+   };
    ```
 
 3. Deploy:
@@ -157,15 +165,16 @@ Can be adapted for Cloudflare Workers with minimal changes.
    ```
 
 **Benefits**:
+
 - ✅ Larger edge network (275+ cities)
 - ✅ Generous free tier
 - ✅ Deno compatibility via workerd
 
 ## Configuration
 
-### netlify.toml
+### deno.toml
 
-The project includes a `netlify.toml` configuration file:
+The project includes a `deno.toml` configuration file:
 
 ```toml
 [build]
@@ -181,20 +190,20 @@ The project includes a `netlify.toml` configuration file:
 
 - **publish**: Directory containing static assets
 - **edge_functions**: Configures the MCP edge function and its route pattern
-- **dev**: Local development server port (used by `netlify dev`)
+- **dev**: Local development server port (used by `deno dev`)
 
 ### Environment Variables
 
-Set in Netlify dashboard or `.env` file locally:
+Set in deno dashboard or `.env` file locally:
 
-| Variable | Purpose | Example |
-|----------|---------|---------|
-| `JOURNEY_SERVICE_URL` | Journey Service backend | `https://journey.example.com` |
-| `SWISS_MOBILITY_URL` | Swiss Mobility backend | `https://mobility.example.com` |
-| `AAREGURU_URL` | Aareguru backend | `https://aareguru.example.com` |
-| `OPEN_METEO_URL` | Open Meteo backend | `https://meteo.example.com` |
-| `PORT` | Local dev server port | `8888` |
-| `DEBUG` | Enable debug logging | `true` |
+| Variable              | Purpose                 | Example                        |
+| --------------------- | ----------------------- | ------------------------------ |
+| `JOURNEY_SERVICE_URL` | Journey Service backend | `https://journey.example.com`  |
+| `SWISS_MOBILITY_URL`  | Swiss Mobility backend  | `https://mobility.example.com` |
+| `AAREGURU_URL`        | Aareguru backend        | `https://aareguru.example.com` |
+| `OPEN_METEO_URL`      | Open Meteo backend      | `https://meteo.example.com`    |
+| `PORT`                | Local dev server port   | `8888`                         |
+| `DEBUG`               | Enable debug logging    | `true`                         |
 
 Local development with `.env`:
 
@@ -217,23 +226,23 @@ deno task dev
 ### 1. Check Deployment Status
 
 ```bash
-netlify status
+deno status
 ```
 
 ### 2. View Live Site
 
 ```bash
 # Open deployed site
-netlify open site
+deno open site
 
 # Or use the URL directly
-open https://netliy-mcp-gateway.netlify.app
+open https://netliy-mcp-gateway.deno.app
 ```
 
 ### 3. Test Health Endpoint
 
 ```bash
-curl https://netliy-mcp-gateway.netlify.app/health
+curl https://netliy-mcp-gateway.deno.app/health
 ```
 
 Expected response:
@@ -250,17 +259,17 @@ Expected response:
 ### 4. List Tools
 
 ```bash
-curl -X GET https://netliy-mcp-gateway.netlify.app/mcp/tools/list
+curl -X GET https://netliy-mcp-gateway.deno.app/mcp/tools/list
 ```
 
 ### 5. View Logs
 
 ```bash
 # Stream logs from production
-netlify logs:deploy
+deno logs:deploy
 
 # Or via dashboard
-netlify open admin
+deno open admin
 ```
 
 ## Local Development
@@ -271,19 +280,21 @@ netlify open admin
 # Using Deno (recommended)
 deno task dev
 
-# Or using Netlify CLI (includes edge function simulation)
-netlify dev
+# Or using deno CLI (includes edge function simulation)
+deno dev
 ```
 
 **Deno dev server** runs at `http://localhost:8888` with:
+
 - ✅ Hot reload on file changes
 - ✅ Native Deno runtime (exact production behavior)
 - ✅ Fast startup
 - ✅ Environment variable support
 
-**Netlify CLI** provides:
+**deno CLI** provides:
+
 - ✅ Full edge functions support
-- ✅ Netlify Blobs simulation
+- ✅ deno Blobs simulation
 - ✅ Production-like environment
 
 ### Testing Endpoints Locally
@@ -310,7 +321,7 @@ curl -X POST http://localhost:8888/mcp/tools/call \
 deno task check
 
 # Or check specific files
-deno check netlify/edge-functions/mcp.ts
+deno check deno/edge-functions/mcp.ts
 ```
 
 ### Formatting & Linting
@@ -346,7 +357,7 @@ git commit -m "feat: my feature"
 
 ```bash
 # Deploy draft to test before production
-netlify deploy --dir=public
+deno deploy --dir=public
 
 # Preview URL is printed in output
 # Share with team for testing
@@ -366,7 +377,7 @@ Or manual production deploy:
 
 ```bash
 git push origin main
-# Netlify automatically deploys
+# deno automatically deploys
 ```
 
 ## Monitoring
@@ -375,28 +386,29 @@ git push origin main
 
 ```bash
 # List recent deploys
-netlify deploys:list --limit=10
+deno deploys:list --limit=10
 
 # View specific deploy details
-netlify deploy:info --filter={DEPLOY_ID}
+deno deploy:info --filter={DEPLOY_ID}
 ```
 
 ### View Logs
 
 ```bash
 # Edge function logs
-netlify logs:edge-functions
+deno logs:edge-functions
 
 # Function execution logs
-netlify logs:functions
+deno logs:functions
 
 # Deployment logs
-netlify logs:deploy
+deno logs:deploy
 ```
 
 ### Analytics
 
-Netlify dashboard shows:
+deno dashboard shows:
+
 - Request count
 - Bandwidth usage
 - Error rates
@@ -409,12 +421,13 @@ Netlify dashboard shows:
 **Check build logs**:
 
 ```bash
-netlify logs:deploy
+deno logs:deploy
 ```
 
 Common causes:
+
 - Missing `public` directory
-- Invalid `netlify.toml` syntax
+- Invalid `deno.toml` syntax
 - Unresolved imports in edge function
 
 ### Edge Function Not Responding
@@ -423,32 +436,34 @@ Common causes:
 
 ```bash
 # Check if mcp.ts is properly formatted
-deno lint netlify/edge-functions/mcp.ts
+deno lint deno/edge-functions/mcp.ts
 
 # Verify function exists
-ls -la netlify/edge-functions/
+ls -la deno/edge-functions/
 ```
 
 **Check bundling logs**:
 
 ```bash
-netlify logs:deploy | grep -i "edge function"
+deno logs:deploy | grep -i "edge function"
 ```
 
 ### Slow Response Times
 
 **Causes**:
+
 - Backend server is slow
 - Network latency
 
 **Solutions**:
+
 - Check backend service health
 - Use the interactive UI to test endpoints
 - Monitor edge function logs
 
 ### 404 Routes
 
-**Verify route pattern in netlify.toml**:
+**Verify route pattern in deno.toml**:
 
 ```toml
 [[edge_functions]]
@@ -464,13 +479,13 @@ The `path` pattern must match your request URLs.
 
 ```bash
 # List recent deploys
-netlify deploys:list
+deno deploys:list
 
 # Rollback to specific deploy
-netlify deploy --alias={DEPLOY_ID}
+deno deploy --alias={DEPLOY_ID}
 
 # Or use dashboard to manually revert
-netlify open admin
+deno open admin
 ```
 
 ## Security
@@ -480,7 +495,7 @@ netlify open admin
 The gateway is publicly accessible at:
 
 ```
-https://netliy-mcp-gateway.netlify.app
+https://netliy-mcp-gateway.deno.app
 ```
 
 For production, consider:
@@ -492,7 +507,7 @@ For production, consider:
 
 ### Secrets Management
 
-Use Netlify environment variables for sensitive data:
+Use deno environment variables for sensitive data:
 
 1. Go to Site settings > Build & deploy > Environment
 2. Add sensitive variables as "Secrets"
@@ -503,22 +518,24 @@ Use Netlify environment variables for sensitive data:
 ### Edge Function Optimization
 
 The edge function automatically:
+
 - Scales globally across 100+ edge locations
 - Serves from nearest data center to user
 - Handles concurrent requests
 
 ### Bandwidth & Cost
 
-Netlify Edge Functions pricing:
+deno Edge Functions pricing:
+
 - **Included**: 1M requests per month
 - **Additional**: Pay-per-use beyond free tier
 
-Monitor usage in Netlify dashboard.
+Monitor usage in deno dashboard.
 
 ## Next Steps
 
 1. ✅ Push code to GitHub
-2. ✅ Link repository to Netlify (automatic deploy on push)
+2. ✅ Link repository to deno (automatic deploy on push)
 3. Test endpoints via interactive UI
 4. Monitor logs and performance
 5. Set up alerts for errors
@@ -526,37 +543,37 @@ Monitor usage in Netlify dashboard.
 ## Useful Commands
 
 ```bash
-# Install Netlify CLI
-npm install -g netlify-cli
+# Install deno CLI
+npm install -g deno-cli
 
-# Login to Netlify account
-netlify login
+# Login to deno account
+deno login
 
-# Link local repo to Netlify
-netlify link
+# Link local repo to deno
+deno link
 
 # Deploy draft version
-netlify deploy --dir=public
+deno deploy --dir=public
 
 # Deploy to production
-netlify deploy --prod --dir=public
+deno deploy --prod --dir=public
 
 # View local dev server
 pnpm dev
 
 # See deployment history
-netlify deploys:list
+deno deploys:list
 
 # View logs
-netlify logs:edge-functions
+deno logs:edge-functions
 
-# Open Netlify dashboard
-netlify open admin
+# Open deno dashboard
+deno open admin
 ```
 
 ## Resources
 
-- [Netlify Edge Functions Docs](https://docs.netlify.com/edge-functions/overview/)
-- [Netlify CLI Reference](https://cli.netlify.com/)
-- [Project Repository](https://github.com/schlpbch/netlify-mcp-gateway)
-- [Live Site](https://netliy-mcp-gateway.netlify.app)
+- [deno Edge Functions Docs](https://docs.deno.com/edge-functions/overview/)
+- [deno CLI Reference](https://cli.deno.com/)
+- [Project Repository](https://github.com/schlpbch/deno-mcp-gateway)
+- [Live Site](https://netliy-mcp-gateway.deno.app)
