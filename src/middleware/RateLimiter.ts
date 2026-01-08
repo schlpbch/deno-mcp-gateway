@@ -20,9 +20,9 @@ export class RateLimiter {
 
   constructor(config: RateLimitConfig) {
     this.config = {
-      windowMs: 60 * 1000, // Default: 1 minute
-      maxRequests: 100, // Default: 100 requests per minute
-      ...config,
+      windowMs: config.windowMs || 60 * 1000, // Default: 1 minute
+      maxRequests: config.maxRequests || 100, // Default: 100 requests per minute
+      keyGenerator: config.keyGenerator,
     };
 
     // Cleanup old entries every 5 minutes
