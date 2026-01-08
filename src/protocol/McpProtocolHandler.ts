@@ -118,15 +118,21 @@ export class McpProtocolHandler {
         const response = await this.client.listResources(server);
         if (response?.resources) {
           // Keep resources as-is without modifying URIs
-          console.log(`[Protocol] Resources from ${server.id}:`, response.resources.map(r => ({ name: r.name, uri: r.uri })));
-          response.resources.forEach(resource => {
+          console.log(
+            `[Protocol] Resources from ${server.id}:`,
+            response.resources.map((r) => ({ name: r.name, uri: r.uri }))
+          );
+          response.resources.forEach((resource) => {
             // Track which server owns each resource
             this.resourceOwnerMap.set(resource.uri, server.id);
           });
           allResources.push(...response.resources);
         }
       } catch (error) {
-        console.error(`Failed to get resources from server ${server.id}:`, error);
+        console.error(
+          `Failed to get resources from server ${server.id}:`,
+          error
+        );
         // Continue with other servers
       }
     }
@@ -148,17 +154,24 @@ export class McpProtocolHandler {
     request: McpResourceReadRequest
   ): Promise<McpResourceReadResponse> {
     console.log('[Protocol] readResource called with URI:', request.uri);
-    
+
     // Look up which server owns this resource
     const serverId = this.resourceOwnerMap.get(request.uri);
-    console.log('[Protocol] Resource owner:', serverId, 'for URI:', request.uri);
-    
+    console.log(
+      '[Protocol] Resource owner:',
+      serverId,
+      'for URI:',
+      request.uri
+    );
+
     if (serverId) {
       // Use direct routing if we know which server owns it
       return await this.router.routeResourceReadDirect(serverId, request.uri);
     } else {
       // Fallback to scheme-based routing if not found in map
-      console.log('[Protocol] Resource not in ownership map, falling back to scheme-based routing');
+      console.log(
+        '[Protocol] Resource not in ownership map, falling back to scheme-based routing'
+      );
       return await this.router.routeResourceRead(request.uri);
     }
   }

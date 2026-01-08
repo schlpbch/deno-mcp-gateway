@@ -24,7 +24,8 @@ function toggleRawView() {
 
 function showRawJson(obj) {
   if (!rawEl) return;
-  rawEl.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
+  rawEl.textContent =
+    typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
 }
 
 function getStatusColor(status) {
@@ -61,12 +62,16 @@ function renderHealth(data) {
   const body = data.body || data;
   const servers = body.servers || [];
   const overallStatus = body.status || 'UNKNOWN';
-  const timestamp = body.timestamp ? new Date(body.timestamp).toLocaleString() : '';
+  const timestamp = body.timestamp
+    ? new Date(body.timestamp).toLocaleString()
+    : '';
 
   let html = `
     <div class="space-y-4">
       <!-- Overall Status -->
-      <div class="flex items-center justify-between p-3 rounded-lg ${getStatusColor(overallStatus)}">
+      <div class="flex items-center justify-between p-3 rounded-lg ${getStatusColor(
+        overallStatus
+      )}">
         <div class="flex items-center gap-2">
           ${getStatusIcon(overallStatus)}
           <span class="font-semibold">Gateway Status: ${overallStatus}</span>
@@ -80,7 +85,7 @@ function renderHealth(data) {
         <div class="grid gap-2">
   `;
 
-  servers.forEach(server => {
+  servers.forEach((server) => {
     const statusColor = getStatusColor(server.status);
     html += `
       <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
@@ -90,12 +95,20 @@ function renderHealth(data) {
               ${getStatusIcon(server.status)}
               ${server.status}
             </span>
-            <span class="font-medium text-slate-900 dark:text-white">${server.name}</span>
+            <span class="font-medium text-slate-900 dark:text-white">${
+              server.name
+            }</span>
           </div>
           <span class="text-xs text-slate-500">${server.latency}ms</span>
         </div>
-        <p class="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">${server.endpoint}</p>
-        ${server.errorMessage ? `<p class="text-xs text-red-500 dark:text-red-400 mt-1">${server.errorMessage}</p>` : ''}
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">${
+          server.endpoint
+        }</p>
+        ${
+          server.errorMessage
+            ? `<p class="text-xs text-red-500 dark:text-red-400 mt-1">${server.errorMessage}</p>`
+            : ''
+        }
       </div>
     `;
   });
@@ -119,7 +132,7 @@ function renderTools(data) {
 
   // Group tools by namespace
   const grouped = {};
-  tools.forEach(tool => {
+  tools.forEach((tool) => {
     const [namespace] = tool.name.split('.');
     if (!grouped[namespace]) grouped[namespace] = [];
     grouped[namespace].push(tool);
@@ -142,15 +155,20 @@ function renderTools(data) {
         <div class="grid gap-2">
     `;
 
-    nsTools.forEach(tool => {
+    nsTools.forEach((tool) => {
       const shortName = tool.name.split('.').slice(1).join('.');
       const summary = tool.summary || tool.description?.split('\n')[0] || '';
       html += `
-        <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-accent/50 transition-colors cursor-pointer tool-card" data-tool='${JSON.stringify(tool)}'>
+        <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-accent/50 transition-colors cursor-pointer tool-card" data-tool='${JSON.stringify(
+          tool
+        )}'>
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0 flex-1">
               <h5 class="font-medium text-slate-900 dark:text-white text-sm">${shortName}</h5>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">${summary.substring(0, 150)}${summary.length > 150 ? '...' : ''}</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">${summary.substring(
+                0,
+                150
+              )}${summary.length > 150 ? '...' : ''}</p>
             </div>
             <svg class="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -184,12 +202,22 @@ function renderResources(data) {
       <div class="grid gap-2">
   `;
 
-  resources.forEach(resource => {
+  resources.forEach((resource) => {
     html += `
       <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-        <h5 class="font-medium text-slate-900 dark:text-white text-sm">${resource.name || resource.uri}</h5>
-        ${resource.description ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${resource.description}</p>` : ''}
-        ${resource.uri ? `<p class="text-xs text-accent font-mono mt-1">${resource.uri}</p>` : ''}
+        <h5 class="font-medium text-slate-900 dark:text-white text-sm">${
+          resource.name || resource.uri
+        }</h5>
+        ${
+          resource.description
+            ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${resource.description}</p>`
+            : ''
+        }
+        ${
+          resource.uri
+            ? `<p class="text-xs text-accent font-mono mt-1">${resource.uri}</p>`
+            : ''
+        }
       </div>
     `;
   });
@@ -208,7 +236,7 @@ function renderPrompts(data) {
 
   // Group prompts by namespace
   const grouped = {};
-  prompts.forEach(prompt => {
+  prompts.forEach((prompt) => {
     const [namespace] = prompt.name.split('.');
     if (!grouped[namespace]) grouped[namespace] = [];
     grouped[namespace].push(prompt);
@@ -229,12 +257,19 @@ function renderPrompts(data) {
         <div class="grid gap-2">
     `;
 
-    nsPrompts.forEach(prompt => {
+    nsPrompts.forEach((prompt) => {
       const shortName = prompt.name.split('.').slice(1).join('.');
       html += `
         <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
           <h5 class="font-medium text-slate-900 dark:text-white text-sm">${shortName}</h5>
-          ${prompt.description ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${prompt.description.substring(0, 150)}${prompt.description.length > 150 ? '...' : ''}</p>` : ''}
+          ${
+            prompt.description
+              ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${prompt.description.substring(
+                  0,
+                  150
+                )}${prompt.description.length > 150 ? '...' : ''}</p>`
+              : ''
+          }
         </div>
       `;
     });
@@ -271,7 +306,7 @@ function renderMetrics(data) {
   // Convert endpoints object to array: { "GET:/path": {...} } -> [{ key: "GET:/path", ... }]
   const endpoints = Object.entries(endpointsObj).map(([key, value]) => ({
     key,
-    ...value
+    ...value,
   }));
 
   // Values are already formatted strings from the API
@@ -283,7 +318,9 @@ function renderMetrics(data) {
       <!-- Header -->
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Performance Metrics</h3>
-        <span class="text-xs text-slate-500">Uptime: ${body.uptime || 'N/A'}</span>
+        <span class="text-xs text-slate-500">Uptime: ${
+          body.uptime || 'N/A'
+        }</span>
       </div>
 
       <!-- Summary Cards -->
@@ -291,57 +328,87 @@ function renderMetrics(data) {
         <!-- Total Requests -->
         <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
           <div class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Requests</div>
-          <div class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">${requests.total || 0}</div>
-          <div class="text-xs ${requests.errors > 0 ? 'text-red-500' : 'text-green-500'}">${requests.errors || 0} errors (${errorRate})</div>
+          <div class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">${
+            requests.total || 0
+          }</div>
+          <div class="text-xs ${
+            requests.errors > 0 ? 'text-red-500' : 'text-green-500'
+          }">${requests.errors || 0} errors (${errorRate})</div>
         </div>
 
         <!-- Cache Hit Rate -->
         <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
           <div class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Cache Hit Rate</div>
-          <div class="mt-1 text-2xl font-bold ${parseFloat(cacheHitRate) > 50 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}">${cacheHitRate}</div>
-          <div class="text-xs text-slate-500">${cache.memorySize || 0} bytes cached</div>
+          <div class="mt-1 text-2xl font-bold ${
+            parseFloat(cacheHitRate) > 50
+              ? 'text-green-600 dark:text-green-400'
+              : 'text-yellow-600 dark:text-yellow-400'
+          }">${cacheHitRate}</div>
+          <div class="text-xs text-slate-500">${
+            cache.memorySize || 0
+          } bytes cached</div>
         </div>
 
         <!-- P50 Latency -->
         <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
           <div class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">P50 Latency</div>
-          <div class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">${latency.p50 || '0ms'}</div>
+          <div class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">${
+            latency.p50 || '0ms'
+          }</div>
           <div class="text-xs text-slate-500">avg: ${latency.avg || '0ms'}</div>
         </div>
 
         <!-- P95/P99 Latency -->
         <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
           <div class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">P95 / P99</div>
-          <div class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">${latency.p95 || '0ms'}</div>
+          <div class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">${
+            latency.p95 || '0ms'
+          }</div>
           <div class="text-xs text-slate-500">p99: ${latency.p99 || '0ms'}</div>
         </div>
       </div>
 
       <!-- Endpoint Breakdown -->
-      ${endpoints.length > 0 ? `
+      ${
+        endpoints.length > 0
+          ? `
       <div class="space-y-2">
         <h4 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Endpoint Breakdown</h4>
         <div class="space-y-2 max-h-48 overflow-y-auto">
-          ${endpoints.map(ep => `
+          ${endpoints
+            .map(
+              (ep) => `
               <div class="p-2 rounded-lg bg-white/30 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between">
-                  <span class="text-xs font-mono text-slate-600 dark:text-slate-300">${ep.key}</span>
-                  <span class="text-xs text-slate-500">${ep.requests || 0} req</span>
+                  <span class="text-xs font-mono text-slate-600 dark:text-slate-300">${
+                    ep.key
+                  }</span>
+                  <span class="text-xs text-slate-500">${
+                    ep.requests || 0
+                  } req</span>
                 </div>
                 <div class="flex items-center gap-4 mt-1 text-xs text-slate-500">
                   <span>avg: ${ep.avgLatency || 0}ms</span>
                   <span>cache: ${ep.cacheHitRate || 0}%</span>
-                  <span class="${ep.errors > 0 ? 'text-red-500' : ''}">errors: ${ep.errors || 0}</span>
+                  <span class="${
+                    ep.errors > 0 ? 'text-red-500' : ''
+                  }">errors: ${ep.errors || 0}</span>
                 </div>
               </div>
-            `).join('')}
+            `
+            )
+            .join('')}
         </div>
       </div>
-      ` : ''}
+      `
+          : ''
+      }
 
       <!-- Timestamp -->
       <div class="text-xs text-slate-400 text-right">
-        Last updated: ${body.timestamp ? new Date(body.timestamp).toLocaleString() : 'N/A'}
+        Last updated: ${
+          body.timestamp ? new Date(body.timestamp).toLocaleString() : 'N/A'
+        }
       </div>
     </div>
   `;
@@ -353,7 +420,11 @@ function renderGeneric(data) {
   const body = data.body || data;
   return `
     <div class="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-      <pre class="text-xs text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">${JSON.stringify(body, null, 2)}</pre>
+      <pre class="text-xs text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">${JSON.stringify(
+        body,
+        null,
+        2
+      )}</pre>
     </div>
   `;
 }
@@ -377,7 +448,11 @@ function show(obj, endpoint = '') {
     html = renderResources(obj);
   } else if (endpoint.includes('/prompts/list') || obj.body?.prompts) {
     html = renderPrompts(obj);
-  } else if (endpoint.includes('/metrics') || obj.body?.requests || obj.body?.latency) {
+  } else if (
+    endpoint.includes('/metrics') ||
+    obj.body?.requests ||
+    obj.body?.latency
+  ) {
     html = renderMetrics(obj);
   } else {
     html = renderGeneric(obj);
@@ -386,7 +461,7 @@ function show(obj, endpoint = '') {
   formattedEl.innerHTML = html;
 
   // Add click handlers for tool cards
-  document.querySelectorAll('.tool-card').forEach(card => {
+  document.querySelectorAll('.tool-card').forEach((card) => {
     card.addEventListener('click', () => {
       const tool = JSON.parse(card.dataset.tool);
       const endpointInput = document.getElementById('post-endpoint');
@@ -395,15 +470,26 @@ function show(obj, endpoint = '') {
         endpointInput.value = '/mcp/tools/call';
         const args = {};
         if (tool.inputSchema?.properties) {
-          Object.entries(tool.inputSchema.properties).forEach(([key, schema]) => {
-            if (schema.default !== undefined) {
-              args[key] = schema.default;
-            } else if (tool.inputSchema.required?.includes(key)) {
-              args[key] = schema.type === 'string' ? '' : schema.type === 'number' ? 0 : null;
+          Object.entries(tool.inputSchema.properties).forEach(
+            ([key, schema]) => {
+              if (schema.default !== undefined) {
+                args[key] = schema.default;
+              } else if (tool.inputSchema.required?.includes(key)) {
+                args[key] =
+                  schema.type === 'string'
+                    ? ''
+                    : schema.type === 'number'
+                    ? 0
+                    : null;
+              }
             }
-          });
+          );
         }
-        bodyInput.value = JSON.stringify({ name: tool.name, arguments: args }, null, 2);
+        bodyInput.value = JSON.stringify(
+          { name: tool.name, arguments: args },
+          null,
+          2
+        );
       }
     });
   });
@@ -412,7 +498,8 @@ function show(obj, endpoint = '') {
 async function callGet(path) {
   setStatus('Loading...', true);
   show({ status: 'loading' }, path);
-  formattedEl.innerHTML = '<div class="flex items-center justify-center h-32"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div></div>';
+  formattedEl.innerHTML =
+    '<div class="flex items-center justify-center h-32"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div></div>';
 
   try {
     const res = await fetch(path, { cache: 'no-store' });
@@ -432,7 +519,8 @@ async function callGet(path) {
 
 async function callPost(path, data) {
   setStatus('Loading...', true);
-  formattedEl.innerHTML = '<div class="flex items-center justify-center h-32"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div></div>';
+  formattedEl.innerHTML =
+    '<div class="flex items-center justify-center h-32"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div></div>';
 
   try {
     const res = await fetch(path, {
@@ -479,12 +567,12 @@ let _resourcesList = [];
 async function initResourcesDropdown() {
   const select = document.getElementById('resource-select');
   if (!select) return;
-  
+
   try {
     const response = await fetch('/mcp/resources/list');
     const data = await response.json();
     _resourcesList = data.resources || [];
-    
+
     // Populate dropdown
     select.innerHTML = '<option value="">Select a resource...</option>';
     _resourcesList.forEach((resource, index) => {
@@ -493,10 +581,13 @@ async function initResourcesDropdown() {
       option.textContent = resource.name;
       select.appendChild(option);
     });
-    
-    document.getElementById('resource-status').textContent = `${_resourcesList.length} resource(s) available`;
+
+    document.getElementById(
+      'resource-status'
+    ).textContent = `${_resourcesList.length} resource(s) available`;
   } catch (error) {
-    document.getElementById('resource-status').textContent = 'Failed to load resources';
+    document.getElementById('resource-status').textContent =
+      'Failed to load resources';
     console.error('Error loading resources:', error);
   }
 }
@@ -506,61 +597,65 @@ function showResourceDetails(resource) {
     document.getElementById('resource-details').classList.add('hidden');
     return;
   }
-  
+
   document.getElementById('resource-name').textContent = resource.name;
-  document.getElementById('resource-description').textContent = resource.description || 'No description available';
+  document.getElementById('resource-description').textContent =
+    resource.description || 'No description available';
   document.getElementById('resource-details').classList.remove('hidden');
 }
 
 async function readResource() {
   const select = document.getElementById('resource-select');
   const selectedIndex = select.value;
-  
+
   if (!selectedIndex) return;
-  
+
   const resource = _resourcesList[selectedIndex];
   if (!resource) return;
-  
+
   const resultContainer = document.getElementById('resource-result-container');
   const resultEl = document.getElementById('resource-result');
   const statusEl = document.getElementById('resource-result-status');
-  
+
   statusEl.textContent = 'Loading...';
   statusEl.classList.add('text-accent');
-  
+
   try {
     // Debug: log the resource to see what we're sending
     console.log('Reading resource:', resource);
     console.log('Resource URI:', resource.uri);
-    
+
     const response = await fetch('/mcp/resources/read', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uri: resource.uri })
+      body: JSON.stringify({ uri: resource.uri }),
     });
-    
+
     const data = await response.json();
-    
+
     console.log('Response status:', response.status, 'Data:', data);
-    
+
     if (response.ok) {
       // Handle different response formats
       let content = data.contents || data.content || data;
-      resultEl.textContent = typeof content === 'string' 
-        ? content 
-        : JSON.stringify(content, null, 2);
+      resultEl.textContent =
+        typeof content === 'string'
+          ? content
+          : JSON.stringify(content, null, 2);
       statusEl.textContent = 'Success';
       statusEl.classList.remove('text-accent');
     } else {
       // Show the error from the backend
       if (data.error) {
-        resultEl.textContent = `Error: ${data.error}\n${data.message || ''}\n\nResource URI: ${resource.uri}`;
+        resultEl.textContent = `Error: ${data.error}\n${
+          data.message || ''
+        }\n\nResource URI: ${resource.uri}`;
       } else {
         resultEl.textContent = JSON.stringify(data, null, 2);
       }
       statusEl.textContent = 'Error';
     }
-    
+
     resultContainer.classList.remove('hidden');
   } catch (error) {
     resultEl.textContent = `Error: ${error.message}`;
@@ -574,7 +669,9 @@ async function readResource() {
 function _getThemePreference() {
   const stored = localStorage.getItem('theme');
   if (stored) return stored;
-  return globalThis.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return globalThis.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
 }
 
 function setTheme(theme) {
@@ -587,7 +684,9 @@ function setTheme(theme) {
 }
 
 function toggleTheme() {
-  const current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+  const current = document.documentElement.classList.contains('dark')
+    ? 'dark'
+    : 'light';
   const next = current === 'dark' ? 'light' : 'dark';
   setTheme(next);
 }
@@ -600,46 +699,65 @@ document.addEventListener('DOMContentLoaded', () => {
   themeToggle?.addEventListener('click', toggleTheme);
 
   // Listen for system theme changes
-  globalThis.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    if (!localStorage.getItem('theme')) {
-      setTheme(e.matches ? 'dark' : 'light');
-    }
-  });
+  globalThis
+    .matchMedia('(prefers-color-scheme: dark)')
+    .addEventListener('change', (e) => {
+      if (!localStorage.getItem('theme')) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
 
   // Raw/Formatted toggle
   toggleRawBtn?.addEventListener('click', toggleRawView);
 
   // GET buttons
-  document.getElementById('btn-tools')?.addEventListener('click', () => callGet('/mcp/tools/list'));
-  document.getElementById('btn-resources')?.addEventListener('click', () => callGet('/mcp/resources/list'));
-  document.getElementById('btn-prompts')?.addEventListener('click', () => callGet('/mcp/prompts/list'));
-  document.getElementById('btn-health')?.addEventListener('click', () => callGet('/mcp/health'));
-  document.getElementById('btn-metrics')?.addEventListener('click', () => callGet('/mcp/metrics'));
+  document
+    .getElementById('btn-tools')
+    ?.addEventListener('click', () => callGet('/mcp/tools/list'));
+  document
+    .getElementById('btn-resources')
+    ?.addEventListener('click', () => callGet('/mcp/resources/list'));
+  document
+    .getElementById('btn-prompts')
+    ?.addEventListener('click', () => callGet('/mcp/prompts/list'));
+  document
+    .getElementById('btn-health')
+    ?.addEventListener('click', () => callGet('/mcp/health'));
+  document
+    .getElementById('btn-metrics')
+    ?.addEventListener('click', () => callGet('/mcp/metrics'));
 
   // Resources Reader
   initResourcesDropdown();
-  document.getElementById('resource-select')?.addEventListener('change', (e) => {
-    const selectedIndex = e.target.value;
-    if (selectedIndex) {
-      showResourceDetails(_resourcesList[selectedIndex]);
-    } else {
-      showResourceDetails(null);
-    }
-  });
-  document.getElementById('read-resource-btn')?.addEventListener('click', readResource);
+  document
+    .getElementById('resource-select')
+    ?.addEventListener('change', (e) => {
+      const selectedIndex = e.target.value;
+      if (selectedIndex) {
+        showResourceDetails(_resourcesList[selectedIndex]);
+      } else {
+        showResourceDetails(null);
+      }
+    });
+  document
+    .getElementById('read-resource-btn')
+    ?.addEventListener('click', readResource);
   document.getElementById('copy-resource')?.addEventListener('click', () => {
     const resultEl = document.getElementById('resource-result');
     if (resultEl?.textContent) {
-      navigator.clipboard.writeText(resultEl.textContent).then(() => {
-        const copyBtn = document.getElementById('copy-resource');
-        const originalLabel = copyBtn.getAttribute('aria-label');
-        copyBtn.setAttribute('aria-label', 'Copied!');
-        copyBtn.classList.add('text-accent');
-        setTimeout(() => {
-          copyBtn.setAttribute('aria-label', originalLabel);
-          copyBtn.classList.remove('text-accent');
-        }, 2000);
-      }).catch(err => console.error('Failed to copy:', err));
+      navigator.clipboard
+        .writeText(resultEl.textContent)
+        .then(() => {
+          const copyBtn = document.getElementById('copy-resource');
+          const originalLabel = copyBtn.getAttribute('aria-label');
+          copyBtn.setAttribute('aria-label', 'Copied!');
+          copyBtn.classList.add('text-accent');
+          setTimeout(() => {
+            copyBtn.setAttribute('aria-label', originalLabel);
+            copyBtn.classList.remove('text-accent');
+          }, 2000);
+        })
+        .catch((err) => console.error('Failed to copy:', err));
     }
   });
 });

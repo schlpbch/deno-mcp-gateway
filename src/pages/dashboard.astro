@@ -6,26 +6,37 @@ import Footer from '../components/Footer.astro';
 
 <Base title="Dashboard - MCP Gateway">
   <Header title="MCP Gateway" />
-  
-  <main class="min-h-[calc(100vh-120px)] bg-gradient-to-br from-white to-slate-50 dark:from-slate-950 dark:to-slate-900 py-8 px-4 sm:px-6 lg:px-8">
+
+  <main
+    class="min-h-[calc(100vh-120px)] bg-gradient-to-br from-white to-slate-50 dark:from-slate-950 dark:to-slate-900 py-8 px-4 sm:px-6 lg:px-8"
+  >
     <div class="max-w-6xl mx-auto">
       <div class="space-y-6">
         <div>
-          <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Dashboard</h1>
-          <p class="text-slate-600 dark:text-slate-400">Real-time gateway metrics and server health</p>
+          <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+            Dashboard
+          </h1>
+          <p class="text-slate-600 dark:text-slate-400">
+            Real-time gateway metrics and server health
+          </p>
         </div>
 
         <!-- Loading state -->
         <div id="dashboard-content" class="text-center py-12">
           <div class="inline-block">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+            <div
+              class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"
+            >
+            </div>
           </div>
-          <p class="mt-4 text-slate-600 dark:text-slate-400">Loading dashboard...</p>
+          <p class="mt-4 text-slate-600 dark:text-slate-400">
+            Loading dashboard...
+          </p>
         </div>
       </div>
     </div>
   </main>
-  
+
   <Footer />
 
   <script>
@@ -33,9 +44,9 @@ import Footer from '../components/Footer.astro';
       try {
         const response = await fetch('/metrics');
         const metrics = await response.json();
-        
+
         const content = document.getElementById('dashboard-content')!;
-        
+
         content.innerHTML = `
           <div class="grid md:grid-cols-2 gap-6">
             <div class="p-6 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
@@ -62,7 +73,9 @@ import Footer from '../components/Footer.astro';
           <div class="mt-8 p-6 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             <h3 class="font-semibold text-slate-900 dark:text-white mb-4">Backend Services</h3>
             <div class="space-y-3">
-              ${Object.entries(metrics.backends || {}).map(([name, status]: [string, any]) => `
+              ${Object.entries(metrics.backends || {})
+                .map(
+                  ([name, status]: [string, any]) => `
                 <div class="flex items-center justify-between p-3 rounded bg-slate-50 dark:bg-slate-900">
                   <span class="font-medium text-slate-900 dark:text-white">${name}</span>
                   <div class="flex items-center gap-2">
@@ -70,7 +83,9 @@ import Footer from '../components/Footer.astro';
                     <span class="text-sm text-slate-600 dark:text-slate-400">${status.healthy ? 'Healthy' : 'Unhealthy'}</span>
                   </div>
                 </div>
-              `).join('')}
+              `
+                )
+                .join('')}
             </div>
           </div>
         `;
@@ -82,7 +97,7 @@ import Footer from '../components/Footer.astro';
         `;
       }
     }
-    
+
     loadDashboard();
     // Refresh every 10 seconds
     setInterval(loadDashboard, 10000);

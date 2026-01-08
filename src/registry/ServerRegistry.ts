@@ -97,7 +97,7 @@ export class ServerRegistry {
     // Extract scheme from URI (e.g., "about://service" -> "about", "journey://trips" -> "journey")
     const schemeMatch = uri.match(/^([^:]+):/);
     const scheme = schemeMatch ? schemeMatch[1] : uri;
-    
+
     // Map scheme to server ID
     const serverId = NAMESPACE_MAP[scheme] || `${scheme}-mcp`;
     const server = this.servers.get(serverId);

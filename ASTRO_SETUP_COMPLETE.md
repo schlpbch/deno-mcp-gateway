@@ -1,14 +1,18 @@
 # Astro + pnpm Setup Complete ✓
 
-Your MCP Gateway frontend has been successfully migrated to **Astro** with **pnpm** as the package manager.
+Your MCP Gateway frontend has been successfully migrated to **Astro** with
+**pnpm** as the package manager.
 
 ## What Changed
 
 ### Frontend Architecture
-- **Old**: Plain HTML/JS in `public/` folder (brittle DOM selectors, scattered state)
+
+- **Old**: Plain HTML/JS in `public/` folder (brittle DOM selectors, scattered
+  state)
 - **New**: Component-based Astro architecture with TypeScript type safety
 
 ### Project Structure
+
 ```
 src/
 ├── pages/           # Auto-routed pages
@@ -25,6 +29,7 @@ src/
 ```
 
 ### Package Manager
+
 - Switched from **npm** to **pnpm**
 - Faster, more secure, better disk space efficiency
 - Config: `packageManager: "pnpm@9.0.0"` in package.json
@@ -32,6 +37,7 @@ src/
 ## Quick Start
 
 ### Development
+
 ```bash
 # Install dependencies (one time)
 pnpm install
@@ -44,11 +50,13 @@ deno task dev   # runs on http://localhost:8888
 ```
 
 ### Build for Production
+
 ```bash
 pnpm build  # creates dist/ with static HTML
 ```
 
-The `dist/` folder contains built HTML that can be served by your Deno backend or deployed to a CDN.
+The `dist/` folder contains built HTML that can be served by your Deno backend
+or deployed to a CDN.
 
 ## Key Benefits
 
@@ -63,6 +71,7 @@ The `dist/` folder contains built HTML that can be served by your Deno backend o
 ## Next Steps
 
 ### Try the Dev Server
+
 ```bash
 pnpm install
 pnpm dev
@@ -71,12 +80,16 @@ pnpm dev
 Visit http://localhost:3000 to see the new Astro-powered UI!
 
 ### Convert More Pages
-The old `public/` files still exist for backward compatibility. You can gradually migrate them:
+
+The old `public/` files still exist for backward compatibility. You can
+gradually migrate them:
+
 - Old static files → New Astro components
 - Scattered JS → Component `<script>` blocks
 - Global styles → Scoped component styles
 
 ### Deploy
+
 Build and serve the `dist/` folder with your Deno backend:
 
 ```typescript

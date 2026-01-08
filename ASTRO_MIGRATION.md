@@ -2,7 +2,8 @@
 
 ## Project Structure
 
-The frontend has been migrated to **Astro** for better component organization and maintainability.
+The frontend has been migrated to **Astro** for better component organization
+and maintainability.
 
 ```
 deno-mcp-gateway/
@@ -28,11 +29,13 @@ deno-mcp-gateway/
 ## Development
 
 ### 1. Install Astro dependencies
+
 ```bash
 pnpm install
 ```
 
 ### 2. Run development server
+
 ```bash
 # Terminal 1: Astro dev server (rebuilds on changes, serves pages)
 pnpm dev
@@ -41,9 +44,11 @@ pnpm dev
 deno task dev
 ```
 
-The Astro dev server runs on `http://localhost:3000` and proxies API requests to your Deno backend on `http://localhost:8888`.
+The Astro dev server runs on `http://localhost:3000` and proxies API requests to
+your Deno backend on `http://localhost:8888`.
 
 ### 3. Build for production
+
 ```bash
 pnpm build
 ```
@@ -53,16 +58,19 @@ This generates static HTML in `dist/` that can be served with your Deno backend.
 ## Key Features
 
 ### Zero JavaScript by Default
+
 - Pages are pure HTML/CSS unless you explicitly add interactivity
 - Load JavaScript only where needed (Islands Architecture)
 
 ### Type-Safe Components
+
 - All components use TypeScript
 - Full IDE autocomplete and type checking
 
 ### Component Examples
 
 #### Simple Static Component
+
 ```astro
 ---
 // src/components/Header.astro
@@ -82,6 +90,7 @@ const { title } = Astro.props;
 ```
 
 #### Interactive Component with Client-Side JS
+
 ```astro
 ---
 // src/components/ResourcesReader.astro
@@ -102,8 +111,10 @@ const { title } = Astro.props;
 
 ## Benefits Over Vanilla HTML/JS
 
-1. **Component Organization** - Each component is self-contained with HTML, CSS, and JS
-2. **No Brittle Selectors** - Less reliance on IDs and classes across the codebase
+1. **Component Organization** - Each component is self-contained with HTML, CSS,
+   and JS
+2. **No Brittle Selectors** - Less reliance on IDs and classes across the
+   codebase
 3. **CSS Isolation** - Styles automatically scoped to components
 4. **Reusability** - Easy to reuse components across pages
 5. **Type Safety** - TypeScript for props and component interfaces
@@ -112,7 +123,8 @@ const { title } = Astro.props;
 
 ## Migration Path
 
-The old `public/` files are still served for backward compatibility, but you should gradually move to Astro components:
+The old `public/` files are still served for backward compatibility, but you
+should gradually move to Astro components:
 
 - `public/index.html` → `src/pages/index.astro`
 - `public/dashboard.html` → `src/pages/dashboard.astro`
@@ -122,6 +134,7 @@ The old `public/` files are still served for backward compatibility, but you sho
 ## Deployment
 
 ### Build and serve with Deno
+
 1. Build Astro: `npm run build`
 2. The `dist/` folder contains static files
 3. Update your Deno server to serve `dist/` for non-API routes:
@@ -129,7 +142,9 @@ The old `public/` files are still served for backward compatibility, but you sho
 ```typescript
 // In dev.ts or main.ts
 const file = await Deno.open('./dist' + pathname);
-return new Response(file.readable, { headers: { 'content-type': 'text/html' } });
+return new Response(file.readable, {
+  headers: { 'content-type': 'text/html' },
+});
 ```
 
 Or deploy to a CDN and keep Deno as API-only backend.

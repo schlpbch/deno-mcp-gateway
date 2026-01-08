@@ -58,9 +58,17 @@ export class IntelligentRouter {
   /**
    * Route a resource read request using direct server ID (when we know which server owns it)
    */
-  async routeResourceReadDirect(serverId: string, uri: string): Promise<McpResourceReadResponse> {
-    console.log('[Router] routeResourceReadDirect: serverId=', serverId, 'uri=', uri);
-    
+  async routeResourceReadDirect(
+    serverId: string,
+    uri: string
+  ): Promise<McpResourceReadResponse> {
+    console.log(
+      '[Router] routeResourceReadDirect: serverId=',
+      serverId,
+      'uri=',
+      uri
+    );
+
     const server = this.registry.getServer(serverId);
     if (!server) {
       throw new Error(`Server not found: ${serverId}`);
