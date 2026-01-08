@@ -640,6 +640,7 @@ if (Deno.env.get('DEBUG')) {
 - P95 latency > 1000ms
 - All backends unhealthy
 - Frequent timeouts
+- Circuit breaker state is OPEN
 
 ### Future Enhancements
 
@@ -647,6 +648,71 @@ if (Deno.env.get('DEBUG')) {
 - Add distributed tracing
 - Implement custom metrics
 - Set up analytics dashboard
+
+## Fault Tolerance & Circuit Breaker
+
+### Circuit Breaker Pattern (src/circuitbreaker/CircuitBreaker.ts)
+
+**Purpose**: Prevent cascading failures and enable automatic recovery
+
+**States**:
+
+- **CLOSED**: Normal operation, all requests pass through
+- **OPEN**: Service failing, rejects requests immediately (fail-fast)
+- **HALF_OPEN**: Recovery mode, testing if service has stabilized
+
+**Features**:
+
+- Automatic state transitions based on failure/success thresholds
+- Fast failure detection prevents timeouts and cascading failures
+- Automatic recovery attempts after configured timeout
+- Per-backend circuit breakers for granular control
+- Failure counting with time-window reset
+- Success counters for recovery validation
+
+**Configuration**:
+
+```typescript
+{
+  failureThreshold: 5,      // Failures before opening
+  successThreshold: 2,      // Successes for recovery
+  timeout: 30000,           // Time before half-open (ms)
+  monitorWindow: 60000      // Failure counting window (ms)
+}
+```
+
+**Benefits**:
+
+- Fail-fast responses instead of hanging requests
+- Prevents repeated requests to failing backends
+- Automatic recovery detection
+- Clear visibility into backend health
+- Graceful degradation
+
+**Monitoring**:
+
+Access circuit breaker status via `/metrics`:
+
+```json
+{
+  "circuitBreakers": {
+    "journey": {
+      "state": "CLOSED",
+      "failureCount": 0,
+      "successCount": 5,
+      "isHealthy": true
+    },
+    "aareguru": {
+      "state": "OPEN",
+      "failureCount": 5,
+      "successCount": 0,
+      "isHealthy": false
+    }
+  }
+}
+```
+
+See [CIRCUIT_BREAKER.md](CIRCUIT_BREAKER.md) for detailed documentation.
 
 ## Middleware & Security
 
@@ -741,13 +807,13 @@ const summary = globalMetrics.getSummary();
 3. ✅ Implement request validation schemas
 4. ✅ Add basic rate limiting
 5. ✅ Set up monitoring dashboard
+6. ✅ Implement circuit breaker pattern
 
 ### Medium Term (Q2 2026)
 
 1. ⬜ Implement distributed caching (deno Blobs)
 2. ⬜ Add authentication/API keys
 3. ⬜ Support backend server health dashboards
-4. ⬜ Implement circuit breaker pattern
 
 ### Long Term (Q3-Q4 2026)
 

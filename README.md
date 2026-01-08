@@ -10,6 +10,7 @@ servers.
 - **Intelligent Routing**: Namespace-based routing to backend servers
 - **Persistent Caching**: Two-tier cache (memory + deno Blobs)
 - **Health Monitoring**: Automatic health checks and failover
+- **Circuit Breaker**: Prevents cascading failures with automatic recovery
 - **Retry Logic**: Exponential backoff for resilient backend calls
 - **TypeScript**: Fully typed with Deno runtime
 - **Mobile-Optimized UI**: Responsive design for all screen sizes (44px touch

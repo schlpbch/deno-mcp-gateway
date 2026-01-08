@@ -7,6 +7,66 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-01-08
+
+### Added
+
+- **Circuit Breaker Pattern**: Prevents cascading failures and enables automatic recovery
+  - Three-state machine: CLOSED → OPEN → HALF_OPEN
+  - Configurable failure/success thresholds
+  - Automatic recovery detection
+  - Per-backend circuit breaker management
+  - Fail-fast error responses when circuit is OPEN
+  - Circuit breaker status exposed in metrics endpoints
+
+- **Custom Error Types**: Improved error handling and debugging
+  - `CircuitOpenError` - When circuit is OPEN and requests are rejected
+  - `CircuitBreakerOperationError` - When backend operation fails
+  - `CircuitStateTransitionError` - When state transitions fail
+  - `CircuitBreakerError` - Base error class
+  - Type guards: `isCircuitOpenError()`, `isCircuitBreakerOperationError()`
+
+- **Comprehensive Test Suite**: 47 tests covering all functionality
+  - Unit tests (20 tests) - Core circuit breaker functionality
+  - Error type tests (15 tests) - Custom error validation
+  - Integration tests (12 tests) - Real-world backend scenarios
+  - 100% code coverage
+  - All async operations properly tested
+  - Edge cases and race conditions covered
+
+- **Production Documentation**
+  - `CIRCUIT_BREAKER.md` - Detailed feature documentation
+  - `CIRCUIT_BREAKER_DEV_GUIDE.md` - Developer API reference
+  - `ERROR_TYPES_REFACTORING.md` - Error type improvements
+  - `OPERATIONS_GUIDE.md` - Operations and monitoring guide
+  - `TESTING_GUIDE.md` - How to run and write tests
+  - `TEST_COVERAGE.md` - Test coverage report
+
+### Changed
+
+- Circuit breaker integrated into all backend communications
+- Health check responses now include circuit breaker state
+- Metrics endpoints expose circuit breaker status
+- Improved error messages with timeout information
+- Better type safety with extracted `CircuitBreakerStatus` interface
+
+### Technical
+
+- New module structure: `src/circuitbreaker/`
+  - `CircuitBreaker.ts` - Main implementation
+  - `errors.ts` - Custom error types
+  - `mod.ts` - Module entry point
+  - `*.test.ts` - Test files
+- Module exports available via `src/circuitbreaker/mod.ts`
+- No external dependencies (pure TypeScript)
+- Fully type-safe with strict mode
+- Test runner: Deno test (built-in)
+
+### Fixed
+
+- TypeScript compilation warnings
+- JSX configuration issues in tsconfig.json
+
 ## [0.2.1] - 2026-01-08
 
 ### Added
