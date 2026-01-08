@@ -98,12 +98,21 @@ const mcpHandler = async (request: Request): Promise<Response> => {
   }
 
   // Static files from public/
-  if (url.pathname === '/' || url.pathname === '/dashboard' || url.pathname.startsWith('/public/')) {
+  if (
+    url.pathname === '/' ||
+    url.pathname === '/dashboard' ||
+    url.pathname === '/dashboard.test' ||
+    url.pathname.startsWith('/public/')
+  ) {
     try {
       const filePath =
-        url.pathname === '/' ? './public/index.html' 
-        : url.pathname === '/dashboard' ? './public/dashboard.html'
-        : '.' + url.pathname;
+        url.pathname === '/'
+          ? './public/index.html'
+          : url.pathname === '/dashboard'
+          ? './public/dashboard.html'
+          : url.pathname === '/dashboard.test'
+          ? './public/dashboard.test.html'
+          : '.' + url.pathname;
 
       const file = await Deno.readFile(filePath);
       const contentType = filePath.endsWith('.html')

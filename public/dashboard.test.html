@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Button Tests</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .test-result {
+      padding: 16px;
+      margin: 8px 0;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+    .test-pass {
+      background-color: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+    .test-fail {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 p-8">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8">Dashboard Button Regression Tests</h1>
+    
+    <div id="test-results"></div>
+    
+    <div class="mt-8 p-6 bg-white rounded-lg border">
+      <h2 class="text-xl font-bold mb-4">Test Actions</h2>
+      <a href="/" class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mr-2">
+        Home Page
+      </a>
+      <a href="/dashboard" class="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+        Dashboard Page
+      </a>
+    </div>
+  </div>
+
+  <script>
+    const tests = [
+      {
+        name: "Dashboard button exists in home page",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          return html.includes('href="/dashboard"') && html.includes('aria-label="View monitoring dashboard"');
+        }
+      },
+      {
+        name: "Dashboard button is an anchor tag (not button)",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          const dashboardLinkMatch = html.match(/<a[^>]*href="\/dashboard"[^>]*>/);
+          return dashboardLinkMatch && !dashboardLinkMatch[0].includes('type="button"');
+        }
+      },
+      {
+        name: "Dashboard button has proper Tailwind classes",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          const dashboardLink = html.match(/<a[^>]*href="\/dashboard"[^>]*>/);
+          const classes = ["p-2", "rounded-lg", "bg-slate-200", "inline-flex", "items-center"];
+          const hasClasses = dashboardLink && classes.every(c => dashboardLink[0].includes(c));
+          return hasClasses;
+        }
+      },
+      {
+        name: "Dashboard button has SVG icon",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          const dashboardSection = html.match(/<a[^>]*href="\/dashboard"[^>]*>[\s\S]*?<\/a>/);
+          return dashboardSection && dashboardSection[0].includes("<svg");
+        }
+      },
+      {
+        name: "Dashboard page is accessible at /dashboard",
+        test: async () => {
+          const response = await fetch("/dashboard");
+          return response.ok && response.status === 200;
+        }
+      },
+      {
+        name: "Dashboard page contains metrics endpoint",
+        test: async () => {
+          const response = await fetch("/dashboard");
+          const html = await response.text();
+          return html.includes('fetch("/metrics")') || html.includes("fetch('/metrics')");
+        }
+      },
+      {
+        name: "Dashboard back link exists",
+        test: async () => {
+          const response = await fetch("/dashboard");
+          const html = await response.text();
+          return html.includes('href="/"') && html.includes("Back to Home");
+        }
+      },
+      {
+        name: "Metrics endpoint returns valid JSON",
+        test: async () => {
+          const response = await fetch("/metrics");
+          if (!response.ok) return false;
+          const data = await response.json();
+          return data.gateway && data.backends && data.timestamp;
+        }
+      },
+      {
+        name: "Footer dashboard link exists",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          const footerMatch = html.match(/<footer[\s\S]*?<\/footer>/);
+          return footerMatch && footerMatch[0].includes('href="/dashboard"');
+        }
+      },
+      {
+        name: "All dashboard links point to /dashboard",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          const dashboardLinks = (html.match(/href="\/dashboard"/g) || []).length;
+          return dashboardLinks >= 2; // At least header and footer links
+        }
+      }
+    ];
+
+    async function runTests() {
+      const resultsDiv = document.getElementById("test-results");
+      let passed = 0;
+      let failed = 0;
+
+      for (const test of tests) {
+        try {
+          const result = await test.test();
+          const resultDiv = document.createElement("div");
+          resultDiv.className = `test-result ${result ? "test-pass" : "test-fail"}`;
+          resultDiv.textContent = `${result ? "✓ PASS" : "✗ FAIL"}: ${test.name}`;
+          resultsDiv.appendChild(resultDiv);
+          
+          if (result) passed++;
+          else failed++;
+        } catch (error) {
+          const resultDiv = document.createElement("div");
+          resultDiv.className = "test-result test-fail";
+          resultDiv.textContent = `✗ ERROR: ${test.name} - ${error.message}`;
+          resultsDiv.appendChild(resultDiv);
+          failed++;
+        }
+      }
+
+      // Summary
+      const summary = document.createElement("div");
+      summary.className = "mt-8 p-4 bg-slate-100 rounded-lg font-bold text-lg";
+      summary.textContent = `Tests: ${passed} passed, ${failed} failed (Total: ${tests.length})`;
+      resultsDiv.appendChild(summary);
+
+      // Color summary based on results
+      if (failed === 0) {
+        summary.className += " text-green-700";
+      } else {
+        summary.className += " text-red-700";
+      }
+    }
+
+    // Run tests when page loads
+    window.addEventListener("load", runTests);
+  </script>
+</body>
+</html>
