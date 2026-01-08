@@ -267,7 +267,7 @@
         test: async () => {
           const response = await fetch("/");
           const html = await response.text();
-          return html.includes("<header") && html.includes("MCP Gateway");
+          return html.includes("<header") && html.includes("<h1") && html.includes("MCP Gateway");
         }
       },
       {
