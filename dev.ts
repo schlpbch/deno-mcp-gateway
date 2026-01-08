@@ -8,6 +8,7 @@
 import type { Gateway } from './src/init.ts';
 import { ServerRegistry } from './src/registry/ServerRegistry.ts';
 import { BackendMcpClient } from './src/client/BackendMcpClient.ts';
+import { MetricsCollector } from './src/monitoring/MetricsCollector.ts';
 import { ResponseCache } from './src/cache/ResponseCache.ts';
 import { IntelligentRouter } from './src/routing/IntelligentRouter.ts';
 import { McpProtocolHandler } from './src/protocol/McpProtocolHandler.ts';
@@ -89,20 +90,7 @@ const mcpHandler = async (request: Request): Promise<Response> => {
 
   // Metrics endpoint for dashboard
   if (url.pathname === '/metrics') {
-    const metrics = {
-      totalRequests: gateway.healthMonitor ? gateway.healthMonitor.totalRequests || 0 : 0,
-      totalErrors: gateway.healthMonitor ? gateway.healthMonitor.totalErrors || 0 : 0,
-      errorRate: gateway.healthMonitor ? (gateway.healthMonitor.totalErrors || 0) / Math.max((gateway.healthMonitor.totalRequests || 1), 1) : 0,
-      cacheHitRate: gateway.cache ? gateway.cache.getHitRate() : 0,
-      averageLatency: gateway.healthMonitor ? gateway.healthMonitor.averageLatency || 0 : 0,
-      backends: Array.from(gateway.registry.getServers()).map(server => ({
-        id: server.id,
-        name: server.name,
-        status: server.health?.status || 'UNKNOWN',
-        latency: server.health?.latency || 0,
-      })),
-      timestamp: new Date().toISOString(),
-    };
+    const metrics = MetricsCollector.globalMetrics.getSummary();
     return new Response(JSON.stringify(metrics), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
