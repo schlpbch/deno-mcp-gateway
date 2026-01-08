@@ -27,6 +27,8 @@ const LIST_CACHE_TTL = 60; // 1 minute for list responses
  */
 export class McpProtocolHandler {
   private cache: ResponseCache | null = null;
+  // Track which server owns each resource by URI
+  private resourceOwnerMap: Map<string, string> = new Map();
 
   constructor(
     private registry: ServerRegistry,
@@ -117,6 +119,10 @@ export class McpProtocolHandler {
         if (response?.resources) {
           // Keep resources as-is without modifying URIs
           console.log(`[Protocol] Resources from ${server.id}:`, response.resources.map(r => ({ name: r.name, uri: r.uri })));
+          response.resources.forEach(resource => {
+            // Track which server owns each resource
+            this.resourceOwnerMap.set(resource.uri, server.id);
+          });
           allResources.push(...response.resources);
         }
       } catch (error) {
@@ -141,7 +147,20 @@ export class McpProtocolHandler {
   async readResource(
     request: McpResourceReadRequest
   ): Promise<McpResourceReadResponse> {
-    return await this.router.routeResourceRead(request.uri);
+    console.log('[Protocol] readResource called with URI:', request.uri);
+    
+    // Look up which server owns this resource
+    const serverId = this.resourceOwnerMap.get(request.uri);
+    console.log('[Protocol] Resource owner:', serverId, 'for URI:', request.uri);
+    
+    if (serverId) {
+      // Use direct routing if we know which server owns it
+      return await this.router.routeResourceReadDirect(serverId, request.uri);
+    } else {
+      // Fallback to scheme-based routing if not found in map
+      console.log('[Protocol] Resource not in ownership map, falling back to scheme-based routing');
+      return await this.router.routeResourceRead(request.uri);
+    }
   }
 
   /**

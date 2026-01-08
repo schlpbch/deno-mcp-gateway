@@ -56,6 +56,31 @@ export class IntelligentRouter {
   }
 
   /**
+   * Route a resource read request using direct server ID (when we know which server owns it)
+   */
+  async routeResourceReadDirect(serverId: string, uri: string): Promise<McpResourceReadResponse> {
+    console.log('[Router] routeResourceReadDirect: serverId=', serverId, 'uri=', uri);
+    
+    const server = this.registry.getServer(serverId);
+    if (!server) {
+      throw new Error(`Server not found: ${serverId}`);
+    }
+
+    if (server.health.status !== HealthStatus.HEALTHY) {
+      throw new Error(
+        `Server ${server.id} is unhealthy (status: ${server.health.status})`
+      );
+    }
+
+    // Pass the full URI to the server that owns it
+    // The server knows how to handle its own resource URIs
+    console.log('[Router] Sending full URI to owning server:', uri);
+    const result = await this.client.readResource(server, uri);
+    console.log('[Router] Resource read result:', result);
+    return result;
+  }
+
+  /**
    * Route a resource read request
    */
   async routeResourceRead(uri: string): Promise<McpResourceReadResponse> {

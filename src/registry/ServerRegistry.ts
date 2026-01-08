@@ -68,6 +68,13 @@ export class ServerRegistry {
   }
 
   /**
+   * Get a specific server by ID
+   */
+  getServer(serverId: string): ServerRegistration | undefined {
+    return this.servers.get(serverId);
+  }
+
+  /**
    * Resolve which server provides a given tool
    */
   resolveToolServer(toolName: string): ServerRegistration {
