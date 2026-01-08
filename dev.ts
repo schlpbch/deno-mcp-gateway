@@ -127,7 +127,7 @@ const mcpHandler = async (request: Request): Promise<Response> => {
   if (url.pathname.startsWith('/mcp/')) {
     // Load and execute the edge function
     const { default: handler } = await import('./netlify/edge-functions/mcp.ts');
-    return handler(request, { gateway });
+    return handler(request, {} as unknown as Parameters<typeof handler>[1]);
   }
 
   return new Response('Not Found', { status: 404 });
