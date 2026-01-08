@@ -81,6 +81,51 @@
         }
       },
       {
+        name: "Dashboard button has hover styles",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          const dashboardLink = html.match(/<a[^>]*href="\/dashboard"[^>]*>/);
+          return dashboardLink && dashboardLink[0].includes("hover:bg-slate-300");
+        }
+      },
+      {
+        name: "Dashboard button has dark mode support",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          const dashboardLink = html.match(/<a[^>]*href="\/dashboard"[^>]*>/);
+          return dashboardLink && dashboardLink[0].includes("dark:bg-slate-800");
+        }
+      },
+      {
+        name: "Dashboard button has focus styles",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          const dashboardLink = html.match(/<a[^>]*href="\/dashboard"[^>]*>/);
+          return dashboardLink && dashboardLink[0].includes("focus:ring-2") && dashboardLink[0].includes("focus:ring-accent");
+        }
+      },
+      {
+        name: "Dashboard button is responsive (sm breakpoint)",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          const dashboardLink = html.match(/<a[^>]*href="\/dashboard"[^>]*>/);
+          return dashboardLink && dashboardLink[0].includes("sm:p-2.5");
+        }
+      },
+      {
+        name: "Dashboard button has proper accessibility label",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          const dashboardLink = html.match(/<a[^>]*href="\/dashboard"[^>]*>/);
+          return dashboardLink && dashboardLink[0].includes('aria-label="View monitoring dashboard"');
+        }
+      },
+      {
         name: "Dashboard page is accessible at /dashboard",
         test: async () => {
           const response = await fetch("/dashboard");
@@ -96,11 +141,72 @@
         }
       },
       {
+        name: "Dashboard page has proper heading structure",
+        test: async () => {
+          const response = await fetch("/dashboard");
+          const html = await response.text();
+          return html.includes("<h1") && html.includes("Monitoring Dashboard");
+        }
+      },
+      {
+        name: "Dashboard page has stats grid",
+        test: async () => {
+          const response = await fetch("/dashboard");
+          const html = await response.text();
+          const hasStatsGrid = html.includes('id="total-requests"') && 
+                               html.includes('id="error-rate"') &&
+                               html.includes('id="cache-hit"') &&
+                               html.includes('id="avg-latency"');
+          return hasStatsGrid;
+        }
+      },
+      {
+        name: "Dashboard page has backend list section",
+        test: async () => {
+          const response = await fetch("/dashboard");
+          const html = await response.text();
+          return html.includes('id="backend-list"');
+        }
+      },
+      {
+        name: "Dashboard page has responsive grid classes",
+        test: async () => {
+          const response = await fetch("/dashboard");
+          const html = await response.text();
+          return html.includes("grid-cols-1") && html.includes("md:grid-cols-2") && html.includes("lg:grid-cols-4");
+        }
+      },
+      {
+        name: "Dashboard page has dark mode classes",
+        test: async () => {
+          const response = await fetch("/dashboard");
+          const html = await response.text();
+          return html.includes("dark:text-white") && html.includes("dark:bg-");
+        }
+      },
+      {
         name: "Dashboard back link exists",
         test: async () => {
           const response = await fetch("/dashboard");
           const html = await response.text();
           return html.includes('href="/"') && html.includes("Back to Home");
+        }
+      },
+      {
+        name: "Dashboard back link has proper styling",
+        test: async () => {
+          const response = await fetch("/dashboard");
+          const html = await response.text();
+          const backLink = html.match(/<a[^>]*href="\/"[^>]*>[\s\S]*?Back to Home[\s\S]*?<\/a>/);
+          return backLink && backLink[0].includes("text-accent") && backLink[0].includes("hover:");
+        }
+      },
+      {
+        name: "Dashboard page has auto-refresh mechanism",
+        test: async () => {
+          const response = await fetch("/dashboard");
+          const html = await response.text();
+          return html.includes("setInterval") && html.includes("10000");
         }
       },
       {
@@ -113,6 +219,23 @@
         }
       },
       {
+        name: "Metrics response has all required gateway properties",
+        test: async () => {
+          const response = await fetch("/metrics");
+          const data = await response.json();
+          const props = ["totalRequests", "totalErrors", "errorRate", "cacheHitRate", "averageLatencyMs"];
+          return props.every(p => p in data.gateway);
+        }
+      },
+      {
+        name: "Metrics response has backend array",
+        test: async () => {
+          const response = await fetch("/metrics");
+          const data = await response.json();
+          return Array.isArray(data.backends);
+        }
+      },
+      {
         name: "Footer dashboard link exists",
         test: async () => {
           const response = await fetch("/");
@@ -122,12 +245,55 @@
         }
       },
       {
+        name: "Footer dashboard link has accessible text",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          const footerMatch = html.match(/<footer[\s\S]*?<\/footer>/);
+          return footerMatch && footerMatch[0].includes(">Dashboard<");
+        }
+      },
+      {
         name: "All dashboard links point to /dashboard",
         test: async () => {
           const response = await fetch("/");
           const html = await response.text();
           const dashboardLinks = (html.match(/href="\/dashboard"/g) || []).length;
           return dashboardLinks >= 2; // At least header and footer links
+        }
+      },
+      {
+        name: "Home page has proper header structure",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          return html.includes("<header") && html.includes("MCP Gateway");
+        }
+      },
+      {
+        name: "Home page has footer with navigation",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          return html.includes("<footer") && html.includes("nav");
+        }
+      },
+      {
+        name: "Dashboard button SVG has proper dimensions",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          const dashboardButton = html.match(/<a[^>]*href="\/dashboard"[^>]*>[\s\S]*?<\/a>/);
+          return dashboardButton && dashboardButton[0].includes("w-4") && dashboardButton[0].includes("h-4");
+        }
+      },
+      {
+        name: "Dashboard button SVG has responsive sizes",
+        test: async () => {
+          const response = await fetch("/");
+          const html = await response.text();
+          const dashboardButton = html.match(/<a[^>]*href="\/dashboard"[^>]*>[\s\S]*?<\/a>/);
+          return dashboardButton && dashboardButton[0].includes("sm:w-5") && dashboardButton[0].includes("sm:h-5");
         }
       }
     ];
