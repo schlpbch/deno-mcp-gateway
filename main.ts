@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MCP Gateway Server for Deno Deploy
  *
  * A stateful MCP gateway that aggregates multiple backend MCP servers
@@ -924,8 +924,13 @@ export async function handler(req: Request): Promise<Response> {
     }
 
     if (path === '/mcp/health' && req.method === 'GET') {
+      // Deduplicate servers by ID (dynamic servers can override hardcoded ones)
+      const allServersMap = new Map<string, BackendServer>();
+      BACKEND_SERVERS.forEach(s => allServersMap.set(s.id, s));
+      Array.from(dynamicServers.values()).forEach(s => allServersMap.set(s.id, s));
+      
       const backendHealth = await Promise.all(
-        [...BACKEND_SERVERS, ...Array.from(dynamicServers.values())].map((server) => checkBackendHealth(server))
+        Array.from(allServersMap.values()).map((server) => checkBackendHealth(server))
       );
       const allHealthy = backendHealth.every((b) => b.status === 'healthy');
       const anyHealthy = backendHealth.some((b) => b.status === 'healthy');
@@ -981,7 +986,7 @@ export async function handler(req: Request): Promise<Response> {
 
         // Add to dynamic registry
         dynamicServers.set(body.id, newServer);
-        console.log(`✅ Registered dynamic server: ${newServer.name} (${newServer.id})`);
+        console.log(`âœ… Registered dynamic server: ${newServer.name} (${newServer.id})`);
 
         return new Response(
           JSON.stringify({
@@ -1087,3 +1092,4 @@ ${BACKEND_SERVERS.map((s) => `    - ${s.name} (${s.id})`).join('\n')}
 `);
 
 Deno.serve({ port }, handler);
+
