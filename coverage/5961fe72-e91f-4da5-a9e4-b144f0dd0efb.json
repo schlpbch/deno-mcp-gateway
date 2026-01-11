@@ -1,0 +1,225 @@
+{
+  "scriptId": "368",
+  "url": "file:///C:/Users/schlp/code/deno-mcp-gateway/src/circuitbreaker/CircuitBreaker.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 4683,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 488,
+          "endOffset": 650,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "<instance_members_initializer>",
+      "ranges": [
+        {
+          "startOffset": 688,
+          "endOffset": 832,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "CircuitBreaker",
+      "ranges": [
+        {
+          "startOffset": 836,
+          "endOffset": 1254,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "execute",
+      "ranges": [
+        {
+          "startOffset": 1333,
+          "endOffset": 2036,
+          "count": 318
+        },
+        {
+          "startOffset": 1445,
+          "endOffset": 1866,
+          "count": 2
+        },
+        {
+          "startOffset": 1548,
+          "endOffset": 1715,
+          "count": 0
+        },
+        {
+          "startOffset": 1866,
+          "endOffset": 1916,
+          "count": 316
+        },
+        {
+          "startOffset": 1916,
+          "endOffset": 1968,
+          "count": 163
+        },
+        {
+          "startOffset": 1968,
+          "endOffset": 2032,
+          "count": 153
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "onSuccess",
+      "ranges": [
+        {
+          "startOffset": 2084,
+          "endOffset": 2406,
+          "count": 163
+        },
+        {
+          "startOffset": 2172,
+          "endOffset": 2402,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "onFailure",
+      "ranges": [
+        {
+          "startOffset": 2450,
+          "endOffset": 3229,
+          "count": 153
+        },
+        {
+          "startOffset": 2599,
+          "endOffset": 2635,
+          "count": 1
+        },
+        {
+          "startOffset": 2635,
+          "endOffset": 2675,
+          "count": 152
+        },
+        {
+          "startOffset": 2755,
+          "endOffset": 2965,
+          "count": 0
+        },
+        {
+          "startOffset": 3010,
+          "endOffset": 3055,
+          "count": 8
+        },
+        {
+          "startOffset": 3057,
+          "endOffset": 3225,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "getState",
+      "ranges": [
+        {
+          "startOffset": 3275,
+          "endOffset": 3314,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "getStatus",
+      "ranges": [
+        {
+          "startOffset": 3361,
+          "endOffset": 3553,
+          "count": 308
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "reset",
+      "ranges": [
+        {
+          "startOffset": 3628,
+          "endOffset": 3820,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "<instance_members_initializer>",
+      "ranges": [
+        {
+          "startOffset": 3937,
+          "endOffset": 3957,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "getOrCreate",
+      "ranges": [
+        {
+          "startOffset": 4024,
+          "endOffset": 4223,
+          "count": 624
+        },
+        {
+          "startOffset": 4096,
+          "endOffset": 4178,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "getAllStatuses",
+      "ranges": [
+        {
+          "startOffset": 4276,
+          "endOffset": 4450,
+          "count": 1
+        },
+        {
+          "startOffset": 4376,
+          "endOffset": 4425,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "resetAll",
+      "ranges": [
+        {
+          "startOffset": 4497,
+          "endOffset": 4593,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

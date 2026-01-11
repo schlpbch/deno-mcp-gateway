@@ -30,24 +30,14 @@ const BACKEND_SERVERS: BackendServer[] = [
   {
     id: 'journey',
     name: 'Journey Service',
-    endpoint:
-      Deno.env.get('JOURNEY_SERVICE_URL') ||
+    endpoint: Deno.env.get('JOURNEY_SERVICE_URL') ||
       'https://journey-service-mcp-staging-874479064416.europe-west6.run.app',
     requiresSession: true,
   },
   {
     id: 'aareguru',
     name: 'Aareguru',
-    endpoint:
-      Deno.env.get('AAREGURU_URL') || 'https://aareguru.fastmcp.app/mcp',
-    requiresSession: false,
-  },
-  {
-    id: 'open-meteo',
-    name: 'OpenMeteo',
-    endpoint:
-      Deno.env.get('OPEN_METEO_URL') ||
-      'https://open-meteo-mcp.fastmcp.app/mcp',
+    endpoint: Deno.env.get('AAREGURU_URL') || 'https://aareguru.fastmcp.app/mcp',
     requiresSession: false,
   },
 ];
@@ -57,7 +47,7 @@ const backendSessions = new Map<string, string>();
 
 const SERVER_INFO = {
   name: 'mcp-gateway',
-  version: '0.9.1',
+  version: '2.0.0',
   protocolVersion: '2024-11-05',
 };
 
@@ -95,11 +85,7 @@ const jsonRpcResponse = (id: string | number | null, result: unknown) => ({
   result,
 });
 
-const jsonRpcError = (
-  id: string | number | null,
-  code: number,
-  message: string
-) => ({
+const jsonRpcError = (id: string | number | null, code: number, message: string) => ({
   jsonrpc: '2.0' as const,
   id,
   error: { code, message },
@@ -126,7 +112,7 @@ async function initializeBackendSession(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Accept: 'application/json, text/event-stream',
+        'Accept': 'application/json, text/event-stream',
       },
       body: JSON.stringify({
         jsonrpc: '2.0',
@@ -142,9 +128,7 @@ async function initializeBackendSession(
     });
 
     if (!response.ok) {
-      console.error(
-        `Failed to initialize session with ${server.id}: ${response.status}`
-      );
+      console.error(`Failed to initialize session with ${server.id}: ${response.status}`);
       return null;
     }
 
@@ -179,9 +163,7 @@ async function initializeBackendSession(
 /**
  * Get or create a session for a backend server
  */
-async function getBackendSession(
-  server: BackendServer
-): Promise<string | null> {
+async function getBackendSession(server: BackendServer): Promise<string | null> {
   if (!server.requiresSession) {
     return null;
   }
@@ -210,7 +192,7 @@ async function sendJsonRpcRequest(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    Accept: 'application/json, text/event-stream',
+    'Accept': 'application/json, text/event-stream',
   };
 
   if (sessionId) {
@@ -274,13 +256,7 @@ async function sendToBackend(
 
   return circuitBreaker.execute(async () => {
     const sessionId = await getBackendSession(server);
-    return sendJsonRpcRequest(
-      server.endpoint,
-      method,
-      params,
-      timeoutMs,
-      sessionId
-    );
+    return sendJsonRpcRequest(server.endpoint, method, params, timeoutMs, sessionId);
   });
 }
 
@@ -297,12 +273,10 @@ interface BackendHealth {
   circuitBreakerState?: string;
 }
 
-async function checkBackendHealth(
-  server: BackendServer
-): Promise<BackendHealth> {
+async function checkBackendHealth(server: BackendServer): Promise<BackendHealth> {
   const circuitBreaker = circuitBreakerRegistry.getOrCreate(server.id);
   const cbStatus = circuitBreaker.getStatus();
-
+  
   // If circuit breaker is open, report it immediately
   if (cbStatus.state === CircuitState.OPEN) {
     return {
@@ -342,9 +316,7 @@ async function checkBackendHealth(
 
 async function fetchToolsFromServer(server: BackendServer): Promise<unknown[]> {
   try {
-    const result = (await sendToBackend(server, 'tools/list')) as {
-      tools?: unknown[];
-    };
+    const result = await sendToBackend(server, 'tools/list') as { tools?: unknown[] };
     return (result.tools || []).map((tool: unknown) => ({
       ...(tool as Record<string, unknown>),
       // Use double underscore as namespace separator (dots not allowed in MCP tool names)
@@ -356,13 +328,9 @@ async function fetchToolsFromServer(server: BackendServer): Promise<unknown[]> {
   }
 }
 
-async function fetchResourcesFromServer(
-  server: BackendServer
-): Promise<unknown[]> {
+async function fetchResourcesFromServer(server: BackendServer): Promise<unknown[]> {
   try {
-    const result = (await sendToBackend(server, 'resources/list')) as {
-      resources?: unknown[];
-    };
+    const result = await sendToBackend(server, 'resources/list') as { resources?: unknown[] };
     return (result.resources || []).map((resource: unknown) => {
       const r = resource as Record<string, unknown>;
       return {
@@ -376,13 +344,9 @@ async function fetchResourcesFromServer(
   }
 }
 
-async function fetchPromptsFromServer(
-  server: BackendServer
-): Promise<unknown[]> {
+async function fetchPromptsFromServer(server: BackendServer): Promise<unknown[]> {
   try {
-    const result = (await sendToBackend(server, 'prompts/list')) as {
-      prompts?: unknown[];
-    };
+    const result = await sendToBackend(server, 'prompts/list') as { prompts?: unknown[] };
     return (result.prompts || []).map((prompt: unknown) => ({
       ...(prompt as Record<string, unknown>),
       // Use double underscore as namespace separator (dots not allowed in MCP prompt names)
@@ -394,10 +358,7 @@ async function fetchPromptsFromServer(
   }
 }
 
-async function callToolOnServer(
-  toolName: string,
-  args: Record<string, unknown>
-): Promise<unknown> {
+async function callToolOnServer(toolName: string, args: Record<string, unknown>): Promise<unknown> {
   // Split on double underscore (namespace separator)
   const separatorIndex = toolName.indexOf('__');
   if (separatorIndex === -1) {
@@ -434,10 +395,7 @@ async function readResourceFromServer(uri: string): Promise<unknown> {
   return await sendToBackend(server, 'resources/read', { uri: originalUri });
 }
 
-async function getPromptFromServer(
-  promptName: string,
-  args?: Record<string, unknown>
-): Promise<unknown> {
+async function getPromptFromServer(promptName: string, args?: Record<string, unknown>): Promise<unknown> {
   // Split on double underscore (namespace separator)
   const separatorIndex = promptName.indexOf('__');
   if (separatorIndex === -1) {
@@ -575,36 +533,26 @@ export async function handler(req: Request): Promise<Response> {
     const filePath = path === '/' ? '/index.html' : path;
     try {
       const content = await Deno.readTextFile(`./dist${filePath}`);
-
+      
       // Determine content type
       let contentType = 'text/html; charset=utf-8';
-      if (filePath.endsWith('.js'))
-        contentType = 'application/javascript; charset=utf-8';
-      else if (filePath.endsWith('.css'))
-        contentType = 'text/css; charset=utf-8';
+      if (filePath.endsWith('.js')) contentType = 'application/javascript; charset=utf-8';
+      else if (filePath.endsWith('.css')) contentType = 'text/css; charset=utf-8';
       else if (filePath.endsWith('.json')) contentType = 'application/json';
       else if (filePath.endsWith('.svg')) contentType = 'image/svg+xml';
       else if (filePath.endsWith('.png')) contentType = 'image/png';
-      else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg'))
-        contentType = 'image/jpeg';
-
+      else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) contentType = 'image/jpeg';
+      
       return new Response(content, {
         headers: { 'Content-Type': contentType, ...corsHeaders },
       });
     } catch {
       // File not found, try index.html for SPA routing (unless it's an API route)
-      if (
-        !path.startsWith('/mcp') &&
-        !path.startsWith('/health') &&
-        !path.startsWith('/metrics')
-      ) {
+      if (!path.startsWith('/mcp') && !path.startsWith('/health') && !path.startsWith('/metrics')) {
         try {
           const content = await Deno.readTextFile('./dist/index.html');
           return new Response(content, {
-            headers: {
-              'Content-Type': 'text/html; charset=utf-8',
-              ...corsHeaders,
-            },
+            headers: { 'Content-Type': 'text/html; charset=utf-8', ...corsHeaders },
           });
         } catch {
           // Fall through to API routes
@@ -622,11 +570,7 @@ export async function handler(req: Request): Promise<Response> {
 
       return new Response(
         JSON.stringify({
-          status: allHealthy
-            ? 'healthy'
-            : anyHealthy
-            ? 'degraded'
-            : 'unhealthy',
+          status: allHealthy ? 'healthy' : anyHealthy ? 'degraded' : 'unhealthy',
           server: SERVER_INFO,
           activeSessions: sessions.size,
           backends: backendHealth,
@@ -651,10 +595,7 @@ export async function handler(req: Request): Promise<Response> {
           activeSessions: sessions.size,
           errorRate:
             metrics.totalRequests > 0
-              ? `${(
-                  (metrics.totalErrors / metrics.totalRequests) *
-                  100
-                ).toFixed(2)}%`
+              ? `${((metrics.totalErrors / metrics.totalRequests) * 100).toFixed(2)}%`
               : '0%',
           circuitBreakers: circuitBreakerRegistry.getAllStatuses(),
         }),
@@ -714,7 +655,7 @@ export async function handler(req: Request): Promise<Response> {
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
+          'Connection': 'keep-alive',
           ...corsHeaders,
         },
       });
@@ -737,9 +678,7 @@ export async function handler(req: Request): Promise<Response> {
       const session = sessions.get(sessionId);
       if (!session) {
         return new Response(
-          JSON.stringify(
-            jsonRpcError(null, -32600, 'Invalid or expired session')
-          ),
+          JSON.stringify(jsonRpcError(null, -32600, 'Invalid or expired session')),
           {
             status: 400,
             headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -765,8 +704,7 @@ export async function handler(req: Request): Promise<Response> {
         return new Response(null, { status: 202, headers: corsHeaders });
       } catch (error) {
         metrics.totalErrors++;
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
         if (id !== undefined && id !== null) {
           sendSSE(sessionId, 'message', jsonRpcError(id, -32603, errorMessage));
@@ -789,9 +727,7 @@ export async function handler(req: Request): Promise<Response> {
 
       if (!contentType.includes('application/json')) {
         return new Response(
-          JSON.stringify(
-            jsonRpcError(null, -32600, 'Content-Type must be application/json')
-          ),
+          JSON.stringify(jsonRpcError(null, -32600, 'Content-Type must be application/json')),
           {
             status: 415,
             headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -826,8 +762,7 @@ export async function handler(req: Request): Promise<Response> {
           }
         } catch (error) {
           metrics.totalErrors++;
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
           if (id !== undefined && id !== null) {
             responses.push(jsonRpcError(id, -32603, errorMessage));
@@ -854,9 +789,7 @@ export async function handler(req: Request): Promise<Response> {
           start(controller) {
             // Send each response as an SSE event
             for (const response of responses) {
-              const event = `event: message\ndata: ${JSON.stringify(
-                response
-              )}\n\n`;
+              const event = `event: message\ndata: ${JSON.stringify(response)}\n\n`;
               controller.enqueue(encoder.encode(event));
             }
             controller.close();
@@ -882,9 +815,7 @@ export async function handler(req: Request): Promise<Response> {
 
       if (!sessionId) {
         return new Response(
-          JSON.stringify({
-            error: 'Mcp-Session-Id header required for GET /mcp',
-          }),
+          JSON.stringify({ error: 'Mcp-Session-Id header required for GET /mcp' }),
           {
             status: 400,
             headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -933,7 +864,7 @@ export async function handler(req: Request): Promise<Response> {
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
+          'Connection': 'keep-alive',
           'Mcp-Session-Id': sessionId,
           ...corsHeaders,
         },
@@ -1026,10 +957,7 @@ export async function handler(req: Request): Promise<Response> {
             errors: metrics.totalErrors,
             errorRate:
               metrics.totalRequests > 0
-                ? `${(
-                    (metrics.totalErrors / metrics.totalRequests) *
-                    100
-                  ).toFixed(2)}%`
+                ? `${((metrics.totalErrors / metrics.totalRequests) * 100).toFixed(2)}%`
                 : '0%',
           },
           latency: {
@@ -1052,20 +980,25 @@ export async function handler(req: Request): Promise<Response> {
     }
 
     // 404 for unknown paths
-    return new Response(JSON.stringify({ error: 'Not Found', path }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    });
+    return new Response(
+      JSON.stringify({ error: 'Not Found', path }),
+      {
+        status: 404,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      }
+    );
   } catch (error) {
     metrics.totalErrors++;
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Request error:', errorMessage);
 
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    });
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      }
+    );
   }
 }
 
@@ -1073,10 +1006,9 @@ export async function handler(req: Request): Promise<Response> {
 // Server Startup
 // =============================================================================
 
-if (import.meta.main) {
-  const port = parseInt(Deno.env.get('PORT') || '8000');
+const port = parseInt(Deno.env.get('PORT') || '8000');
 
-  console.log(`
+console.log(`
 ========================================
   MCP Gateway Server v${SERVER_INFO.version}
 ========================================
@@ -1091,5 +1023,4 @@ ${BACKEND_SERVERS.map((s) => `    - ${s.name} (${s.id})`).join('\n')}
 ========================================
 `);
 
-  Deno.serve({ port }, handler);
-}
+Deno.serve({ port }, handler);
