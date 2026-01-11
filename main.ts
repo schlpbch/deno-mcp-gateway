@@ -42,6 +42,9 @@ const BACKEND_SERVERS: BackendServer[] = [
   },
 ];
 
+// Dynamic server registry (for servers added via /mcp/servers/register)
+const dynamicServers = new Map<string, BackendServer>();
+
 // Backend session storage (for servers that require Mcp-Session-Id)
 const backendSessions = new Map<string, string>();
 
@@ -922,7 +925,7 @@ export async function handler(req: Request): Promise<Response> {
 
     if (path === '/mcp/health' && req.method === 'GET') {
       const backendHealth = await Promise.all(
-        BACKEND_SERVERS.map((server) => checkBackendHealth(server))
+        [...BACKEND_SERVERS, ...Array.from(dynamicServers.values())].map((server) => checkBackendHealth(server))
       );
       const allHealthy = backendHealth.every((b) => b.status === 'healthy');
       const anyHealthy = backendHealth.some((b) => b.status === 'healthy');
@@ -943,6 +946,66 @@ export async function handler(req: Request): Promise<Response> {
         {
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         }
+      );
+    }
+
+    // Register new server dynamically - POST /mcp/servers/register
+    if (path === '/mcp/servers/register' && req.method === 'POST') {
+      try {
+        const body = await req.json();
+        
+        if (!body.id || !body.name || !body.endpoint) {
+          return new Response(
+            JSON.stringify({ error: 'Missing required fields: id, name, endpoint' }),
+            { status: 400, headers: corsHeaders }
+          );
+        }
+
+        // Validate endpoint URL
+        try {
+          new URL(body.endpoint);
+        } catch {
+          return new Response(
+            JSON.stringify({ error: 'Invalid endpoint URL format' }),
+            { status: 400, headers: corsHeaders }
+          );
+        }
+
+        // Create server object
+        const newServer: BackendServer = {
+          id: body.id,
+          name: body.name,
+          endpoint: body.endpoint,
+          requiresSession: body.requiresSession || false,
+        };
+
+        // Add to dynamic registry
+        dynamicServers.set(body.id, newServer);
+        console.log(`✅ Registered dynamic server: ${newServer.name} (${newServer.id})`);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            serverId: body.id,
+            message: `Server "${body.name}" registered successfully`
+          }),
+          { status: 200, headers: corsHeaders }
+        );
+      } catch (error) {
+        console.error('Error registering server:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to register server' }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
+    }
+
+    // List dynamically registered servers - GET /mcp/servers/register
+    if (path === '/mcp/servers/register' && req.method === 'GET') {
+      const servers = Array.from(dynamicServers.values());
+      return new Response(
+        JSON.stringify({ servers }),
+        { status: 200, headers: corsHeaders }
       );
     }
 
