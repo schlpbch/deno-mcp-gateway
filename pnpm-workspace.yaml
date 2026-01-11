@@ -1,2 +1,4 @@
 packages:
+  - 'packages/gateway'
+  - 'packages/ui'
   - 'packages/types'
