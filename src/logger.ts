@@ -25,7 +25,12 @@ class Logger {
   }
 
   private shouldLog(level: LogLevel): boolean {
-    const levels = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR];
+    const levels = [
+      LogLevel.DEBUG,
+      LogLevel.INFO,
+      LogLevel.WARN,
+      LogLevel.ERROR,
+    ];
     const minIndex = levels.indexOf(this.minLevel);
     const levelIndex = levels.indexOf(level);
     return levelIndex >= minIndex;
@@ -36,7 +41,11 @@ class Logger {
     return `[${entry.timestamp}] ${entry.level}: ${entry.message}${dataStr}`;
   }
 
-  private log(level: LogLevel, message: string, data?: Record<string, unknown>): void {
+  private log(
+    level: LogLevel,
+    message: string,
+    data?: Record<string, unknown>
+  ): void {
     if (!this.shouldLog(level)) return;
 
     const entry: LogEntry = {
@@ -83,7 +92,12 @@ class Logger {
   /**
    * Log an incoming HTTP request
    */
-  logRequest(method: string, path: string, query?: Record<string, string>, headers?: Record<string, string>): void {
+  logRequest(
+    method: string,
+    path: string,
+    query?: Record<string, string>,
+    headers?: Record<string, string>
+  ): void {
     const data: Record<string, unknown> = {
       method,
       path,
@@ -113,7 +127,7 @@ class Logger {
     path: string,
     statusCode: number,
     durationMs: number,
-    size?: number,
+    size?: number
   ): void {
     const data: Record<string, unknown> = {
       method,
@@ -140,7 +154,7 @@ class Logger {
     serverId: string,
     durationMs: number,
     statusCode?: number,
-    error?: string,
+    error?: string
   ): void {
     const data: Record<string, unknown> = {
       method,
@@ -168,7 +182,7 @@ class Logger {
   logSession(
     action: 'created' | 'deleted' | 'accessed' | 'expired',
     sessionId: string,
-    serverId?: string,
+    serverId?: string
   ): void {
     const data: Record<string, unknown> = {
       action,
@@ -186,7 +200,11 @@ class Logger {
   /**
    * Log circuit breaker state changes
    */
-  logCircuitBreaker(serverId: string, state: 'open' | 'closed' | 'half-open', failureCount?: number): void {
+  logCircuitBreaker(
+    serverId: string,
+    state: 'open' | 'closed' | 'half-open',
+    failureCount?: number
+  ): void {
     const data: Record<string, unknown> = {
       serverId,
       state,
@@ -223,7 +241,11 @@ class Logger {
   /**
    * Log cache operations
    */
-  logCache(operation: 'hit' | 'miss' | 'set' | 'invalidate', key: string, ttl?: number): void {
+  logCache(
+    operation: 'hit' | 'miss' | 'set' | 'invalidate',
+    key: string,
+    ttl?: number
+  ): void {
     const data: Record<string, unknown> = {
       operation,
       key,

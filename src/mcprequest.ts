@@ -12,6 +12,12 @@ import {
   readResourceFromServer,
   getPromptFromServer,
 } from './backend.ts';
+import {
+  validateToolCall,
+  validateResourceRead,
+  validatePromptGet,
+  sanitizeInput,
+} from './validation/mcpValidation.ts';
 import type { BackendServer } from './types.ts';
 
 /**
@@ -78,8 +84,18 @@ export async function handleJsonRpcRequest(
     }
 
     case 'tools/call': {
+      // Validate request
+      const validation = validateToolCall(params);
+      if (!validation.valid) {
+        throw new Error(
+          `Invalid tool call: ${validation.errors.join(', ')}`
+        );
+      }
+
       const name = params?.name as string;
-      const args = (params?.arguments || {}) as Record<string, unknown>;
+      const args = sanitizeInput(
+        params?.arguments || {}
+      ) as Record<string, unknown>;
       return await callToolOnServer(name, args, getServer);
     }
 
@@ -91,6 +107,14 @@ export async function handleJsonRpcRequest(
     }
 
     case 'resources/read': {
+      // Validate request
+      const validation = validateResourceRead(params);
+      if (!validation.valid) {
+        throw new Error(
+          `Invalid resource read: ${validation.errors.join(', ')}`
+        );
+      }
+
       const uri = params?.uri as string;
       return await readResourceFromServer(uri, getServer);
     }
@@ -103,8 +127,18 @@ export async function handleJsonRpcRequest(
     }
 
     case 'prompts/get': {
+      // Validate request
+      const validation = validatePromptGet(params);
+      if (!validation.valid) {
+        throw new Error(
+          `Invalid prompt request: ${validation.errors.join(', ')}`
+        );
+      }
+
       const name = params?.name as string;
-      const args = params?.arguments as Record<string, unknown> | undefined;
+      const args = sanitizeInput(
+        params?.arguments
+      ) as Record<string, unknown> | undefined;
       return await getPromptFromServer(name, args, getServer);
     }
 

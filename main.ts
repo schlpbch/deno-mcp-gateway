@@ -315,7 +315,7 @@ export async function handler(req: Request): Promise<Response> {
     metrics.totalErrors++;
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
-    
+
     const durationMs = performance.now() - startTime;
     logger.error('Request handler error', {
       path,
