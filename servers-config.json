@@ -1,0 +1,28 @@
+{
+  "servers": [
+    {
+      "id": "journey",
+      "name": "Journey Service",
+      "endpoint": "http://localhost:3001/mcp",
+      "requiresSession": true
+    },
+    {
+      "id": "aareguru",
+      "name": "Aareguru",
+      "endpoint": "http://localhost:3003/mcp",
+      "requiresSession": false
+    },
+    {
+      "id": "swiss-mobility",
+      "name": "Swiss Mobility",
+      "endpoint": "http://localhost:3002/mcp",
+      "requiresSession": false
+    },
+    {
+      "id": "open-meteo",
+      "name": "Open Meteo",
+      "endpoint": "http://localhost:3004/mcp",
+      "requiresSession": false
+    }
+  ]
+}

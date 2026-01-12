@@ -14,7 +14,8 @@
     "check": "deno check src/**/*.ts dev.ts main.ts",
     "lint": "deno lint src/",
     "fmt": "deno fmt src/ dev.ts main.ts",
-    "fmt:check": "deno fmt --check src/ dev.ts main.ts"
+    "fmt:check": "deno fmt --check src/ dev.ts main.ts",
+    "upload-config": "bash scripts/upload-server-config.sh"
   },
   "lint": {
     "rules": {
