@@ -411,6 +411,10 @@ async function fetchResourcesFromServer(
       return {
         ...r,
         uri: `${server.id}://${r.uri}`,
+        _server: {
+          id: server.id,
+          name: server.name,
+        },
       };
     });
   } catch (e) {
