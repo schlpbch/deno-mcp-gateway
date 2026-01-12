@@ -527,8 +527,9 @@ async function handleJsonRpcRequest(
       return undefined;
 
     case 'tools/list': {
+      const allServers = [...BACKEND_SERVERS, ...Array.from(dynamicServers.values())];
       const toolsArrays = await Promise.all(
-        BACKEND_SERVERS.map((server) => fetchToolsFromServer(server))
+        allServers.map((server) => fetchToolsFromServer(server))
       );
       return { tools: toolsArrays.flat() };
     }
@@ -540,8 +541,9 @@ async function handleJsonRpcRequest(
     }
 
     case 'resources/list': {
+      const allServers = [...BACKEND_SERVERS, ...Array.from(dynamicServers.values())];
       const resourcesArrays = await Promise.all(
-        BACKEND_SERVERS.map((server) => fetchResourcesFromServer(server))
+        allServers.map((server) => fetchResourcesFromServer(server))
       );
       return { resources: resourcesArrays.flat() };
     }
@@ -552,8 +554,9 @@ async function handleJsonRpcRequest(
     }
 
     case 'prompts/list': {
+      const allServers = [...BACKEND_SERVERS, ...Array.from(dynamicServers.values())];
       const promptsArrays = await Promise.all(
-        BACKEND_SERVERS.map((server) => fetchPromptsFromServer(server))
+        allServers.map((server) => fetchPromptsFromServer(server))
       );
       return { prompts: promptsArrays.flat() };
     }
