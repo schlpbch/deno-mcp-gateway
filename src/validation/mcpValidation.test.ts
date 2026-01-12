@@ -17,7 +17,7 @@ import {
 
 Deno.test('validateToolCall - valid tool call with namespace', () => {
   const result = validateToolCall({
-    name: 'journey.findTrips',
+    name: 'journey-service-mcp__findTrips',
     arguments: { from: 'Bern', to: 'Zurich' },
   });
   assertEquals(result.valid, true);
@@ -26,7 +26,7 @@ Deno.test('validateToolCall - valid tool call with namespace', () => {
 
 Deno.test('validateToolCall - valid tool call without arguments', () => {
   const result = validateToolCall({
-    name: 'aareguru.getCurrentConditions',
+    name: 'aareguru-mcp__getCurrentConditions',
   });
   assertEquals(result.valid, true);
   assertEquals(result.errors.length, 0);
@@ -40,7 +40,7 @@ Deno.test('validateToolCall - missing name field', () => {
   assertEquals(result.errors.includes('name is required'), true);
 });
 
-Deno.test('validateToolCall - invalid namespace format (no dot)', () => {
+Deno.test('validateToolCall - invalid namespace format (no separator)', () => {
   const result = validateToolCall({
     name: 'invalidtoolname',
   });
@@ -53,7 +53,7 @@ Deno.test('validateToolCall - invalid namespace format (no dot)', () => {
 
 Deno.test('validateToolCall - invalid characters in namespace', () => {
   const result = validateToolCall({
-    name: 'invalid@namespace.findTrips',
+    name: 'invalid@namespace__findTrips',
   });
   assertEquals(result.valid, false);
   assertEquals(
@@ -64,7 +64,7 @@ Deno.test('validateToolCall - invalid characters in namespace', () => {
 
 Deno.test('validateToolCall - prototype pollution attempt (__proto__)', () => {
   // Simulate JSON.parse which creates actual __proto__ properties
-  const params = JSON.parse('{"name":"journey.findTrips","arguments":{"__proto__":{"isAdmin":true}}}')
+  const params = JSON.parse('{"name":"journey-service-mcp__findTrips","arguments":{"__proto__":{"isAdmin":true}}}')
   const result = validateToolCall(params);
   assertEquals(result.valid, false);
   assertEquals(
@@ -75,7 +75,7 @@ Deno.test('validateToolCall - prototype pollution attempt (__proto__)', () => {
 
 Deno.test('validateToolCall - prototype pollution attempt (constructor)', () => {
   const result = validateToolCall({
-    name: 'journey.findTrips',
+    name: 'journey-service-mcp__findTrips',
     arguments: { constructor: { prototype: { isAdmin: true } } },
   });
   assertEquals(result.valid, false);
@@ -87,7 +87,7 @@ Deno.test('validateToolCall - prototype pollution attempt (constructor)', () => 
 
 Deno.test('validateToolCall - nested prototype pollution', () => {
   // Simulate JSON.parse which creates actual __proto__ properties
-  const params = JSON.parse('{"name":"journey.findTrips","arguments":{"data":{"nested":{"__proto__":{"evil":true}}}}}')
+  const params = JSON.parse('{"name":"journey-service-mcp__findTrips","arguments":{"data":{"nested":{"__proto__":{"evil":true}}}}}')
   const result = validateToolCall(params);
   assertEquals(result.valid, false);
   assertEquals(
@@ -104,7 +104,7 @@ Deno.test('validateToolCall - invalid params type', () => {
 
 Deno.test('validateToolCall - arguments not an object', () => {
   const result = validateToolCall({
-    name: 'journey.findTrips',
+    name: 'journey-service-mcp__findTrips',
     arguments: 'invalid',
   });
   assertEquals(result.valid, false);
@@ -196,7 +196,7 @@ Deno.test('validateResourceRead - invalid params type', () => {
 
 Deno.test('validatePromptGet - valid prompt request', () => {
   const result = validatePromptGet({
-    name: 'journey.tripSummary',
+    name: 'journey-service-mcp__tripSummary',
     arguments: { tripId: '123' },
   });
   assertEquals(result.valid, true);
@@ -205,7 +205,7 @@ Deno.test('validatePromptGet - valid prompt request', () => {
 
 Deno.test('validatePromptGet - valid prompt without arguments', () => {
   const result = validatePromptGet({
-    name: 'aareguru.currentStatus',
+    name: 'aareguru-mcp__currentStatus',
   });
   assertEquals(result.valid, true);
   assertEquals(result.errors.length, 0);
@@ -235,7 +235,7 @@ Deno.test('validatePromptGet - invalid namespace format', () => {
 // ============================================================================
 
 Deno.test('validateNamespace - valid namespace', () => {
-  const result = validateNamespace('journey.findTrips');
+  const result = validateNamespace('journey-service-mcp__findTrips');
   assertEquals(result.valid, true);
   assertEquals(result.errors.length, 0);
 });

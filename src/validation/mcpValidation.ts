@@ -16,11 +16,12 @@ export interface ValidationResult {
 /**
  * Namespace pattern: alphanumeric with hyphens/underscores
  * Tool/Prompt name pattern: alphanumeric with underscores
- * Note: The NAMESPACED_NAME_PATTERN ensures both parts are validated separately
+ * Note: Uses double underscore (__) as separator (dots not allowed in MCP tool names)
+ * Example: journey-service-mcp__findTrips
  */
 const NAMESPACE_PATTERN = /^[a-zA-Z0-9_-]+$/;
 const TOOL_NAME_PATTERN = /^[a-zA-Z0-9_]+$/;
-const NAMESPACED_NAME_PATTERN = /^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_]+$/;
+const NAMESPACED_NAME_PATTERN = /^[a-zA-Z0-9_-]+__[a-zA-Z0-9_]+$/;
 
 /**
  * Dangerous URI schemes that should be blocked
@@ -57,13 +58,13 @@ export function validateToolCall(params: unknown): ValidationResult {
   } else if (typeof p.name !== 'string') {
     errors.push('name must be a string');
   } else {
-    // Validate namespace format
+    // Validate namespace format (using double underscore separator)
     if (!NAMESPACED_NAME_PATTERN.test(p.name)) {
       errors.push(
-        'name must match pattern {namespace}.{toolName} (e.g., "journey.findTrips")'
+        'name must match pattern {namespace}__{toolName} (e.g., "journey-service-mcp__findTrips")'
       );
     } else {
-      const [namespace, toolName] = p.name.split('.');
+      const [namespace, toolName] = p.name.split('__');
       if (!NAMESPACE_PATTERN.test(namespace)) {
         errors.push(
           'namespace must be alphanumeric with hyphens/underscores only'
@@ -158,13 +159,13 @@ export function validatePromptGet(params: unknown): ValidationResult {
   } else if (typeof p.name !== 'string') {
     errors.push('name must be a string');
   } else {
-    // Validate namespace format
+    // Validate namespace format (using double underscore separator)
     if (!NAMESPACED_NAME_PATTERN.test(p.name)) {
       errors.push(
-        'name must match pattern {namespace}.{promptName} (e.g., "journey.tripSummary")'
+        'name must match pattern {namespace}__{promptName} (e.g., "journey-service-mcp__tripSummary")'
       );
     } else {
-      const [namespace, promptName] = p.name.split('.');
+      const [namespace, promptName] = p.name.split('__');
       if (!NAMESPACE_PATTERN.test(namespace)) {
         errors.push(
           'namespace must be alphanumeric with hyphens/underscores only'
@@ -207,7 +208,7 @@ export function validateNamespace(name: string): ValidationResult {
 
   if (!NAMESPACED_NAME_PATTERN.test(name)) {
     errors.push(
-      'name must match pattern {namespace}.{name} (e.g., "journey.findTrips")'
+      'name must match pattern {namespace}__{name} (e.g., "journey-service-mcp__findTrips")'
     );
   }
 
