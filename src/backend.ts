@@ -4,8 +4,10 @@
  */
 
 import { CircuitBreakerRegistry, CircuitState } from './circuitbreaker/mod.ts';
-import type { BackendServer } from './config.ts';
+import type { BackendServer, ServerHealth } from './types.ts';
 import { metrics } from './session.ts';
+
+export type { ServerHealth };
 
 let requestIdCounter = 1;
 const backendSessions = new Map<string, string>();
@@ -120,23 +122,11 @@ export async function sendToBackend(
 }
 
 /**
- * Backend health check response type
- */
-export interface BackendHealth {
-  id: string;
-  name: string;
-  status: 'healthy' | 'unhealthy' | 'unknown' | 'open';
-  latencyMs?: number;
-  error?: string;
-  circuitBreakerState?: string;
-}
-
-/**
  * Check health of a backend server
  */
 export async function checkBackendHealth(
   server: BackendServer
-): Promise<BackendHealth> {
+): Promise<ServerHealth> {
   const circuitBreaker = circuitBreakerRegistry.getOrCreate(server.id);
   const cbStatus = circuitBreaker.getStatus();
 

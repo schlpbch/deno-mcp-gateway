@@ -13,7 +13,7 @@
 // ============================================================================
 
 import { SERVER_INFO, corsHeaders, initializeServersFromEnv } from './src/config.ts';
-import type { BackendServer } from './src/config.ts';
+import type { BackendServer } from './src/types.ts';
 import { jsonRpcResponse, jsonRpcError } from './src/jsonrpc.ts';
 import { sessions, metrics, sendSSE } from './src/session.ts';
 import { handleJsonRpcRequest } from './src/mcprequest.ts';

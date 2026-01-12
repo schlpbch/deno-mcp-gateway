@@ -1,0 +1,162 @@
+{
+  "scriptId": "339",
+  "url": "file:///home/schlpbch/code/deno-mcp-gateway/src/registry/ServerRegistry.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 0, "endOffset": 4852, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "<instance_members_initializer>",
+      "ranges": [{ "startOffset": 290, "endOffset": 399, "count": 22 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "register",
+      "ranges": [
+        { "startOffset": 440, "endOffset": 1104, "count": 19 },
+        { "startOffset": 499, "endOffset": 565, "count": 1 },
+        { "startOffset": 565, "endOffset": 683, "count": 18 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 773, "endOffset": 852, "count": 10 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 897, "endOffset": 970, "count": 3 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 1013, "endOffset": 1098, "count": 4 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "unregister",
+      "ranges": [
+        { "startOffset": 1142, "endOffset": 1699, "count": 2 },
+        { "startOffset": 1229, "endOffset": 1698, "count": 1 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 1357, "endOffset": 1428, "count": 0 }],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 1473, "endOffset": 1538, "count": 0 }],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 1581, "endOffset": 1658, "count": 0 }],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "getServer",
+      "ranges": [
+        { "startOffset": 1745, "endOffset": 1817, "count": 6 },
+        { "startOffset": 1805, "endOffset": 1812, "count": 0 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "listServers",
+      "ranges": [{ "startOffset": 1863, "endOffset": 1928, "count": 6 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "getHealthyServers",
+      "ranges": [{ "startOffset": 1970, "endOffset": 2135, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        { "startOffset": 2044, "endOffset": 2129, "count": 2 },
+        { "startOffset": 2090, "endOffset": 2129, "count": 1 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "updateHealth",
+      "ranges": [
+        { "startOffset": 2181, "endOffset": 2418, "count": 6 },
+        { "startOffset": 2278, "endOffset": 2340, "count": 1 },
+        { "startOffset": 2340, "endOffset": 2417, "count": 5 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "resolveToolServer",
+      "ranges": [
+        { "startOffset": 2472, "endOffset": 2986, "count": 6 },
+        { "startOffset": 2623, "endOffset": 2712, "count": 5 },
+        { "startOffset": 2712, "endOffset": 2855, "count": 1 },
+        { "startOffset": 2855, "endOffset": 2920, "count": 0 },
+        { "startOffset": 2920, "endOffset": 2985, "count": 1 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "resolveResourceServer",
+      "ranges": [
+        { "startOffset": 3044, "endOffset": 3389, "count": 4 },
+        { "startOffset": 3161, "endOffset": 3239, "count": 1 },
+        { "startOffset": 3239, "endOffset": 3304, "count": 3 },
+        { "startOffset": 3304, "endOffset": 3366, "count": 0 },
+        { "startOffset": 3366, "endOffset": 3388, "count": 3 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "resolvePromptServer",
+      "ranges": [
+        { "startOffset": 3445, "endOffset": 3977, "count": 4 },
+        { "startOffset": 3606, "endOffset": 3695, "count": 3 },
+        { "startOffset": 3695, "endOffset": 3842, "count": 1 },
+        { "startOffset": 3842, "endOffset": 3907, "count": 0 },
+        { "startOffset": 3907, "endOffset": 3976, "count": 1 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "getStatuses",
+      "ranges": [
+        { "startOffset": 4021, "endOffset": 4213, "count": 1 },
+        { "startOffset": 4143, "endOffset": 4181, "count": 0 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "resetAll",
+      "ranges": [{ "startOffset": 4249, "endOffset": 4390, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "resetHealth",
+      "ranges": [{ "startOffset": 4441, "endOffset": 4598, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "getRegistry",
+      "ranges": [
+        { "startOffset": 4659, "endOffset": 4788, "count": 3 },
+        { "startOffset": 4709, "endOffset": 4759, "count": 2 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "resetRegistry",
+      "ranges": [{ "startOffset": 4796, "endOffset": 4851, "count": 2 }],
+      "isBlockCoverage": true
+    }
+  ]
+}

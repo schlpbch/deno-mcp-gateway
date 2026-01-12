@@ -17,7 +17,7 @@ import {
   buildHealthStatusResponse,
   jsonResponse,
 } from './endpoints/serverConfigUpload.ts';
-import type { BackendServer } from './config.ts';
+import type { BackendServer, ServerHealth } from './types.ts';
 
 /**
  * Handle CORS preflight requests

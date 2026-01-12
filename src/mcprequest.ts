@@ -12,7 +12,7 @@ import {
   readResourceFromServer,
   getPromptFromServer,
 } from './backend.ts';
-import type { BackendServer } from './config.ts';
+import type { BackendServer } from './types.ts';
 
 /**
  * Get a server by ID from static or dynamic registry

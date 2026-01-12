@@ -1,0 +1,21 @@
+{
+  "scriptId": "376",
+  "url": "file:///home/schlpbch/code/deno-mcp-gateway/src/jsonrpc.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 0, "endOffset": 261, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "jsonRpcResponse",
+      "ranges": [{ "startOffset": 68, "endOffset": 128, "count": 3 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "jsonRpcError",
+      "ranges": [{ "startOffset": 158, "endOffset": 259, "count": 1 }],
+      "isBlockCoverage": true
+    }
+  ]
+}

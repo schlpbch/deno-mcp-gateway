@@ -3,12 +3,9 @@
  * Handles environment-based server initialization and constants
  */
 
-export interface BackendServer {
-  id: string;
-  name: string;
-  endpoint: string;
-  requiresSession: boolean;
-}
+import type { BackendServer } from './types.ts';
+
+export type { BackendServer };
 
 export const SERVER_INFO = {
   name: 'mcp-gateway',

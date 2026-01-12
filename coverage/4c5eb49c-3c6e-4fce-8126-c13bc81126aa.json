@@ -1,0 +1,16 @@
+{
+  "scriptId": "368",
+  "url": "file:///home/schlpbch/code/deno-mcp-gateway/src/session.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 0, "endOffset": 665, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "sendSSE",
+      "ranges": [{ "startOffset": 293, "endOffset": 664, "count": 0 }],
+      "isBlockCoverage": false
+    }
+  ]
+}

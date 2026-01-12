@@ -1,0 +1,100 @@
+{
+  "scriptId": "367",
+  "url": "file:///home/schlpbch/code/deno-mcp-gateway/src/circuitbreaker/CircuitBreaker.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 0, "endOffset": 4658, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 483, "endOffset": 645, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "<instance_members_initializer>",
+      "ranges": [{ "startOffset": 683, "endOffset": 827, "count": 14 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "CircuitBreaker",
+      "ranges": [
+        { "startOffset": 831, "endOffset": 1249, "count": 14 },
+        { "startOffset": 1082, "endOffset": 1086, "count": 5 },
+        { "startOffset": 1140, "endOffset": 1144, "count": 13 },
+        { "startOffset": 1180, "endOffset": 1188, "count": 13 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "execute",
+      "ranges": [
+        { "startOffset": 1326, "endOffset": 2029, "count": 27 },
+        { "startOffset": 1438, "endOffset": 1859, "count": 4 },
+        { "startOffset": 1541, "endOffset": 1708, "count": 1 },
+        { "startOffset": 1708, "endOffset": 1853, "count": 3 },
+        { "startOffset": 1859, "endOffset": 1909, "count": 24 },
+        { "startOffset": 1909, "endOffset": 2025, "count": 12 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "onSuccess",
+      "ranges": [
+        { "startOffset": 2075, "endOffset": 2397, "count": 12 },
+        { "startOffset": 2163, "endOffset": 2393, "count": 1 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "onFailure",
+      "ranges": [
+        { "startOffset": 2439, "endOffset": 3218, "count": 12 },
+        { "startOffset": 2588, "endOffset": 2624, "count": 8 },
+        { "startOffset": 2624, "endOffset": 2664, "count": 4 },
+        { "startOffset": 2744, "endOffset": 2954, "count": 0 },
+        { "startOffset": 3046, "endOffset": 3214, "count": 7 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "getState",
+      "ranges": [{ "startOffset": 3262, "endOffset": 3301, "count": 9 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "getStatus",
+      "ranges": [{ "startOffset": 3346, "endOffset": 3538, "count": 4 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "reset",
+      "ranges": [{ "startOffset": 3611, "endOffset": 3803, "count": 0 }],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "<instance_members_initializer>",
+      "ranges": [{ "startOffset": 3918, "endOffset": 3938, "count": 4 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "getOrCreate",
+      "ranges": [{ "startOffset": 4003, "endOffset": 4202, "count": 4 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "getAllStatuses",
+      "ranges": [
+        { "startOffset": 4253, "endOffset": 4427, "count": 1 },
+        { "startOffset": 4353, "endOffset": 4402, "count": 2 }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "resetAll",
+      "ranges": [{ "startOffset": 4472, "endOffset": 4568, "count": 0 }],
+      "isBlockCoverage": false
+    }
+  ]
+}

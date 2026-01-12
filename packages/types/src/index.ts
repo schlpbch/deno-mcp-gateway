@@ -1,4 +1,12 @@
-// MCP Server Types
+/**
+ * Shared type definitions for MCP Gateway
+ * Used across backend and frontend packages
+ */
+
+// ============================================================================
+// Server Capabilities
+// ============================================================================
+
 export interface ServerCapabilities {
   tools?: ToolCapability[];
   resources?: ResourceCapability[];
@@ -29,7 +37,10 @@ export interface PromptArgument {
   required?: boolean;
 }
 
-// Server Registration Types
+// ============================================================================
+// Server Registration & Health
+// ============================================================================
+
 export interface ServerRegistration {
   id: string;
   name: string;
@@ -44,15 +55,21 @@ export interface ServerHealth {
   lastError?: string;
 }
 
+// ============================================================================
 // Backend Server Configuration
+// ============================================================================
+
 export interface BackendServer {
   id: string;
   name: string;
   endpoint: string;
-  capabilities: ServerCapabilities;
+  capabilities?: ServerCapabilities;
 }
 
+// ============================================================================
 // MCP Protocol Types
+// ============================================================================
+
 export interface MCPRequest {
   jsonrpc: '2.0';
   id: string | number;
@@ -73,7 +90,10 @@ export interface MCPError {
   data?: unknown;
 }
 
-// Tool Call Request/Response
+// ============================================================================
+// Tool Operations
+// ============================================================================
+
 export interface ToolCall {
   toolName: string;
   arguments: Record<string, unknown>;
@@ -85,7 +105,10 @@ export interface ToolResult {
   error?: string;
 }
 
-// Resource Request/Response
+// ============================================================================
+// Resource Operations
+// ============================================================================
+
 export interface ResourceRequest {
   uri: string;
 }
@@ -100,7 +123,10 @@ export interface ResourceResponse {
   }>;
 }
 
-// Prompt Request/Response
+// ============================================================================
+// Prompt Operations
+// ============================================================================
+
 export interface PromptRequest {
   name: string;
   arguments?: Record<string, string>;
@@ -113,7 +139,10 @@ export interface PromptResponse {
   }>;
 }
 
-// Health Check Types
+// ============================================================================
+// Health & Status
+// ============================================================================
+
 export interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
   servers: Record<string, ServerHealth>;
@@ -125,6 +154,8 @@ export interface MetricsData {
   successfulRequests: number;
   failedRequests: number;
   averageResponseTime: number;
+  uptime: string;
+  errorRate?: string;
   servers: Record<
     string,
     {

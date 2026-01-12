@@ -1,0 +1,54 @@
+{
+  "scriptId": "377",
+  "url": "file:///home/schlpbch/code/deno-mcp-gateway/src/endpoints/serverConfigUpload.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [{ "startOffset": 0, "endOffset": 4754, "count": 1 }],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "validateServerConfiguration",
+      "ranges": [{ "startOffset": 233, "endOffset": 1987, "count": 0 }],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "extractServersFromConfig",
+      "ranges": [{ "startOffset": 2051, "endOffset": 2454, "count": 0 }],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "parseMultipartFormData",
+      "ranges": [{ "startOffset": 2519, "endOffset": 3517, "count": 0 }],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "buildRegistrationResponse",
+      "ranges": [{ "startOffset": 3575, "endOffset": 3755, "count": 0 }],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "buildBulkUploadResponse",
+      "ranges": [{ "startOffset": 3805, "endOffset": 4146, "count": 0 }],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "buildHealthStatusResponse",
+      "ranges": [{ "startOffset": 4194, "endOffset": 4307, "count": 0 }],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "buildErrorResponse",
+      "ranges": [{ "startOffset": 4347, "endOffset": 4499, "count": 0 }],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "jsonResponse",
+      "ranges": [
+        { "startOffset": 4541, "endOffset": 4753, "count": 2 },
+        { "startOffset": 4734, "endOffset": 4739, "count": 0 }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}
