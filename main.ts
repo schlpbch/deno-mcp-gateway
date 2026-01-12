@@ -1052,14 +1052,21 @@ export async function handler(req: Request): Promise<Response> {
         JSON.stringify({
           status: allHealthy ? 'UP' : anyHealthy ? 'DEGRADED' : 'DOWN',
           timestamp: new Date().toISOString(),
-          servers: backendHealth.map((b) => ({
-            id: b.id,
-            name: b.name,
-            endpoint: BACKEND_SERVERS.find((s) => s.id === b.id)?.endpoint,
-            status: b.status === 'healthy' ? 'HEALTHY' : 'DOWN',
-            latency: b.latencyMs,
-            errorMessage: b.error,
-          })),
+          servers: backendHealth.map((b) => {
+            // Look for endpoint in both BACKEND_SERVERS and dynamicServers
+            const staticServer = BACKEND_SERVERS.find((s) => s.id === b.id);
+            const dynamicServer = dynamicServers.get(b.id);
+            const endpoint = staticServer?.endpoint || dynamicServer?.endpoint;
+            
+            return {
+              id: b.id,
+              name: b.name,
+              endpoint,
+              status: b.status === 'healthy' ? 'HEALTHY' : 'DOWN',
+              latency: b.latencyMs,
+              errorMessage: b.error,
+            };
+          }),
         }),
         {
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
