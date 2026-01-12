@@ -8,543 +8,42 @@
  * Deploy: deployctl deploy --project=mcp-gateway --prod main.ts
  */
 
+// ============================================================================
+// Module Imports
+// ============================================================================
+
+import { SERVER_INFO, corsHeaders, initializeServersFromEnv } from './src/config.ts';
+import type { BackendServer } from './src/config.ts';
+import { jsonRpcResponse, jsonRpcError } from './src/jsonrpc.ts';
+import { sessions, metrics, sendSSE } from './src/session.ts';
+import { handleJsonRpcRequest } from './src/mcprequest.ts';
 import {
-  CircuitBreakerRegistry,
-  CircuitState,
-  isCircuitOpenError,
-  type CircuitBreakerStatus,
-} from './src/circuitbreaker/mod.ts';
-import {
-  validateServerConfiguration,
-  extractServersFromConfig,
-  buildBulkUploadResponse,
-  buildHealthStatusResponse,
-  jsonResponse,
-} from './src/endpoints/serverConfigUpload.ts';
+  handleCors,
+  handleStaticFile,
+  handleHealth,
+  handleMetrics,
+  handleSseStream,
+  handleMessage,
+  handleStreamableHttp,
+  handleMcpGetStream,
+  handleMcpDeleteSession,
+  handleRegisterServer,
+  handleUploadConfig,
+  handleDeleteServer,
+  handleServerHealth,
+  handle404,
+} from './src/handlers.ts';
 
-// =============================================================================
-// Configuration
-// =============================================================================
-
-interface BackendServer {
-  id: string;
-  name: string;
-  endpoint: string;
-  requiresSession: boolean;
-}
-
-// Start with pre-configured servers from environment variables
-// Configure servers via:
-// 1. Environment variables: JOURNEY_SERVICE_URL, SWISS_MOBILITY_URL, etc.
-// 2. Dynamic registration API: POST /mcp/servers/register
-// 3. Upload script: deno task upload-config
-
-// Initialize servers from environment variables
-function initializeServersFromEnv(): BackendServer[] {
-  const servers: BackendServer[] = [];
-
-  // Journey Service
-  const journeyUrl = Deno.env.get('JOURNEY_SERVICE_URL');
-  if (journeyUrl) {
-    servers.push({
-      id: 'journey',
-      name: 'Journey Service',
-      endpoint: journeyUrl,
-      requiresSession: true,
-    });
-  }
-
-  // Swiss Mobility
-  const mobilityUrl = Deno.env.get('SWISS_MOBILITY_URL');
-  if (mobilityUrl) {
-    servers.push({
-      id: 'swiss-mobility',
-      name: 'Swiss Mobility',
-      endpoint: mobilityUrl,
-      requiresSession: false,
-    });
-  }
-
-  // Aareguru
-  const aaregruUrl = Deno.env.get('AAREGURU_URL');
-  if (aaregruUrl) {
-    servers.push({
-      id: 'aareguru',
-      name: 'Aareguru',
-      endpoint: aaregruUrl,
-      requiresSession: false,
-    });
-  }
-
-  // Open Meteo
-  const meteoUrl = Deno.env.get('OPEN_METEO_URL');
-  if (meteoUrl) {
-    servers.push({
-      id: 'open-meteo',
-      name: 'Open Meteo',
-      endpoint: meteoUrl,
-      requiresSession: false,
-    });
-  }
-
-  return servers;
-}
+// ============================================================================
+// Global State
+// ============================================================================
 
 const BACKEND_SERVERS: BackendServer[] = initializeServersFromEnv();
-
-// Dynamic server registry (for servers added via /mcp/servers/register)
 const dynamicServers = new Map<string, BackendServer>();
 
-// Backend session storage (for servers that require Mcp-Session-Id)
-const backendSessions = new Map<string, string>();
-
-const SERVER_INFO = {
-  name: 'mcp-gateway',
-  version: '2.0.0',
-  protocolVersion: '2024-11-05',
-};
-
-// Circuit Breaker Registry - prevents cascading failures
-const circuitBreakerRegistry = new CircuitBreakerRegistry();
-
-// =============================================================================
-// Session Management
-// =============================================================================
-
-interface Session {
-  controller: ReadableStreamDefaultController<Uint8Array>;
-  encoder: TextEncoder;
-  createdAt: number;
-}
-
-const sessions = new Map<string, Session>();
-
-// Metrics
-const metrics = {
-  startTime: Date.now(),
-  totalRequests: 0,
-  totalErrors: 0,
-  toolCalls: 0,
-  sessionsCreated: 0,
-};
-
-// =============================================================================
-// JSON-RPC Helpers
-// =============================================================================
-
-const jsonRpcResponse = (id: string | number | null, result: unknown) => ({
-  jsonrpc: '2.0' as const,
-  id,
-  result,
-});
-
-const jsonRpcError = (
-  id: string | number | null,
-  code: number,
-  message: string
-) => ({
-  jsonrpc: '2.0' as const,
-  id,
-  error: { code, message },
-});
-
-// =============================================================================
-// Backend Communication
-// =============================================================================
-
-let requestIdCounter = 1;
-
-/**
- * Get or create a session for a backend server
- */
-async function getBackendSession(
-  server: BackendServer
-): Promise<string | null> {
-  if (!server.requiresSession) {
-    return null;
-  }
-
-  const existingSession = backendSessions.get(server.id);
-  if (existingSession) {
-    return existingSession;
-  }
-
-  // Sessions must be initialized externally
-  return null;
-}
-
-/**
- * Send JSON-RPC request to a backend server
- */
-async function sendJsonRpcRequest(
-  endpoint: string,
-  method: string,
-  params: Record<string, unknown> = {},
-  timeoutMs = 30000,
-  sessionId?: string | null
-): Promise<unknown> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json, text/event-stream',
-  };
-
-  if (sessionId) {
-    headers['Mcp-Session-Id'] = sessionId;
-  }
-
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        method,
-        params,
-        id: requestIdCounter++,
-      }),
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Request failed: ${response.status}`);
-    }
-
-    const text = await response.text();
-
-    // Parse SSE or plain JSON response
-    if (text.startsWith('event:') || text.startsWith('data:')) {
-      const lines = text.split('\n');
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const jsonRpc = JSON.parse(line.substring(6));
-          if (jsonRpc.error) throw new Error(jsonRpc.error.message);
-          return jsonRpc.result;
-        }
-      }
-      throw new Error('No data in SSE response');
-    }
-
-    const jsonRpc = JSON.parse(text);
-    if (jsonRpc.error) throw new Error(jsonRpc.error.message);
-    return jsonRpc.result;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-/**
- * Send JSON-RPC request to a specific backend server (with session handling and circuit breaker)
- */
-async function sendToBackend(
-  server: BackendServer,
-  method: string,
-  params: Record<string, unknown> = {},
-  timeoutMs = 30000
-): Promise<unknown> {
-  const circuitBreaker = circuitBreakerRegistry.getOrCreate(server.id, {
-    failureThreshold: 5,
-    successThreshold: 2,
-    timeout: 30000,
-  });
-
-  return circuitBreaker.execute(async () => {
-    const sessionId = await getBackendSession(server);
-    return sendJsonRpcRequest(
-      server.endpoint,
-      method,
-      params,
-      timeoutMs,
-      sessionId
-    );
-  });
-}
-
-// =============================================================================
-// Backend Health Checks
-// =============================================================================
-
-interface BackendHealth {
-  id: string;
-  name: string;
-  status: 'healthy' | 'unhealthy' | 'unknown' | 'open';
-  latencyMs?: number;
-  error?: string;
-  circuitBreakerState?: string;
-}
-
-async function checkBackendHealth(
-  server: BackendServer
-): Promise<BackendHealth> {
-  const circuitBreaker = circuitBreakerRegistry.getOrCreate(server.id);
-  const cbStatus = circuitBreaker.getStatus();
-
-  // If circuit breaker is open, report it immediately
-  if (cbStatus.state === CircuitState.OPEN) {
-    return {
-      id: server.id,
-      name: server.name,
-      status: 'open',
-      error: 'Circuit breaker is open - service unavailable',
-      circuitBreakerState: CircuitState.OPEN,
-    };
-  }
-
-  const start = Date.now();
-  try {
-    await sendToBackend(server, 'ping', {}, 5000);
-    return {
-      id: server.id,
-      name: server.name,
-      status: 'healthy',
-      latencyMs: Date.now() - start,
-      circuitBreakerState: cbStatus.state,
-    };
-  } catch (e) {
-    return {
-      id: server.id,
-      name: server.name,
-      status: 'unhealthy',
-      latencyMs: Date.now() - start,
-      error: e instanceof Error ? e.message : 'Unknown error',
-      circuitBreakerState: cbStatus.state,
-    };
-  }
-}
-
-// =============================================================================
-// Tool/Resource/Prompt Aggregation
-// =============================================================================
-
-async function fetchToolsFromServer(server: BackendServer): Promise<unknown[]> {
-  try {
-    const result = (await sendToBackend(server, 'tools/list')) as {
-      tools?: unknown[];
-    };
-    return (result.tools || []).map((tool: unknown) => ({
-      ...(tool as Record<string, unknown>),
-      // Use double underscore as namespace separator (dots not allowed in MCP tool names)
-      name: `${server.id}__${(tool as Record<string, unknown>).name}`,
-    }));
-  } catch (e) {
-    console.error(`Failed to fetch tools from ${server.name}:`, e);
-    return [];
-  }
-}
-
-async function fetchResourcesFromServer(
-  server: BackendServer
-): Promise<unknown[]> {
-  try {
-    const result = (await sendToBackend(server, 'resources/list')) as {
-      resources?: unknown[];
-    };
-    return (result.resources || []).map((resource: unknown) => {
-      const r = resource as Record<string, unknown>;
-      return {
-        ...r,
-        uri: `${server.id}://${r.uri}`,
-        _server: {
-          id: server.id,
-          name: server.name,
-        },
-      };
-    });
-  } catch (e) {
-    console.error(`Failed to fetch resources from ${server.name}:`, e);
-    return [];
-  }
-}
-
-async function fetchPromptsFromServer(
-  server: BackendServer
-): Promise<unknown[]> {
-  try {
-    const result = (await sendToBackend(server, 'prompts/list')) as {
-      prompts?: unknown[];
-    };
-    return (result.prompts || []).map((prompt: unknown) => ({
-      ...(prompt as Record<string, unknown>),
-      // Use double underscore as namespace separator (dots not allowed in MCP prompt names)
-      name: `${server.id}__${(prompt as Record<string, unknown>).name}`,
-    }));
-  } catch (e) {
-    console.error(`Failed to fetch prompts from ${server.name}:`, e);
-    return [];
-  }
-}
-
-async function callToolOnServer(
-  toolName: string,
-  args: Record<string, unknown>
-): Promise<unknown> {
-  // Split on double underscore (namespace separator)
-  const separatorIndex = toolName.indexOf('__');
-  if (separatorIndex === -1) {
-    throw new Error(`Invalid tool name format: ${toolName}`);
-  }
-  const serverId = toolName.substring(0, separatorIndex);
-  const actualToolName = toolName.substring(separatorIndex + 2);
-
-  // Check both static and dynamic servers
-  const server = BACKEND_SERVERS.find((s) => s.id === serverId) || dynamicServers.get(serverId);
-  if (!server) {
-    throw new Error(`Unknown server: ${serverId}`);
-  }
-
-  metrics.toolCalls++;
-  return await sendToBackend(server, 'tools/call', {
-    name: actualToolName,
-    arguments: args,
-  });
-}
-
-async function readResourceFromServer(uri: string): Promise<unknown> {
-  // Parse URI format: serverId://originalUri
-  const match = uri.match(/^([^:]+):\/\/(.+)$/);
-  if (!match) {
-    throw new Error(`Invalid resource URI: ${uri}`);
-  }
-
-  const [, serverId, originalUri] = match;
-  // Check both static and dynamic servers
-  const server = BACKEND_SERVERS.find((s) => s.id === serverId) || dynamicServers.get(serverId);
-  if (!server) {
-    throw new Error(`Unknown server: ${serverId}`);
-  }
-
-  return await sendToBackend(server, 'resources/read', { uri: originalUri });
-}
-
-async function getPromptFromServer(
-  promptName: string,
-  args?: Record<string, unknown>
-): Promise<unknown> {
-  // Split on double underscore (namespace separator)
-  const separatorIndex = promptName.indexOf('__');
-  if (separatorIndex === -1) {
-    throw new Error(`Invalid prompt name format: ${promptName}`);
-  }
-  const serverId = promptName.substring(0, separatorIndex);
-  const actualPromptName = promptName.substring(separatorIndex + 2);
-
-  // Check both static and dynamic servers
-  const server = BACKEND_SERVERS.find((s) => s.id === serverId) || dynamicServers.get(serverId);
-  if (!server) {
-    throw new Error(`Unknown server: ${serverId}`);
-  }
-
-  return await sendToBackend(server, 'prompts/get', {
-    name: actualPromptName,
-    arguments: args,
-  });
-}
-
-// =============================================================================
-// MCP Request Handler
-// =============================================================================
-
-async function handleJsonRpcRequest(
-  method: string,
-  params: Record<string, unknown> | undefined
-): Promise<unknown> {
-  switch (method) {
-    case 'initialize':
-      return {
-        protocolVersion: SERVER_INFO.protocolVersion,
-        capabilities: {
-          tools: { listChanged: false },
-          resources: { listChanged: false },
-          prompts: { listChanged: false },
-        },
-        serverInfo: {
-          name: SERVER_INFO.name,
-          version: SERVER_INFO.version,
-        },
-      };
-
-    case 'notifications/initialized':
-      return undefined;
-
-    case 'tools/list': {
-      const allServers = [...BACKEND_SERVERS, ...Array.from(dynamicServers.values())];
-      const toolsArrays = await Promise.all(
-        allServers.map((server) => fetchToolsFromServer(server))
-      );
-      return { tools: toolsArrays.flat() };
-    }
-
-    case 'tools/call': {
-      const name = params?.name as string;
-      const args = (params?.arguments || {}) as Record<string, unknown>;
-      return await callToolOnServer(name, args);
-    }
-
-    case 'resources/list': {
-      const allServers = [...BACKEND_SERVERS, ...Array.from(dynamicServers.values())];
-      const resourcesArrays = await Promise.all(
-        allServers.map((server) => fetchResourcesFromServer(server))
-      );
-      return { resources: resourcesArrays.flat() };
-    }
-
-    case 'resources/read': {
-      const uri = params?.uri as string;
-      return await readResourceFromServer(uri);
-    }
-
-    case 'prompts/list': {
-      const allServers = [...BACKEND_SERVERS, ...Array.from(dynamicServers.values())];
-      const promptsArrays = await Promise.all(
-        allServers.map((server) => fetchPromptsFromServer(server))
-      );
-      return { prompts: promptsArrays.flat() };
-    }
-
-    case 'prompts/get': {
-      const name = params?.name as string;
-      const args = params?.arguments as Record<string, unknown> | undefined;
-      return await getPromptFromServer(name, args);
-    }
-
-    case 'ping':
-      return {};
-
-    default:
-      throw new Error(`Method not found: ${method}`);
-  }
-}
-
-// =============================================================================
-// SSE Helpers
-// =============================================================================
-
-function sendSSE(sessionId: string, event: string, data: unknown): boolean {
-  const session = sessions.get(sessionId);
-  if (session) {
-    try {
-      const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-      session.controller.enqueue(session.encoder.encode(message));
-      return true;
-    } catch {
-      sessions.delete(sessionId);
-      return false;
-    }
-  }
-  return false;
-}
-
-// =============================================================================
+// ============================================================================
 // HTTP Request Handler
-// =============================================================================
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Accept, Mcp-Session-Id',
-};
+// ============================================================================
 
 export async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
@@ -554,510 +53,115 @@ export async function handler(req: Request): Promise<Response> {
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return handleCors();
   }
 
   try {
-    // Serve static files from Astro dist/ folder
-    // Try to serve the file, falling back to index.html for SPA routing
-    const filePath = path === '/' ? '/index.html' : path;
-    try {
-      const content = await Deno.readTextFile(`./dist${filePath}`);
-
-      // Determine content type
-      let contentType = 'text/html; charset=utf-8';
-      if (filePath.endsWith('.js'))
-        contentType = 'application/javascript; charset=utf-8';
-      else if (filePath.endsWith('.css'))
-        contentType = 'text/css; charset=utf-8';
-      else if (filePath.endsWith('.json')) contentType = 'application/json';
-      else if (filePath.endsWith('.svg')) contentType = 'image/svg+xml';
-      else if (filePath.endsWith('.png')) contentType = 'image/png';
-      else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg'))
-        contentType = 'image/jpeg';
-
-      return new Response(content, {
-        headers: { 'Content-Type': contentType, ...corsHeaders },
-      });
-    } catch {
-      // File not found, try index.html for SPA routing (unless it's an API route)
-      if (
-        !path.startsWith('/mcp') &&
-        !path.startsWith('/health') &&
-        !path.startsWith('/metrics')
-      ) {
-        try {
-          const content = await Deno.readTextFile('./dist/index.html');
-          return new Response(content, {
-            headers: {
-              'Content-Type': 'text/html; charset=utf-8',
-              ...corsHeaders,
-            },
-          });
-        } catch {
-          // Fall through to API routes
-        }
-      }
+    // Serve static files
+    const staticResponse = await handleStaticFile(path);
+    if (staticResponse) {
+      return staticResponse;
     }
 
     // Health check endpoint
     if (path === '/health') {
-      // Deduplicate servers by ID (dynamic servers can override hardcoded ones)
-      const allServersMap = new Map<string, BackendServer>();
-      BACKEND_SERVERS.forEach((s) => allServersMap.set(s.id, s));
-      Array.from(dynamicServers.values()).forEach((s) =>
-        allServersMap.set(s.id, s)
-      );
-
-      const backendHealth = await Promise.all(
-        Array.from(allServersMap.values()).map((server) =>
-          checkBackendHealth(server)
-        )
-      );
-      const allHealthy = backendHealth.every((b) => b.status === 'healthy');
-      const anyHealthy = backendHealth.some((b) => b.status === 'healthy');
-
-      return new Response(
-        JSON.stringify({
-          status: allHealthy ? 'UP' : anyHealthy ? 'DEGRADED' : 'DOWN',
-          timestamp: new Date().toISOString(),
-          servers: backendHealth.map((b) => {
-            // Look for endpoint in both BACKEND_SERVERS and dynamicServers
-            const staticServer = BACKEND_SERVERS.find((s) => s.id === b.id);
-            const dynamicServer = dynamicServers.get(b.id);
-            const endpoint = staticServer?.endpoint || dynamicServer?.endpoint;
-            
-            return {
-              id: b.id,
-              name: b.name,
-              endpoint,
-              status: b.status === 'healthy' ? 'HEALTHY' : 'DOWN',
-              latency: b.latencyMs,
-              errorMessage: b.error,
-            };
-          }),
-        }),
-        {
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
+      return await handleHealth(BACKEND_SERVERS);
     }
 
     // Metrics endpoint
     if (path === '/metrics') {
-      const uptimeMs = Date.now() - metrics.startTime;
-      return new Response(
-        JSON.stringify({
-          uptime: `${Math.floor(uptimeMs / 1000)}s`,
-          totalRequests: metrics.totalRequests,
-          totalErrors: metrics.totalErrors,
-          toolCalls: metrics.toolCalls,
-          sessionsCreated: metrics.sessionsCreated,
-          activeSessions: sessions.size,
-          errorRate:
-            metrics.totalRequests > 0
-              ? `${(
-                  (metrics.totalErrors / metrics.totalRequests) *
-                  100
-                ).toFixed(2)}%`
-              : '0%',
-          circuitBreakers: circuitBreakerRegistry.getAllStatuses(),
-        }),
-        {
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
+      return handleMetrics();
     }
 
     // SSE endpoint - GET /sse
     if (path === '/sse' && req.method === 'GET') {
-      const sessionId = crypto.randomUUID();
-      const messageEndpoint = `${url.protocol}//${url.host}/message?sessionId=${sessionId}`;
-      const encoder = new TextEncoder();
-
-      metrics.sessionsCreated++;
-
-      const stream = new ReadableStream<Uint8Array>({
-        start(controller) {
-          sessions.set(sessionId, {
-            controller,
-            encoder,
-            createdAt: Date.now(),
-          });
-
-          // Send endpoint event
-          const endpointEvent = `event: endpoint\ndata: "${messageEndpoint}"\n\n`;
-          controller.enqueue(encoder.encode(endpointEvent));
-
-          // Keep-alive ping every 25 seconds
-          const pingInterval = setInterval(() => {
-            try {
-              controller.enqueue(encoder.encode(': ping\n\n'));
-            } catch {
-              clearInterval(pingInterval);
-              sessions.delete(sessionId);
-            }
-          }, 25000);
-
-          // Clean up on abort
-          req.signal.addEventListener('abort', () => {
-            clearInterval(pingInterval);
-            sessions.delete(sessionId);
-            try {
-              controller.close();
-            } catch {
-              // Already closed
-            }
-          });
-        },
-        cancel() {
-          sessions.delete(sessionId);
-        },
-      });
-
-      return new Response(stream, {
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-          ...corsHeaders,
-        },
-      });
+      return handleSseStream();
     }
 
     // Message endpoint - POST /message
     if (path === '/message' && req.method === 'POST') {
       const sessionId = url.searchParams.get('sessionId');
-
-      if (!sessionId) {
-        return new Response(
-          JSON.stringify(jsonRpcError(null, -32600, 'Missing sessionId')),
-          {
-            status: 400,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          }
-        );
-      }
-
-      const session = sessions.get(sessionId);
-      if (!session) {
-        return new Response(
-          JSON.stringify(
-            jsonRpcError(null, -32600, 'Invalid or expired session')
-          ),
-          {
-            status: 400,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          }
-        );
-      }
-
       const body = await req.json();
-      const { id, method, params } = body;
-
-      try {
-        const result = await handleJsonRpcRequest(method, params);
-
-        // For notifications (no id), just acknowledge
-        if (id === undefined || id === null) {
-          return new Response(null, { status: 202, headers: corsHeaders });
-        }
-
-        // Send response via SSE stream
-        const response = jsonRpcResponse(id, result);
-        sendSSE(sessionId, 'message', response);
-
-        return new Response(null, { status: 202, headers: corsHeaders });
-      } catch (error) {
-        metrics.totalErrors++;
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-
-        if (id !== undefined && id !== null) {
-          sendSSE(sessionId, 'message', jsonRpcError(id, -32603, errorMessage));
-        }
-
-        return new Response(null, { status: 202, headers: corsHeaders });
-      }
+      return await handleMessage(
+        sessionId,
+        body,
+        (method, params) => handleJsonRpcRequest(method, params, BACKEND_SERVERS, dynamicServers)
+      );
     }
 
-    // ==========================================================================
-    // Streamable HTTP Transport - POST /mcp
-    // ==========================================================================
-    // This implements the MCP Streamable HTTP transport specification.
-    // Clients POST JSON-RPC requests and receive responses via SSE stream.
-    // Session management is handled via Mcp-Session-Id header.
+    // Streamable HTTP transport - POST /mcp
     if ((path === '/mcp' || path === '/mcp/') && req.method === 'POST') {
-      const acceptHeader = req.headers.get('Accept') || '';
-      const wantsSSE = acceptHeader.includes('text/event-stream');
-      const contentType = req.headers.get('Content-Type') || '';
-
-      if (!contentType.includes('application/json')) {
-        return new Response(
-          JSON.stringify(
-            jsonRpcError(null, -32600, 'Content-Type must be application/json')
-          ),
-          {
-            status: 415,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          }
-        );
-      }
-
-      // Get or create session from header
-      let sessionId = req.headers.get('Mcp-Session-Id');
-      const isNewSession = !sessionId;
-
-      if (isNewSession) {
-        sessionId = crypto.randomUUID();
-        metrics.sessionsCreated++;
-      }
-
       const body = await req.json();
-
-      // Handle batch requests (array of JSON-RPC messages)
-      const requests = Array.isArray(body) ? body : [body];
-      const responses: unknown[] = [];
-
-      for (const request of requests) {
-        const { id, method, params } = request;
-
-        try {
-          const result = await handleJsonRpcRequest(method, params);
-
-          // Only add response if it's not a notification (has id)
-          if (id !== undefined && id !== null) {
-            responses.push(jsonRpcResponse(id, result));
-          }
-        } catch (error) {
-          metrics.totalErrors++;
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-
-          if (id !== undefined && id !== null) {
-            responses.push(jsonRpcError(id, -32603, errorMessage));
-          }
-        }
-      }
-
-      // Build response headers
-      const responseHeaders: Record<string, string> = {
-        'Content-Type': wantsSSE ? 'text/event-stream' : 'application/json',
-        'Cache-Control': 'no-cache',
-        ...corsHeaders,
-      };
-
-      // Include session ID in response header for new sessions
-      if (isNewSession && sessionId) {
-        responseHeaders['Mcp-Session-Id'] = sessionId;
-      }
-
-      // If client wants SSE, stream the responses
-      if (wantsSSE) {
-        const encoder = new TextEncoder();
-        const stream = new ReadableStream<Uint8Array>({
-          start(controller) {
-            // Send each response as an SSE event
-            for (const response of responses) {
-              const event = `event: message\ndata: ${JSON.stringify(
-                response
-              )}\n\n`;
-              controller.enqueue(encoder.encode(event));
-            }
-            controller.close();
-          },
-        });
-
-        return new Response(stream, { headers: responseHeaders });
-      }
-
-      // Return JSON response (single or batch)
-      const responseBody = Array.isArray(body)
-        ? responses
-        : responses[0] || { jsonrpc: '2.0', result: null };
-
-      return new Response(JSON.stringify(responseBody), {
-        headers: responseHeaders,
-      });
+      return await handleStreamableHttp(
+        req,
+        body,
+        (method, params) => handleJsonRpcRequest(method, params, BACKEND_SERVERS, dynamicServers)
+      );
     }
 
-    // Handle GET /mcp for SSE stream (optional long-lived connection)
+    // Handle GET /mcp for SSE stream
     if ((path === '/mcp' || path === '/mcp/') && req.method === 'GET') {
       const sessionId = req.headers.get('Mcp-Session-Id');
-
-      if (!sessionId) {
-        return new Response(
-          JSON.stringify({
-            error: 'Mcp-Session-Id header required for GET /mcp',
-          }),
-          {
-            status: 400,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          }
-        );
-      }
-
-      const encoder = new TextEncoder();
-
-      const stream = new ReadableStream<Uint8Array>({
-        start(controller) {
-          // Store the session for server-initiated messages
-          sessions.set(sessionId, {
-            controller,
-            encoder,
-            createdAt: Date.now(),
-          });
-
-          // Keep-alive ping every 25 seconds
-          const pingInterval = setInterval(() => {
-            try {
-              controller.enqueue(encoder.encode(': ping\n\n'));
-            } catch {
-              clearInterval(pingInterval);
-              sessions.delete(sessionId);
-            }
-          }, 25000);
-
-          // Clean up on abort
-          req.signal.addEventListener('abort', () => {
-            clearInterval(pingInterval);
-            sessions.delete(sessionId);
-            try {
-              controller.close();
-            } catch {
-              // Already closed
-            }
-          });
-        },
-        cancel() {
-          sessions.delete(sessionId);
-        },
-      });
-
-      return new Response(stream, {
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-          'Mcp-Session-Id': sessionId,
-          ...corsHeaders,
-        },
-      });
+      return handleMcpGetStream(sessionId);
     }
 
     // Handle DELETE /mcp to close session
     if ((path === '/mcp' || path === '/mcp/') && req.method === 'DELETE') {
       const sessionId = req.headers.get('Mcp-Session-Id');
-
-      if (sessionId && sessions.has(sessionId)) {
-        const session = sessions.get(sessionId);
-        if (session) {
-          try {
-            session.controller.close();
-          } catch {
-            // Already closed
-          }
-        }
-        sessions.delete(sessionId);
-      }
-
-      return new Response(null, { status: 204, headers: corsHeaders });
+      return handleMcpDeleteSession(sessionId);
     }
 
     // MCP REST endpoints (for web UI)
-    if (path === '/tools/list' && req.method === 'GET') {
-      const result = await handleJsonRpcRequest('tools/list', undefined);
+    if ((path === '/mcp/tools/list' || path === '/tools/list') && req.method === 'GET') {
+      const result = await handleJsonRpcRequest('tools/list', undefined, BACKEND_SERVERS, dynamicServers);
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    if (path === '/tools/call' && req.method === 'POST') {
+    if ((path === '/mcp/tools/call' || path === '/tools/call') && req.method === 'POST') {
       const body = await req.json();
-      const result = await handleJsonRpcRequest('tools/call', body);
+      const result = await handleJsonRpcRequest('tools/call', body, BACKEND_SERVERS, dynamicServers);
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    if (path === '/resources/list' && req.method === 'GET') {
-      const result = await handleJsonRpcRequest('resources/list', undefined);
+    if ((path === '/mcp/resources/list' || path === '/resources/list') && req.method === 'GET') {
+      const result = await handleJsonRpcRequest('resources/list', undefined, BACKEND_SERVERS, dynamicServers);
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    if (path === '/prompts/list' && req.method === 'GET') {
-      const result = await handleJsonRpcRequest('prompts/list', undefined);
+    if ((path === '/mcp/prompts/list' || path === '/prompts/list') && req.method === 'GET') {
+      const result = await handleJsonRpcRequest('prompts/list', undefined, BACKEND_SERVERS, dynamicServers);
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    if (path === '/resources/read' && req.method === 'POST') {
+    if ((path === '/mcp/resources/read' || path === '/resources/read') && req.method === 'POST') {
       const body = await req.json();
-      const result = await handleJsonRpcRequest('resources/read', body);
+      const result = await handleJsonRpcRequest('resources/read', body, BACKEND_SERVERS, dynamicServers);
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    if (path === '/prompts/get' && req.method === 'POST') {
+    if ((path === '/mcp/prompts/get' || path === '/prompts/get') && req.method === 'POST') {
       const body = await req.json();
-      const result = await handleJsonRpcRequest('prompts/get', body);
+      const result = await handleJsonRpcRequest('prompts/get', body, BACKEND_SERVERS, dynamicServers);
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
-
-
 
     // Register new server dynamically - POST /servers/register
     if (path === '/servers/register' && req.method === 'POST') {
       try {
         const body = await req.json();
-
-        if (!body.id || !body.name || !body.endpoint) {
-          return new Response(
-            JSON.stringify({
-              error: 'Missing required fields: id, name, endpoint',
-            }),
-            { status: 400, headers: corsHeaders }
-          );
-        }
-
-        // Validate endpoint URL
-        try {
-          new URL(body.endpoint);
-        } catch {
-          return new Response(
-            JSON.stringify({ error: 'Invalid endpoint URL format' }),
-            { status: 400, headers: corsHeaders }
-          );
-        }
-
-        // Create server object
-        const newServer: BackendServer = {
-          id: body.id,
-          name: body.name,
-          endpoint: body.endpoint,
-          requiresSession: body.requiresSession || false,
-        };
-
-        // Add to dynamic registry
-        dynamicServers.set(body.id, newServer);
-        console.log(
-          `âœ… Registered dynamic server: ${newServer.name} (${newServer.id})`
-        );
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            serverId: body.id,
-            message: `Server "${body.name}" registered successfully`,
-          }),
-          { status: 200, headers: corsHeaders }
-        );
+        return handleRegisterServer(body, dynamicServers);
       } catch (error) {
         console.error('Error registering server:', error);
         return new Response(
@@ -1079,92 +183,12 @@ export async function handler(req: Request): Promise<Response> {
     // Upload server configuration via multipart form - POST /mcp/servers/upload
     if (path === '/mcp/servers/upload' && req.method === 'POST') {
       try {
-        const contentType = req.headers.get('content-type');
-        if (!contentType || !contentType.includes('multipart/form-data')) {
-          return jsonResponse(
-            { error: 'Invalid content-type. Expected multipart/form-data' },
-            400,
-            corsHeaders
-          );
-        }
-
-        const body = await req.arrayBuffer();
-        const uint8Array = new Uint8Array(body);
-        const text = new TextDecoder().decode(uint8Array);
-
-        // Simple multipart parser
-        const boundaryMatch = contentType.match(/boundary=([^;]+)/);
-        if (!boundaryMatch) {
-          return jsonResponse(
-            { error: 'No boundary in multipart request' },
-            400,
-            corsHeaders
-          );
-        }
-
-        const boundary = boundaryMatch[1];
-        const parts = text.split(`--${boundary}`);
-        let configJson: string | null = null;
-
-        for (const part of parts) {
-          if (part.includes('name="config"')) {
-            const match = part.match(/\r\n\r\n([\s\S]*?)\r\n/);
-            if (match) {
-              configJson = match[1];
-              break;
-            }
-          }
-        }
-
-        if (!configJson) {
-          return jsonResponse(
-            { error: 'No config file found in upload' },
-            400,
-            corsHeaders
-          );
-        }
-
-        // Parse and validate config
-        const config = JSON.parse(configJson);
-        const validation = validateServerConfiguration(config);
-
-        if (!validation.valid) {
-          return jsonResponse(
-            { error: 'Invalid configuration', details: validation.errors },
-            400,
-            corsHeaders
-          );
-        }
-
-        // Extract servers from config
-        const servers = extractServersFromConfig(config);
-        const failedIndices: number[] = [];
-        const errors: string[] = [];
-
-        // Register each server
-        for (let i = 0; i < servers.length; i++) {
-          try {
-            const server = servers[i];
-            dynamicServers.set(server.id, {
-              id: server.id,
-              name: server.name,
-              endpoint: server.endpoint,
-              requiresSession: server.requiresSession ?? false,
-            });
-          } catch (error) {
-            failedIndices.push(i);
-            errors.push(String(error));
-          }
-        }
-
-        const response = buildBulkUploadResponse(servers, failedIndices, errors);
-        return jsonResponse(response, 200, corsHeaders);
+        return await handleUploadConfig(req, dynamicServers);
       } catch (error) {
         console.error('Error processing config upload:', error);
-        return jsonResponse(
-          { error: 'Failed to process upload', details: String(error) },
-          500,
-          corsHeaders
+        return new Response(
+          JSON.stringify({ error: 'Failed to process upload', details: String(error) }),
+          { status: 500, headers: corsHeaders }
         );
       }
     }
@@ -1173,66 +197,14 @@ export async function handler(req: Request): Promise<Response> {
     const deleteServerMatch = path.match(/^\/mcp\/servers\/([^/]+)$/);
     if (deleteServerMatch && req.method === 'DELETE') {
       const serverId = deleteServerMatch[1];
-
-      if (!dynamicServers.has(serverId)) {
-        return jsonResponse(
-          { error: `Server not found: ${serverId}` },
-          404,
-          corsHeaders
-        );
-      }
-
-      dynamicServers.delete(serverId);
-      return jsonResponse(
-        { success: true, message: `Server ${serverId} deleted` },
-        200,
-        corsHeaders
-      );
+      return handleDeleteServer(serverId, dynamicServers);
     }
 
     // Check server health status - GET /mcp/servers/{serverId}/health
     const healthCheckMatch = path.match(/^\/mcp\/servers\/([^/]+)\/health$/);
     if (healthCheckMatch && req.method === 'GET') {
       const serverId = healthCheckMatch[1];
-      const server = dynamicServers.get(serverId);
-
-      if (!server) {
-        return jsonResponse(
-          { error: `Server not found: ${serverId}` },
-          404,
-          corsHeaders
-        );
-      }
-
-      // Try to health check the server
-      try {
-        const healthCheckUrl = `${server.endpoint}`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-
-        const response = await fetch(healthCheckUrl, {
-          method: 'GET',
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        const status = buildHealthStatusResponse(
-          serverId,
-          server.name,
-          response.status === 200 ? 'healthy' : 'unhealthy'
-        );
-
-        return jsonResponse(status, 200, corsHeaders);
-      } catch (_error) {
-        const status = buildHealthStatusResponse(
-          serverId,
-          server.name,
-          'unknown'
-        );
-
-        return jsonResponse(status, 503, corsHeaders);
-      }
+      return await handleServerHealth(serverId, dynamicServers);
     }
 
     if (path === '/mcp/metrics' && req.method === 'GET') {
@@ -1262,7 +234,7 @@ export async function handler(req: Request): Promise<Response> {
             hitRate: '0%',
             memorySize: 0,
           },
-          circuitBreakers: circuitBreakerRegistry.getAllStatuses(),
+          circuitBreakers: {},
           endpoints: {},
         }),
         {
@@ -1272,10 +244,7 @@ export async function handler(req: Request): Promise<Response> {
     }
 
     // 404 for unknown paths
-    return new Response(JSON.stringify({ error: 'Not Found', path }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    });
+    return handle404();
   } catch (error) {
     metrics.totalErrors++;
     const errorMessage =
@@ -1293,9 +262,10 @@ export async function handler(req: Request): Promise<Response> {
 // Server Startup
 // =============================================================================
 
-const port = parseInt(Deno.env.get('PORT') || '8000');
+if (import.meta.main) {
+  const port = parseInt(Deno.env.get('PORT') || '8000');
 
-console.log(`
+  console.log(`
 ========================================
   MCP Gateway Server v${SERVER_INFO.version}
 ========================================
@@ -1310,4 +280,5 @@ ${BACKEND_SERVERS.map((s) => `    - ${s.name} (${s.id})`).join('\n')}
 ========================================
 `);
 
-Deno.serve({ port }, handler);
+  Deno.serve({ port }, handler);
+}
