@@ -4,10 +4,8 @@
  */
 
 import { corsHeaders } from './config.ts';
-import {
-  jsonRpcResponse,
-  jsonRpcError,
-} from './jsonrpc.ts';
+import { logger } from './logger.ts';
+import { jsonRpcResponse, jsonRpcError } from './jsonrpc.ts';
 import { sessions, metrics, sendSSE } from './session.ts';
 import { checkBackendHealth, circuitBreakerRegistry } from './backend.ts';
 import {
@@ -38,8 +36,7 @@ export async function handleStaticFile(path: string): Promise<Response | null> {
     let contentType = 'text/html; charset=utf-8';
     if (filePath.endsWith('.js'))
       contentType = 'application/javascript; charset=utf-8';
-    else if (filePath.endsWith('.css'))
-      contentType = 'text/css; charset=utf-8';
+    else if (filePath.endsWith('.css')) contentType = 'text/css; charset=utf-8';
     else if (filePath.endsWith('.json')) contentType = 'application/json';
     else if (filePath.endsWith('.svg')) contentType = 'image/svg+xml';
     else if (filePath.endsWith('.png')) contentType = 'image/png';
@@ -79,11 +76,22 @@ export async function handleStaticFile(path: string): Promise<Response | null> {
 export async function handleHealth(
   staticServers: BackendServer[]
 ): Promise<Response> {
+  logger.info('Health check requested', {
+    backendsCount: staticServers.length,
+  });
+
   const backendHealth = await Promise.all(
     staticServers.map((server) => checkBackendHealth(server))
   );
   const allHealthy = backendHealth.every((b) => b.status === 'healthy');
   const anyHealthy = backendHealth.some((b) => b.status === 'healthy');
+
+  const overallStatus = allHealthy ? 'UP' : anyHealthy ? 'DEGRADED' : 'DOWN';
+  logger.info('Health check completed', {
+    status: overallStatus,
+    healthy: backendHealth.filter((b) => b.status === 'healthy').length,
+    total: backendHealth.length,
+  });
 
   return new Response(
     JSON.stringify({
@@ -122,10 +130,9 @@ export function handleMetrics(): Response {
       activeSessions: sessions.size,
       errorRate:
         metrics.totalRequests > 0
-          ? `${(
-              (metrics.totalErrors / metrics.totalRequests) *
-              100
-            ).toFixed(2)}%`
+          ? `${((metrics.totalErrors / metrics.totalRequests) * 100).toFixed(
+              2
+            )}%`
           : '0%',
       circuitBreakers: circuitBreakerRegistry.getAllStatuses(),
     }),
@@ -203,9 +210,13 @@ export function handleSseStream(): Response {
 export async function handleMessage(
   sessionId: string | null,
   body: unknown,
-  rpcHandler: (method: string, params?: Record<string, unknown>) => Promise<unknown>
+  rpcHandler: (
+    method: string,
+    params?: Record<string, unknown>
+  ) => Promise<unknown>
 ): Promise<Response> {
   if (!sessionId) {
+    logger.warn('Message received without sessionId', {});
     return new Response(
       JSON.stringify(jsonRpcError(null, -32600, 'Missing sessionId')),
       {
@@ -217,10 +228,9 @@ export async function handleMessage(
 
   const session = sessions.get(sessionId);
   if (!session) {
+    logger.warn('Message received with invalid session', { sessionId });
     return new Response(
-      JSON.stringify(
-        jsonRpcError(null, -32600, 'Invalid or expired session')
-      ),
+      JSON.stringify(jsonRpcError(null, -32600, 'Invalid or expired session')),
       {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -230,11 +240,21 @@ export async function handleMessage(
 
   const { id, method, params } = body as Record<string, unknown>;
 
+  logger.debug('Processing message', {
+    sessionId,
+    method,
+    hasParams: !!params,
+  });
+
   try {
-    const result = await rpcHandler(method as string, params as Record<string, unknown>);
+    const result = await rpcHandler(
+      method as string,
+      params as Record<string, unknown>
+    );
 
     // For notifications (no id), just acknowledge
     if (id === undefined || id === null) {
+      logger.debug('Notification processed', { sessionId, method });
       return new Response(null, { status: 202, headers: corsHeaders });
     }
 
@@ -249,7 +269,11 @@ export async function handleMessage(
       error instanceof Error ? error.message : 'Unknown error';
 
     if (id !== undefined && id !== null) {
-      sendSSE(sessionId, 'message', jsonRpcError(id as string | number, -32603, errorMessage));
+      sendSSE(
+        sessionId,
+        'message',
+        jsonRpcError(id as string | number, -32603, errorMessage)
+      );
     }
 
     return new Response(null, { status: 202, headers: corsHeaders });
@@ -262,13 +286,17 @@ export async function handleMessage(
 export async function handleStreamableHttp(
   req: Request,
   body: unknown,
-  rpcHandler: (method: string, params?: Record<string, unknown>) => Promise<unknown>
+  rpcHandler: (
+    method: string,
+    params?: Record<string, unknown>
+  ) => Promise<unknown>
 ): Promise<Response> {
   const acceptHeader = req.headers.get('Accept') || '';
   const wantsSSE = acceptHeader.includes('text/event-stream');
   const contentType = req.headers.get('Content-Type') || '';
 
   if (!contentType.includes('application/json')) {
+    logger.warn('Invalid content type for /mcp', { contentType });
     return new Response(
       JSON.stringify(
         jsonRpcError(null, -32600, 'Content-Type must be application/json')
@@ -287,7 +315,15 @@ export async function handleStreamableHttp(
   if (isNewSession) {
     sessionId = crypto.randomUUID();
     metrics.sessionsCreated++;
+    logger.info('New session created', { sessionId, wantsSSE });
   }
+
+  logger.debug('StreamableHTTP request', {
+    sessionId,
+    isNewSession,
+    wantsSSE,
+    requestCount: Array.isArray(body) ? (body as unknown[]).length : 1,
+  });
 
   // Handle batch requests (array of JSON-RPC messages)
   const requests = Array.isArray(body) ? body : [body];
@@ -296,8 +332,13 @@ export async function handleStreamableHttp(
   for (const request of requests) {
     const { id, method, params } = request as Record<string, unknown>;
 
+    logger.debug('Processing RPC method', { sessionId, method });
+
     try {
-      const result = await rpcHandler(method as string, params as Record<string, unknown>);
+      const result = await rpcHandler(
+        method as string,
+        params as Record<string, unknown>
+      );
 
       // Only add response if it's not a notification (has id)
       if (id !== undefined && id !== null) {
@@ -309,7 +350,9 @@ export async function handleStreamableHttp(
         error instanceof Error ? error.message : 'Unknown error';
 
       if (id !== undefined && id !== null) {
-        responses.push(jsonRpcError(id as string | number, -32603, errorMessage));
+        responses.push(
+          jsonRpcError(id as string | number, -32603, errorMessage)
+        );
       }
     }
   }
@@ -333,9 +376,7 @@ export async function handleStreamableHttp(
       start(controller) {
         // Send each response as an SSE event
         for (const response of responses) {
-          const event = `event: message\ndata: ${JSON.stringify(
-            response
-          )}\n\n`;
+          const event = `event: message\ndata: ${JSON.stringify(response)}\n\n`;
           controller.enqueue(encoder.encode(event));
         }
         controller.close();
@@ -449,7 +490,10 @@ export function handleRegisterServer(
   body: unknown,
   dynamicServers: Map<string, BackendServer>
 ): Response {
-  const { id, name, endpoint, requiresSession } = body as Record<string, unknown>;
+  const { id, name, endpoint, requiresSession } = body as Record<
+    string,
+    unknown
+  >;
 
   if (!id || !name || !endpoint) {
     return new Response(
@@ -643,11 +687,7 @@ export async function handleServerHealth(
 
     return jsonResponse(status, 200, corsHeaders);
   } catch (_error) {
-    const status = buildHealthStatusResponse(
-      serverId,
-      server.name,
-      'unknown'
-    );
+    const status = buildHealthStatusResponse(serverId, server.name, 'unknown');
 
     return jsonResponse(status, 503, corsHeaders);
   }

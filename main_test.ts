@@ -154,10 +154,6 @@ Deno.test('Invalid JSON in POST request returns error', async () => {
   assertEquals(res.status >= 400, true);
 });
 
-
-
-
-
 Deno.test('Valid API key allows access to protected endpoints', async () => {
   const originalKey = Deno.env.get('MCP_API_KEY');
   Deno.env.set('MCP_API_KEY', 'test-key-123');
@@ -422,17 +418,20 @@ Deno.test('POST /servers/register with valid server data', async () => {
   assertEquals(res.status >= 200 && res.status < 500, true);
 });
 
-Deno.test('POST /servers/register with invalid data returns error', async () => {
-  const req = new Request('http://localhost:8000/servers/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 'test' }), // missing required fields
-  });
+Deno.test(
+  'POST /servers/register with invalid data returns error',
+  async () => {
+    const req = new Request('http://localhost:8000/servers/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'test' }), // missing required fields
+    });
 
-  const res = await handler(req);
-  // Should return error or 400
-  assertExists(res);
-});
+    const res = await handler(req);
+    // Should return error or 400
+    assertExists(res);
+  }
+);
 
 // =============================================================================
 // Resources/Prompts Read/Get Tests
@@ -529,9 +528,12 @@ Deno.test('DELETE /mcp/servers/{serverId} route exists', async () => {
 });
 
 Deno.test('GET /mcp/servers/{serverId}/health route exists', async () => {
-  const req = new Request('http://localhost:8000/mcp/servers/test-server/health', {
-    method: 'GET',
-  });
+  const req = new Request(
+    'http://localhost:8000/mcp/servers/test-server/health',
+    {
+      method: 'GET',
+    }
+  );
 
   const res = await handler(req);
   assertExists(res);

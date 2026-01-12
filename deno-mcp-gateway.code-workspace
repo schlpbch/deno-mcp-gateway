@@ -1,13 +1,14 @@
 {
   "folders": [
-	{
-		"path": "."
-	},
-	{
-		"path": "../mcp-gateway-ui"
-	}
-],
+    {
+      "path": "."
+    },
+    {
+      "path": "../mcp-gateway-ui"
+    }
+  ],
   "settings": {
-    "powershell.cwd": "mcp-gateway-ui"
+    "powershell.cwd": "mcp-gateway-ui",
+    "cSpell.words": ["deno"]
   }
 }

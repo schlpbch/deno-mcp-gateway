@@ -12,9 +12,14 @@
 // Module Imports
 // ============================================================================
 
-import { SERVER_INFO, corsHeaders, initializeServersFromEnv } from './src/config.ts';
+import {
+  SERVER_INFO,
+  corsHeaders,
+  initializeServersFromEnv,
+} from './src/config.ts';
 import type { BackendServer } from './src/types.ts';
 import { jsonRpcResponse, jsonRpcError } from './src/jsonrpc.ts';
+import { logger } from './src/logger.ts';
 import { sessions, metrics, sendSSE } from './src/session.ts';
 import { handleJsonRpcRequest } from './src/mcprequest.ts';
 import {
@@ -48,8 +53,22 @@ const dynamicServers = new Map<string, BackendServer>();
 export async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const path = url.pathname;
+  const startTime = performance.now();
 
   metrics.totalRequests++;
+
+  // Log incoming request
+  const queryParams: Record<string, string> = {};
+  url.searchParams.forEach((value, key) => {
+    queryParams[key] = value;
+  });
+
+  const headers: Record<string, string> = {};
+  req.headers.forEach((value, key) => {
+    headers[key] = value;
+  });
+
+  logger.logRequest(req.method, path, queryParams, headers);
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -82,20 +101,16 @@ export async function handler(req: Request): Promise<Response> {
     if (path === '/message' && req.method === 'POST') {
       const sessionId = url.searchParams.get('sessionId');
       const body = await req.json();
-      return await handleMessage(
-        sessionId,
-        body,
-        (method, params) => handleJsonRpcRequest(method, params, BACKEND_SERVERS, dynamicServers)
+      return await handleMessage(sessionId, body, (method, params) =>
+        handleJsonRpcRequest(method, params, BACKEND_SERVERS, dynamicServers)
       );
     }
 
     // Streamable HTTP transport - POST /mcp
     if ((path === '/mcp' || path === '/mcp/') && req.method === 'POST') {
       const body = await req.json();
-      return await handleStreamableHttp(
-        req,
-        body,
-        (method, params) => handleJsonRpcRequest(method, params, BACKEND_SERVERS, dynamicServers)
+      return await handleStreamableHttp(req, body, (method, params) =>
+        handleJsonRpcRequest(method, params, BACKEND_SERVERS, dynamicServers)
       );
     }
 
@@ -112,46 +127,94 @@ export async function handler(req: Request): Promise<Response> {
     }
 
     // MCP REST endpoints (for web UI)
-    if ((path === '/mcp/tools/list' || path === '/tools/list') && req.method === 'GET') {
-      const result = await handleJsonRpcRequest('tools/list', undefined, BACKEND_SERVERS, dynamicServers);
+    if (
+      (path === '/mcp/tools/list' || path === '/tools/list') &&
+      req.method === 'GET'
+    ) {
+      const result = await handleJsonRpcRequest(
+        'tools/list',
+        undefined,
+        BACKEND_SERVERS,
+        dynamicServers
+      );
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    if ((path === '/mcp/tools/call' || path === '/tools/call') && req.method === 'POST') {
+    if (
+      (path === '/mcp/tools/call' || path === '/tools/call') &&
+      req.method === 'POST'
+    ) {
       const body = await req.json();
-      const result = await handleJsonRpcRequest('tools/call', body, BACKEND_SERVERS, dynamicServers);
+      const result = await handleJsonRpcRequest(
+        'tools/call',
+        body,
+        BACKEND_SERVERS,
+        dynamicServers
+      );
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    if ((path === '/mcp/resources/list' || path === '/resources/list') && req.method === 'GET') {
-      const result = await handleJsonRpcRequest('resources/list', undefined, BACKEND_SERVERS, dynamicServers);
+    if (
+      (path === '/mcp/resources/list' || path === '/resources/list') &&
+      req.method === 'GET'
+    ) {
+      const result = await handleJsonRpcRequest(
+        'resources/list',
+        undefined,
+        BACKEND_SERVERS,
+        dynamicServers
+      );
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    if ((path === '/mcp/prompts/list' || path === '/prompts/list') && req.method === 'GET') {
-      const result = await handleJsonRpcRequest('prompts/list', undefined, BACKEND_SERVERS, dynamicServers);
+    if (
+      (path === '/mcp/prompts/list' || path === '/prompts/list') &&
+      req.method === 'GET'
+    ) {
+      const result = await handleJsonRpcRequest(
+        'prompts/list',
+        undefined,
+        BACKEND_SERVERS,
+        dynamicServers
+      );
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    if ((path === '/mcp/resources/read' || path === '/resources/read') && req.method === 'POST') {
+    if (
+      (path === '/mcp/resources/read' || path === '/resources/read') &&
+      req.method === 'POST'
+    ) {
       const body = await req.json();
-      const result = await handleJsonRpcRequest('resources/read', body, BACKEND_SERVERS, dynamicServers);
+      const result = await handleJsonRpcRequest(
+        'resources/read',
+        body,
+        BACKEND_SERVERS,
+        dynamicServers
+      );
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    if ((path === '/mcp/prompts/get' || path === '/prompts/get') && req.method === 'POST') {
+    if (
+      (path === '/mcp/prompts/get' || path === '/prompts/get') &&
+      req.method === 'POST'
+    ) {
       const body = await req.json();
-      const result = await handleJsonRpcRequest('prompts/get', body, BACKEND_SERVERS, dynamicServers);
+      const result = await handleJsonRpcRequest(
+        'prompts/get',
+        body,
+        BACKEND_SERVERS,
+        dynamicServers
+      );
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
@@ -187,7 +250,10 @@ export async function handler(req: Request): Promise<Response> {
       } catch (error) {
         console.error('Error processing config upload:', error);
         return new Response(
-          JSON.stringify({ error: 'Failed to process upload', details: String(error) }),
+          JSON.stringify({
+            error: 'Failed to process upload',
+            details: String(error),
+          }),
           { status: 500, headers: corsHeaders }
         );
       }
@@ -249,6 +315,15 @@ export async function handler(req: Request): Promise<Response> {
     metrics.totalErrors++;
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
+    
+    const durationMs = performance.now() - startTime;
+    logger.error('Request handler error', {
+      path,
+      method: req.method,
+      error: errorMessage,
+      durationMs,
+    });
+    logger.logResponse(req.method, path, 500, durationMs);
     console.error('Request error:', errorMessage);
 
     return new Response(JSON.stringify({ error: errorMessage }), {

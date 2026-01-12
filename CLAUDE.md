@@ -2,7 +2,10 @@
 
 ## 📋 Project Overview
 
-**deno-mcp-gateway** is a unified MCP (Model Context Protocol) gateway deployed on deno Edge Functions. It provides AI assistants with intelligent routing, caching, health monitoring, and circuit breaker functionality for accessing federated MCP servers globally.
+**deno-mcp-gateway** is a unified MCP (Model Context Protocol) gateway deployed
+on deno Edge Functions. It provides AI assistants with intelligent routing,
+caching, health monitoring, and circuit breaker functionality for accessing
+federated MCP servers globally.
 
 **Repository**: https://github.com/schlpbch/deno-mcp-gateway
 
@@ -25,7 +28,8 @@ src/types.ts (235 lines) - Centralized type definitions
 ### Key Features
 
 - **Global Edge Deployment**: Sub-50ms latency via deno Edge
-- **Intelligent Routing**: Namespace-based routing (`journey.*`, `mobility.*`, etc.)
+- **Intelligent Routing**: Namespace-based routing (`journey.*`, `mobility.*`,
+  etc.)
 - **Persistent Caching**: Two-tier (memory + deno Blobs)
 - **Health Monitoring**: Automatic checks with failover
 - **Circuit Breaker**: Prevents cascading failures
@@ -56,11 +60,13 @@ weather.*       → Open Meteo MCP
 ### Code Quality Improvements
 
 1. **Monolith to Modular Architecture**
+
    - `main.ts`: 1314 → 180 lines
    - Created 6 focused modules for separation of concerns
    - Each module has single responsibility
 
 2. **Centralized Type System**
+
    - Created `src/types.ts` (235 lines) as single source of truth
    - All modules import from centralized types
    - Eliminated type duplication
@@ -77,7 +83,9 @@ weather.*       → Open Meteo MCP
 **Location**: `packages/types/src/index.ts` (150+ lines)
 
 **Exports**:
-- `ServerCapabilities`, `ToolCapability`, `ResourceCapability`, `PromptCapability`
+
+- `ServerCapabilities`, `ToolCapability`, `ResourceCapability`,
+  `PromptCapability`
 - `ServerRegistration`, `ServerHealth`, `BackendServer`
 - `MCPRequest`, `MCPResponse`, `MCPError`
 - `ToolCall`, `ResourceRequest`, `ResourceResponse`
@@ -89,6 +97,7 @@ weather.*       → Open Meteo MCP
 **Location**: `src/types.ts` (235 lines)
 
 **Key Interfaces**:
+
 ```typescript
 interface BackendServer {
   name: string;
@@ -143,21 +152,22 @@ deno task fmt
 
 ### Deployment
 
-The project is deployed on deno Edge Functions. Configuration is managed through environment variables and server config files.
+The project is deployed on deno Edge Functions. Configuration is managed through
+environment variables and server config files.
 
 ## 🗂️ Key Files
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `main.ts` | Entry point with import.meta.main guard | 180 |
-| `src/types.ts` | Centralized type definitions | 235 |
-| `src/config.ts` | Server initialization | ~80 |
-| `src/session.ts` | Session management & metrics | ~70 |
-| `src/backend.ts` | Backend communication | ~90 |
-| `src/handlers.ts` | HTTP endpoint routing | ~200 |
-| `src/mcprequest.ts` | MCP protocol methods | ~150 |
-| `src/jsonrpc.ts` | JSON-RPC helpers | ~50 |
-| `packages/types/src/index.ts` | Shared type definitions | 150+ |
+| File                          | Purpose                                 | Lines |
+| ----------------------------- | --------------------------------------- | ----- |
+| `main.ts`                     | Entry point with import.meta.main guard | 180   |
+| `src/types.ts`                | Centralized type definitions            | 235   |
+| `src/config.ts`               | Server initialization                   | ~80   |
+| `src/session.ts`              | Session management & metrics            | ~70   |
+| `src/backend.ts`              | Backend communication                   | ~90   |
+| `src/handlers.ts`             | HTTP endpoint routing                   | ~200  |
+| `src/mcprequest.ts`           | MCP protocol methods                    | ~150  |
+| `src/jsonrpc.ts`              | JSON-RPC helpers                        | ~50   |
+| `packages/types/src/index.ts` | Shared type definitions                 | 150+  |
 
 ## 📝 Recent Commits
 
@@ -187,8 +197,12 @@ The project is deployed on deno Edge Functions. Configuration is managed through
 
 ## 💡 Key Insights
 
-1. **Modular Architecture**: Breaking down the 1314-line monolith improved maintainability without changing functionality
-2. **Type Safety**: Centralized types prevent inconsistencies and make refactoring safer
+1. **Modular Architecture**: Breaking down the 1314-line monolith improved
+   maintainability without changing functionality
+2. **Type Safety**: Centralized types prevent inconsistencies and make
+   refactoring safer
 3. **Testing Strategy**: 130 tests provide confidence in edge case handling
-4. **Shared Types**: Both backend and frontend use types from `packages/types` for consistency
-5. **pnpm Workspace**: Monorepo structure enables code sharing and coordinated updates
+4. **Shared Types**: Both backend and frontend use types from `packages/types`
+   for consistency
+5. **pnpm Workspace**: Monorepo structure enables code sharing and coordinated
+   updates

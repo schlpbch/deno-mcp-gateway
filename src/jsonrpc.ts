@@ -2,7 +2,10 @@
  * JSON-RPC protocol helpers
  */
 
-export const jsonRpcResponse = (id: string | number | null, result: unknown) => ({
+export const jsonRpcResponse = (
+  id: string | number | null,
+  result: unknown
+) => ({
   jsonrpc: '2.0' as const,
   id,
   result,

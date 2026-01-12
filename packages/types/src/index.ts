@@ -1,7 +1,7 @@
 /**
  * Shared type definitions for MCP Gateway
  * Used across backend and frontend packages
- * 
+ *
  * This package provides unified types for:
  * - Server capabilities and health monitoring
  * - MCP protocol operations (tools, resources, prompts)

@@ -30,7 +30,11 @@ export const metrics: Metrics = {
 /**
  * Send SSE message to a session
  */
-export function sendSSE(sessionId: string, event: string, data: unknown): boolean {
+export function sendSSE(
+  sessionId: string,
+  event: string,
+  data: unknown
+): boolean {
   const session = sessions.get(sessionId);
   if (session) {
     try {

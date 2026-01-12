@@ -166,7 +166,9 @@ export async function checkBackendHealth(
 /**
  * Fetch tools from a backend server
  */
-export async function fetchToolsFromServer(server: BackendServer): Promise<unknown[]> {
+export async function fetchToolsFromServer(
+  server: BackendServer
+): Promise<unknown[]> {
   try {
     const result = (await sendToBackend(server, 'tools/list')) as {
       tools?: unknown[];
