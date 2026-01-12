@@ -14,6 +14,13 @@ import {
   isCircuitOpenError,
   type CircuitBreakerStatus,
 } from './src/circuitbreaker/mod.ts';
+import {
+  validateServerConfiguration,
+  extractServersFromConfig,
+  buildBulkUploadResponse,
+  buildHealthStatusResponse,
+  jsonResponse,
+} from './src/endpoints/serverConfigUpload.ts';
 
 // =============================================================================
 // Configuration
@@ -1070,6 +1077,165 @@ export async function handler(req: Request): Promise<Response> {
         status: 200,
         headers: corsHeaders,
       });
+    }
+
+    // Upload server configuration via multipart form - POST /mcp/servers/upload
+    if (path === '/mcp/servers/upload' && req.method === 'POST') {
+      try {
+        const contentType = req.headers.get('content-type');
+        if (!contentType || !contentType.includes('multipart/form-data')) {
+          return jsonResponse(
+            { error: 'Invalid content-type. Expected multipart/form-data' },
+            400,
+            corsHeaders
+          );
+        }
+
+        const body = await req.arrayBuffer();
+        const uint8Array = new Uint8Array(body);
+        const text = new TextDecoder().decode(uint8Array);
+
+        // Simple multipart parser
+        const boundaryMatch = contentType.match(/boundary=([^;]+)/);
+        if (!boundaryMatch) {
+          return jsonResponse(
+            { error: 'No boundary in multipart request' },
+            400,
+            corsHeaders
+          );
+        }
+
+        const boundary = boundaryMatch[1];
+        const parts = text.split(`--${boundary}`);
+        let configJson: string | null = null;
+
+        for (const part of parts) {
+          if (part.includes('name="config"')) {
+            const match = part.match(/\r\n\r\n([\s\S]*?)\r\n/);
+            if (match) {
+              configJson = match[1];
+              break;
+            }
+          }
+        }
+
+        if (!configJson) {
+          return jsonResponse(
+            { error: 'No config file found in upload' },
+            400,
+            corsHeaders
+          );
+        }
+
+        // Parse and validate config
+        const config = JSON.parse(configJson);
+        const validation = validateServerConfiguration(config);
+
+        if (!validation.valid) {
+          return jsonResponse(
+            { error: 'Invalid configuration', details: validation.errors },
+            400,
+            corsHeaders
+          );
+        }
+
+        // Extract servers from config
+        const servers = extractServersFromConfig(config);
+        const failedIndices: number[] = [];
+        const errors: string[] = [];
+
+        // Register each server
+        for (let i = 0; i < servers.length; i++) {
+          try {
+            const server = servers[i];
+            dynamicServers.set(server.id, {
+              id: server.id,
+              name: server.name,
+              endpoint: server.endpoint,
+              requiresSession: server.requiresSession ?? false,
+            });
+          } catch (error) {
+            failedIndices.push(i);
+            errors.push(String(error));
+          }
+        }
+
+        const response = buildBulkUploadResponse(servers, failedIndices, errors);
+        return jsonResponse(response, 200, corsHeaders);
+      } catch (error) {
+        console.error('Error processing config upload:', error);
+        return jsonResponse(
+          { error: 'Failed to process upload', details: String(error) },
+          500,
+          corsHeaders
+        );
+      }
+    }
+
+    // Delete a registered server - DELETE /mcp/servers/{serverId}
+    const deleteServerMatch = path.match(/^\/mcp\/servers\/([^/]+)$/);
+    if (deleteServerMatch && req.method === 'DELETE') {
+      const serverId = deleteServerMatch[1];
+
+      if (!dynamicServers.has(serverId)) {
+        return jsonResponse(
+          { error: `Server not found: ${serverId}` },
+          404,
+          corsHeaders
+        );
+      }
+
+      dynamicServers.delete(serverId);
+      return jsonResponse(
+        { success: true, message: `Server ${serverId} deleted` },
+        200,
+        corsHeaders
+      );
+    }
+
+    // Check server health status - GET /mcp/servers/{serverId}/health
+    const healthCheckMatch = path.match(/^\/mcp\/servers\/([^/]+)\/health$/);
+    if (healthCheckMatch && req.method === 'GET') {
+      const serverId = healthCheckMatch[1];
+      const server = dynamicServers.get(serverId);
+
+      if (!server) {
+        return jsonResponse(
+          { error: `Server not found: ${serverId}` },
+          404,
+          corsHeaders
+        );
+      }
+
+      // Try to health check the server
+      try {
+        const healthCheckUrl = `${server.endpoint}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+        const response = await fetch(healthCheckUrl, {
+          method: 'GET',
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const status = buildHealthStatusResponse(
+          serverId,
+          server.name,
+          response.status === 200 ? 'healthy' : 'unhealthy'
+        );
+
+        return jsonResponse(status, 200, corsHeaders);
+      } catch (_error) {
+        const status = buildHealthStatusResponse(
+          serverId,
+          server.name,
+          'unknown'
+        );
+
+        return jsonResponse(status, 503, corsHeaders);
+      }
     }
 
     if (path === '/mcp/metrics' && req.method === 'GET') {
