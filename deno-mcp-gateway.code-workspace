@@ -1,11 +1,13 @@
 {
-	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "../mcp-gateway-ui"
-		}
-	],
-	"settings": {}
+  "folders": [
+	{
+		"path": "."
+	},
+	{
+		"path": "../mcp-gateway-ui"
+	}
+],
+  "settings": {
+    "powershell.cwd": "mcp-gateway-ui"
+  }
 }

@@ -155,71 +155,6 @@ const jsonRpcError = (
 let requestIdCounter = 1;
 
 /**
- * Initialize a session with a backend server that requires Mcp-Session-Id
- */
-async function initializeBackendSession(
-  server: BackendServer,
-  timeoutMs = 10000
-): Promise<string | null> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(server.endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json, text/event-stream',
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        method: 'initialize',
-        params: {
-          protocolVersion: '2024-11-05',
-          capabilities: {},
-          clientInfo: { name: 'mcp-gateway', version: '2.0.0' },
-        },
-        id: requestIdCounter++,
-      }),
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      console.error(
-        `Failed to initialize session with ${server.id}: ${response.status}`
-      );
-      return null;
-    }
-
-    // Get session ID from response header
-    const sessionId = response.headers.get('Mcp-Session-Id');
-    if (sessionId) {
-      console.log(`Initialized session with ${server.id}: ${sessionId}`);
-      backendSessions.set(server.id, sessionId);
-      return sessionId;
-    }
-
-    // Some servers return session in body
-    const text = await response.text();
-    const jsonRpc = JSON.parse(text);
-    if (jsonRpc.result) {
-      // Session initialized successfully even without header
-      // Generate a placeholder session ID
-      const placeholderSessionId = `${server.id}-${Date.now()}`;
-      backendSessions.set(server.id, placeholderSessionId);
-      return placeholderSessionId;
-    }
-
-    return null;
-  } catch (e) {
-    console.error(`Error initializing session with ${server.id}:`, e);
-    return null;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-/**
  * Get or create a session for a backend server
  */
 async function getBackendSession(
@@ -234,8 +169,8 @@ async function getBackendSession(
     return existingSession;
   }
 
-  const newSession = await initializeBackendSession(server);
-  return newSession;
+  // Sessions must be initialized externally
+  return null;
 }
 
 /**

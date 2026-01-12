@@ -1,0 +1,179 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        test-type: [backend, ui-unit, e2e]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        # Fetch both repositories if they're separate
+        path: deno-mcp-gateway
+    
+    - name: Checkout UI repository
+      uses: actions/checkout@v4
+      with:
+        repository: schlpbch/mcp-gateway-ui
+        path: mcp-gateway-ui
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup Deno
+      uses: denoland/setup-deno@v1
+      with:
+        deno-version: v1.x
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+        cache-dependency-path: mcp-gateway-ui/pnpm-lock.yaml
+    
+    - name: Install pnpm
+      run: npm install -g pnpm@9.0.0
+    
+    - name: Install UI dependencies
+      run: |
+        cd mcp-gateway-ui
+        pnpm install
+    
+    - name: Install Playwright browsers (E2E only)
+      if: matrix.test-type == 'e2e'
+      run: |
+        cd mcp-gateway-ui
+        pnpm exec playwright install --with-deps
+    
+    - name: Run backend tests
+      if: matrix.test-type == 'backend'
+      run: |
+        cd deno-mcp-gateway
+        deno task test --coverage
+    
+    - name: Run UI unit tests
+      if: matrix.test-type == 'ui-unit'
+      run: |
+        cd mcp-gateway-ui
+        pnpm test:coverage
+    
+    - name: Start backend for E2E tests
+      if: matrix.test-type == 'e2e'
+      run: |
+        cd deno-mcp-gateway
+        deno task dev &
+        sleep 10
+        # Wait for backend to be ready
+        timeout 30s bash -c 'until curl -f http://localhost:8080/mcp/health; do sleep 2; done'
+      env:
+        PORT: 8080
+    
+    - name: Start UI for E2E tests
+      if: matrix.test-type == 'e2e'
+      run: |
+        cd mcp-gateway-ui
+        pnpm build
+        pnpm preview --port 8888 &
+        sleep 5
+        # Wait for UI to be ready
+        timeout 30s bash -c 'until curl -f http://localhost:8888; do sleep 2; done'
+      env:
+        GATEWAY_URL: http://localhost:8080
+    
+    - name: Run E2E tests
+      if: matrix.test-type == 'e2e'
+      run: |
+        cd mcp-gateway-ui
+        pnpm test:e2e
+      env:
+        GATEWAY_URL: http://localhost:8080
+        UI_URL: http://localhost:8888
+    
+    - name: Upload test results
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.test-type }}
+        path: |
+          deno-mcp-gateway/coverage/
+          mcp-gateway-ui/coverage/
+          mcp-gateway-ui/test-results/
+          mcp-gateway-ui/playwright-report/
+    
+    - name: Upload coverage to Codecov (Backend)
+      if: matrix.test-type == 'backend'
+      uses: codecov/codecov-action@v3
+      with:
+        directory: deno-mcp-gateway/coverage/
+        flags: backend
+    
+    - name: Upload coverage to Codecov (UI)
+      if: matrix.test-type == 'ui-unit'  
+      uses: codecov/codecov-action@v3
+      with:
+        directory: mcp-gateway-ui/coverage/
+        flags: frontend
+
+  # Job to run all tests together (integration check)
+  integration:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        path: deno-mcp-gateway
+    
+    - name: Checkout UI repository
+      uses: actions/checkout@v4
+      with:
+        repository: schlpbch/mcp-gateway-ui
+        path: mcp-gateway-ui
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup Deno
+      uses: denoland/setup-deno@v1
+      with:
+        deno-version: v1.x
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+        cache-dependency-path: mcp-gateway-ui/pnpm-lock.yaml
+    
+    - name: Install pnpm
+      run: npm install -g pnpm@9.0.0
+    
+    - name: Make test script executable
+      run: |
+        cd deno-mcp-gateway
+        chmod +x run-tests.sh
+    
+    - name: Run comprehensive test suite
+      run: |
+        cd deno-mcp-gateway
+        ./run-tests.sh all --coverage
+    
+    - name: Generate combined coverage report
+      run: |
+        echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+        echo "| Component | Coverage |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----------|----------|" >> $GITHUB_STEP_SUMMARY
+        if [ -f "deno-mcp-gateway/coverage/lcov.info" ]; then
+          echo "| Backend | ![Backend Coverage](https://img.shields.io/badge/Backend-Coverage-green) |" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ -f "mcp-gateway-ui/coverage/coverage-summary.json" ]; then
+          echo "| Frontend | ![Frontend Coverage](https://img.shields.io/badge/Frontend-Coverage-green) |" >> $GITHUB_STEP_SUMMARY
+        fi
