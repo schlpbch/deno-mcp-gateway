@@ -453,7 +453,8 @@ async function callToolOnServer(
   const serverId = toolName.substring(0, separatorIndex);
   const actualToolName = toolName.substring(separatorIndex + 2);
 
-  const server = BACKEND_SERVERS.find((s) => s.id === serverId);
+  // Check both static and dynamic servers
+  const server = BACKEND_SERVERS.find((s) => s.id === serverId) || dynamicServers.get(serverId);
   if (!server) {
     throw new Error(`Unknown server: ${serverId}`);
   }
@@ -473,7 +474,8 @@ async function readResourceFromServer(uri: string): Promise<unknown> {
   }
 
   const [, serverId, originalUri] = match;
-  const server = BACKEND_SERVERS.find((s) => s.id === serverId);
+  // Check both static and dynamic servers
+  const server = BACKEND_SERVERS.find((s) => s.id === serverId) || dynamicServers.get(serverId);
   if (!server) {
     throw new Error(`Unknown server: ${serverId}`);
   }
@@ -493,7 +495,8 @@ async function getPromptFromServer(
   const serverId = promptName.substring(0, separatorIndex);
   const actualPromptName = promptName.substring(separatorIndex + 2);
 
-  const server = BACKEND_SERVERS.find((s) => s.id === serverId);
+  // Check both static and dynamic servers
+  const server = BACKEND_SERVERS.find((s) => s.id === serverId) || dynamicServers.get(serverId);
   if (!server) {
     throw new Error(`Unknown server: ${serverId}`);
   }
