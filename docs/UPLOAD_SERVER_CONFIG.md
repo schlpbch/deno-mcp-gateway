@@ -1,6 +1,7 @@
 # Server Configuration Upload Script
 
-This script allows you to bulk upload and configure MCP server configurations to the gateway's dynamic server registry.
+This script allows you to bulk upload and configure MCP server configurations to
+the gateway's dynamic server registry.
 
 ## Features
 
@@ -41,12 +42,12 @@ Create a `servers-config.json` file with the following structure:
 
 ### Configuration Fields
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | string | ✓ | Unique server identifier (used for routing) |
-| `name` | string | ✓ | Human-readable server name |
-| `endpoint` | string | ✓ | Full URL to the MCP server endpoint |
-| `requiresSession` | boolean | | Whether the server requires MCP-Session-Id (default: false) |
+| Field             | Type    | Required | Description                                                 |
+| ----------------- | ------- | -------- | ----------------------------------------------------------- |
+| `id`              | string  | ✓        | Unique server identifier (used for routing)                 |
+| `name`            | string  | ✓        | Human-readable server name                                  |
+| `endpoint`        | string  | ✓        | Full URL to the MCP server endpoint                         |
+| `requiresSession` | boolean |          | Whether the server requires MCP-Session-Id (default: false) |
 
 ## Usage
 
@@ -86,6 +87,7 @@ deno task upload-config
 ```
 
 **Output:**
+
 ```
 📋 MCP Server Configuration Upload Script
 ==========================================
@@ -181,6 +183,7 @@ The script uses the following gateway API endpoint:
 Registers a new server with the gateway.
 
 **Request:**
+
 ```json
 {
   "id": "journey",
@@ -191,6 +194,7 @@ Registers a new server with the gateway.
 ```
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -200,6 +204,7 @@ Registers a new server with the gateway.
 ```
 
 **Response (Error):**
+
 ```json
 {
   "error": "Missing required fields: id, name, endpoint"
@@ -209,41 +214,51 @@ Registers a new server with the gateway.
 ## Validation Rules
 
 ### Server ID
+
 - Must be a valid string
 - Should be URL-safe (lowercase, hyphens, underscores)
 - Must be unique across all servers
 
 ### Server Name
+
 - Must be a non-empty string
 - Human-readable description
 
 ### Endpoint
+
 - Must be a valid HTTP/HTTPS URL
 - Must be accessible from the gateway
 - Should point to the `/mcp` path or equivalent
 
 ### Requires Session
+
 - Optional boolean field
 - Only set to `true` if the server requires MCP-Session-Id header
 
 ## Tips & Best Practices
 
-1. **Start with the example file**: Use the provided `servers-config.json` as a template
+1. **Start with the example file**: Use the provided `servers-config.json` as a
+   template
 
-2. **Validate before uploading**: The script validates all configurations before uploading
+2. **Validate before uploading**: The script validates all configurations before
+   uploading
 
-3. **Test local servers first**: Ensure your MCP servers are running before uploading
+3. **Test local servers first**: Ensure your MCP servers are running before
+   uploading
 
-4. **Use meaningful IDs**: Use lowercase, hyphenated IDs that reflect the server purpose
+4. **Use meaningful IDs**: Use lowercase, hyphenated IDs that reflect the server
+   purpose
+
    ```json
    {
-     "id": "journey-service",        // ✓ Good
-     "id": "JourneyService",         // ✗ Avoid
-     "id": "journey_service",        // ✓ Acceptable
+     "id": "journey-service", // ✓ Good
+     "id": "JourneyService", // ✗ Avoid
+     "id": "journey_service" // ✓ Acceptable
    }
    ```
 
-5. **Check gateway health**: The script automatically verifies the gateway is reachable
+5. **Check gateway health**: The script automatically verifies the gateway is
+   reachable
 
 6. **Review output**: Check the summary for any failed uploads
 
@@ -252,6 +267,7 @@ Registers a new server with the gateway.
 ### "Cannot connect to gateway"
 
 Make sure the gateway is running:
+
 ```bash
 # Start the gateway in a terminal
 deno task dev
@@ -260,9 +276,10 @@ deno task dev
 ### "Invalid endpoint URL"
 
 Verify the endpoint is a complete URL with protocol and path:
+
 ```json
 {
-  "endpoint": "http://localhost:3001/mcp"  // ✓ Valid
+  "endpoint": "http://localhost:3001/mcp" // ✓ Valid
 }
 ```
 
