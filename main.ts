@@ -657,25 +657,42 @@ export async function handler(req: Request): Promise<Response> {
 
     // Health check endpoint
     if (path === '/health') {
+      // Deduplicate servers by ID (dynamic servers can override hardcoded ones)
+      const allServersMap = new Map<string, BackendServer>();
+      BACKEND_SERVERS.forEach((s) => allServersMap.set(s.id, s));
+      Array.from(dynamicServers.values()).forEach((s) =>
+        allServersMap.set(s.id, s)
+      );
+
       const backendHealth = await Promise.all(
-        BACKEND_SERVERS.map((server) => checkBackendHealth(server))
+        Array.from(allServersMap.values()).map((server) =>
+          checkBackendHealth(server)
+        )
       );
       const allHealthy = backendHealth.every((b) => b.status === 'healthy');
       const anyHealthy = backendHealth.some((b) => b.status === 'healthy');
 
       return new Response(
         JSON.stringify({
-          status: allHealthy
-            ? 'healthy'
-            : anyHealthy
-            ? 'degraded'
-            : 'unhealthy',
-          server: SERVER_INFO,
-          activeSessions: sessions.size,
-          backends: backendHealth,
+          status: allHealthy ? 'UP' : anyHealthy ? 'DEGRADED' : 'DOWN',
+          timestamp: new Date().toISOString(),
+          servers: backendHealth.map((b) => {
+            // Look for endpoint in both BACKEND_SERVERS and dynamicServers
+            const staticServer = BACKEND_SERVERS.find((s) => s.id === b.id);
+            const dynamicServer = dynamicServers.get(b.id);
+            const endpoint = staticServer?.endpoint || dynamicServer?.endpoint;
+            
+            return {
+              id: b.id,
+              name: b.name,
+              endpoint,
+              status: b.status === 'healthy' ? 'HEALTHY' : 'DOWN',
+              latency: b.latencyMs,
+              errorMessage: b.error,
+            };
+          }),
         }),
         {
-          status: allHealthy ? 200 : anyHealthy ? 200 : 503,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         }
       );
@@ -1003,14 +1020,14 @@ export async function handler(req: Request): Promise<Response> {
     }
 
     // MCP REST endpoints (for web UI)
-    if (path === '/mcp/tools/list' && req.method === 'GET') {
+    if (path === '/tools/list' && req.method === 'GET') {
       const result = await handleJsonRpcRequest('tools/list', undefined);
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    if (path === '/mcp/tools/call' && req.method === 'POST') {
+    if (path === '/tools/call' && req.method === 'POST') {
       const body = await req.json();
       const result = await handleJsonRpcRequest('tools/call', body);
       return new Response(JSON.stringify(result), {
@@ -1018,64 +1035,40 @@ export async function handler(req: Request): Promise<Response> {
       });
     }
 
-    if (path === '/mcp/resources/list' && req.method === 'GET') {
+    if (path === '/resources/list' && req.method === 'GET') {
       const result = await handleJsonRpcRequest('resources/list', undefined);
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    if (path === '/mcp/prompts/list' && req.method === 'GET') {
+    if (path === '/prompts/list' && req.method === 'GET') {
       const result = await handleJsonRpcRequest('prompts/list', undefined);
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    if (path === '/mcp/health' && req.method === 'GET') {
-      // Deduplicate servers by ID (dynamic servers can override hardcoded ones)
-      const allServersMap = new Map<string, BackendServer>();
-      BACKEND_SERVERS.forEach((s) => allServersMap.set(s.id, s));
-      Array.from(dynamicServers.values()).forEach((s) =>
-        allServersMap.set(s.id, s)
-      );
-
-      const backendHealth = await Promise.all(
-        Array.from(allServersMap.values()).map((server) =>
-          checkBackendHealth(server)
-        )
-      );
-      const allHealthy = backendHealth.every((b) => b.status === 'healthy');
-      const anyHealthy = backendHealth.some((b) => b.status === 'healthy');
-
-      return new Response(
-        JSON.stringify({
-          status: allHealthy ? 'UP' : anyHealthy ? 'DEGRADED' : 'DOWN',
-          timestamp: new Date().toISOString(),
-          servers: backendHealth.map((b) => {
-            // Look for endpoint in both BACKEND_SERVERS and dynamicServers
-            const staticServer = BACKEND_SERVERS.find((s) => s.id === b.id);
-            const dynamicServer = dynamicServers.get(b.id);
-            const endpoint = staticServer?.endpoint || dynamicServer?.endpoint;
-            
-            return {
-              id: b.id,
-              name: b.name,
-              endpoint,
-              status: b.status === 'healthy' ? 'HEALTHY' : 'DOWN',
-              latency: b.latencyMs,
-              errorMessage: b.error,
-            };
-          }),
-        }),
-        {
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
+    if (path === '/resources/read' && req.method === 'POST') {
+      const body = await req.json();
+      const result = await handleJsonRpcRequest('resources/read', body);
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
     }
 
-    // Register new server dynamically - POST /mcp/servers/register
-    if (path === '/mcp/servers/register' && req.method === 'POST') {
+    if (path === '/prompts/get' && req.method === 'POST') {
+      const body = await req.json();
+      const result = await handleJsonRpcRequest('prompts/get', body);
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+
+
+    // Register new server dynamically - POST /servers/register
+    if (path === '/servers/register' && req.method === 'POST') {
       try {
         const body = await req.json();
 
