@@ -21,23 +21,23 @@ async function handleRegisterPost(body: Record<string, unknown>): Promise<{ succ
   }
 
   try {
-    new URL(body.endpoint);
+    new URL(body.endpoint as string);
   } catch {
     return { success: false, error: 'Invalid endpoint URL format' };
   }
 
   const newServer: BackendServer = {
-    id: body.id,
-    name: body.name,
-    endpoint: body.endpoint,
-    requiresSession: body.requiresSession || false,
+    id: body.id as string,
+    name: body.name as string,
+    endpoint: body.endpoint as string,
+    requiresSession: (body.requiresSession as boolean) || false,
   };
 
-  dynamicServers.set(body.id, newServer);
+  dynamicServers.set(body.id as string, newServer);
 
   return {
     success: true,
-    serverId: body.id,
+    serverId: body.id as string,
   };
 }
 
