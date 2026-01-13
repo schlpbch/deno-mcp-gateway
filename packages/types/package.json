@@ -1,6 +1,6 @@
 {
   "name": "@mcp-gateway/types",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Authoritative shared type definitions for deno MCP Gateway and UI",
   "type": "module",
   "main": "./dist/index.js",
