@@ -1,6 +1,7 @@
-name: Test Suite
-
-on:
+# DISABLED: This workflow requires access to private mcp-gateway-ui repository
+# Re-enable by adding a PAT with repo scope to secrets.MCP_UI_TOKEN
+# name: Test Suite (DISABLED)
+name: _DISABLED_Test_Suite
   push:
     branches: [ master, main, develop ]
   pull_request:
