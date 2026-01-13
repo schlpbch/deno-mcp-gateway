@@ -185,7 +185,9 @@ export function handleSseStream(): Response {
       };
 
       // addEventListener might not be available, try to use signal
+      // deno-lint-ignore no-explicit-any
       if (typeof (controller as any).signal?.addEventListener === 'function') {
+        // deno-lint-ignore no-explicit-any
         (controller as any).signal.addEventListener('abort', abortHandler);
       }
     },
@@ -444,7 +446,9 @@ export function handleMcpGetStream(sessionId: string | null): Response {
         }
       };
 
+      // deno-lint-ignore no-explicit-any
       if (typeof (controller as any).signal?.addEventListener === 'function') {
+        // deno-lint-ignore no-explicit-any
         (controller as any).signal.addEventListener('abort', abortHandler);
       }
     },

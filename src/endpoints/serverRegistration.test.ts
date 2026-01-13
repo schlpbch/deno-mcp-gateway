@@ -15,7 +15,7 @@ interface BackendServer {
 // Mock implementation of the registration logic
 const dynamicServers = new Map<string, BackendServer>();
 
-async function handleRegisterPost(body: any): Promise<{ success: boolean; serverId?: string; error?: string }> {
+async function handleRegisterPost(body: Record<string, unknown>): Promise<{ success: boolean; serverId?: string; error?: string }> {
   if (!body.id || !body.name || !body.endpoint) {
     return { success: false, error: 'Missing required fields: id, name, endpoint' };
   }
