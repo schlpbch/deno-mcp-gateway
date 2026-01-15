@@ -19,6 +19,7 @@ import {
   sanitizeInput,
 } from './validation/mcpValidation.ts';
 import type { BackendServer } from './types.ts';
+import { logger } from './logger.ts';
 
 /**
  * Get a server by ID from static or dynamic registry
@@ -58,6 +59,37 @@ export async function handleJsonRpcRequest(
   const getServer = createGetServer(staticServers, dynamicServers);
   const allServers = getAllServers(staticServers, dynamicServers);
 
+  // Log MCP method call
+  logger.info('MCP request', {
+    method,
+    serverCount: allServers.length,
+    hasParams: !!params,
+  });
+
+  const startTime = performance.now();
+
+  try {
+    const result = await handleMcpMethod(method, params, getServer, allServers);
+    const durationMs = performance.now() - startTime;
+    logger.info('MCP response', { method, durationMs: Math.round(durationMs) });
+    return result;
+  } catch (error) {
+    const durationMs = performance.now() - startTime;
+    logger.error('MCP error', {
+      method,
+      error: error instanceof Error ? error.message : String(error),
+      durationMs: Math.round(durationMs),
+    });
+    throw error;
+  }
+}
+
+async function handleMcpMethod(
+  method: string,
+  params: Record<string, unknown> | undefined,
+  getServer: (id: string) => BackendServer | undefined,
+  allServers: BackendServer[]
+): Promise<unknown> {
   switch (method) {
     case 'initialize':
       return {
