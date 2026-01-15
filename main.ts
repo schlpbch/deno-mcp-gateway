@@ -18,7 +18,7 @@ import {
   initializeServersFromEnv,
 } from './src/config.ts';
 import type { BackendServer } from './src/types.ts';
-import { jsonRpcResponse, jsonRpcError } from './src/jsonrpc.ts';
+import { jsonRpcResponse, jsonRpcError, JsonRpcErrorCode } from './src/jsonrpc.ts';
 import { logger } from './src/logger.ts';
 import { sessions, metrics, sendSSE } from './src/session.ts';
 import { handleJsonRpcRequest } from './src/mcprequest.ts';
@@ -45,6 +45,35 @@ import {
 
 const BACKEND_SERVERS: BackendServer[] = initializeServersFromEnv();
 const dynamicServers = new Map<string, BackendServer>();
+
+// ============================================================================
+// Content-Type Validation Helper
+// ============================================================================
+
+/**
+ * Validate Content-Type header for JSON-RPC endpoints
+ * Returns error response if invalid, null if valid
+ */
+function validateJsonContentType(req: Request): Response | null {
+  const contentType = req.headers.get('Content-Type') || '';
+  if (!contentType.includes('application/json')) {
+    logger.warn('Invalid content type', { contentType, path: new URL(req.url).pathname });
+    return new Response(
+      JSON.stringify(
+        jsonRpcError(
+          null,
+          JsonRpcErrorCode.INVALID_REQUEST,
+          'Content-Type must be application/json'
+        )
+      ),
+      {
+        status: 415,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      }
+    );
+  }
+  return null;
+}
 
 // ============================================================================
 // HTTP Request Handler
@@ -78,6 +107,8 @@ export async function handler(req: Request): Promise<Response> {
   try {
     // MCP JSON-RPC at root path (for Claude Desktop compatibility)
     if (path === '/' && req.method === 'POST') {
+      const contentTypeError = validateJsonContentType(req);
+      if (contentTypeError) return contentTypeError;
       const body = await req.json();
       return await handleStreamableHttp(req, body, (method, params) =>
         handleJsonRpcRequest(method, params, BACKEND_SERVERS, dynamicServers)
@@ -116,6 +147,8 @@ export async function handler(req: Request): Promise<Response> {
 
     // Streamable HTTP transport - POST /mcp
     if ((path === '/mcp' || path === '/mcp/') && req.method === 'POST') {
+      const contentTypeError = validateJsonContentType(req);
+      if (contentTypeError) return contentTypeError;
       const body = await req.json();
       return await handleStreamableHttp(req, body, (method, params) =>
         handleJsonRpcRequest(method, params, BACKEND_SERVERS, dynamicServers)

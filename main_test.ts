@@ -541,7 +541,7 @@ Deno.test('POST /mcp returns JSON-RPC error code -32601 for unknown method', asy
   assertEquals(data.error.code, -32601); // METHOD_NOT_FOUND
 });
 
-Deno.test('POST /mcp returns error for invalid content-type (non-JSON body)', async () => {
+Deno.test('POST /mcp returns JSON-RPC error code -32600 for invalid content-type', async () => {
   const req = new Request('http://localhost:8000/mcp', {
     method: 'POST',
     headers: { 'Content-Type': 'text/xml' },
@@ -549,11 +549,14 @@ Deno.test('POST /mcp returns error for invalid content-type (non-JSON body)', as
   });
 
   const res = await handler(req);
-  // JSON parse fails, returns 500 with error details
-  assertEquals(res.status, 500);
+  // Content-Type validation returns 415 before JSON parsing
+  assertEquals(res.status, 415);
 
   const data = await res.json();
+  assertEquals(data.jsonrpc, '2.0');
   assertExists(data.error);
+  assertEquals(data.error.code, -32600); // INVALID_REQUEST
+  assertStringIncludes(data.error.message, 'Content-Type');
 });
 
 Deno.test('POST / handles batch with mixed success and errors', async () => {
