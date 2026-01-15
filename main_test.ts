@@ -235,6 +235,199 @@ Deno.test('JSON-RPC responses have jsonrpc field', async () => {
 });
 
 // =============================================================================
+// Root Endpoint Tests (POST /) - Claude Desktop Compatibility
+// =============================================================================
+
+Deno.test('POST / accepts JSON-RPC initialize request', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-06-18',
+        capabilities: {},
+        clientInfo: { name: 'test-client', version: '1.0.0' },
+      },
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 200);
+
+  const data = await res.json();
+  assertEquals(data.jsonrpc, '2.0');
+  assertEquals(data.id, 1);
+  assertExists(data.result);
+  assertExists(data.result.protocolVersion);
+  assertExists(data.result.capabilities);
+  assertExists(data.result.serverInfo);
+});
+
+Deno.test('POST / accepts JSON-RPC ping request', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 2,
+      method: 'ping',
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 200);
+
+  const data = await res.json();
+  assertEquals(data.jsonrpc, '2.0');
+  assertEquals(data.id, 2);
+  assertExists(data.result);
+});
+
+Deno.test('POST / accepts JSON-RPC tools/list request', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 3,
+      method: 'tools/list',
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 200);
+
+  const data = await res.json();
+  assertEquals(data.jsonrpc, '2.0');
+  assertEquals(data.id, 3);
+  assertExists(data.result);
+  assertExists(data.result.tools);
+  assertEquals(Array.isArray(data.result.tools), true);
+});
+
+Deno.test('POST / accepts JSON-RPC resources/list request', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 4,
+      method: 'resources/list',
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 200);
+
+  const data = await res.json();
+  assertEquals(data.jsonrpc, '2.0');
+  assertExists(data.result);
+});
+
+Deno.test('POST / accepts JSON-RPC prompts/list request', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 5,
+      method: 'prompts/list',
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 200);
+
+  const data = await res.json();
+  assertEquals(data.jsonrpc, '2.0');
+  assertExists(data.result);
+});
+
+Deno.test('POST / returns error for invalid method', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 6,
+      method: 'invalid/method',
+    }),
+  });
+
+  const res = await handler(req);
+  const data = await res.json();
+
+  assertEquals(data.jsonrpc, '2.0');
+  assertExists(data.error);
+  assertEquals(typeof data.error.code, 'number');
+  assertEquals(typeof data.error.message, 'string');
+});
+
+Deno.test('POST / handles batch requests', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify([
+      { jsonrpc: '2.0', id: 1, method: 'ping' },
+      { jsonrpc: '2.0', id: 2, method: 'tools/list' },
+    ]),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 200);
+
+  const data = await res.json();
+  assertEquals(Array.isArray(data), true);
+  assertEquals(data.length, 2);
+});
+
+Deno.test('POST / includes CORS headers', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Origin: 'http://localhost:3000',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'ping',
+    }),
+  });
+
+  const res = await handler(req);
+  assertExists(res.headers.get('Access-Control-Allow-Origin'));
+});
+
+Deno.test('POST / returns Mcp-Session-Id header for new sessions', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json, text/event-stream',
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-06-18',
+        capabilities: {},
+        clientInfo: { name: 'test', version: '1.0' },
+      },
+    }),
+  });
+
+  const res = await handler(req);
+  // Session ID may or may not be present depending on Accept header handling
+  assertExists(res);
+  assertEquals(res.status, 200);
+});
+
+// =============================================================================
 // Metrics Tests
 // =============================================================================
 

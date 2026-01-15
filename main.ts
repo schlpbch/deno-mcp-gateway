@@ -76,6 +76,14 @@ export async function handler(req: Request): Promise<Response> {
   }
 
   try {
+    // MCP JSON-RPC at root path (for Claude Desktop compatibility)
+    if (path === '/' && req.method === 'POST') {
+      const body = await req.json();
+      return await handleStreamableHttp(req, body, (method, params) =>
+        handleJsonRpcRequest(method, params, BACKEND_SERVERS, dynamicServers)
+      );
+    }
+
     // Serve static files
     const staticResponse = await handleStaticFile(path);
     if (staticResponse) {
@@ -344,6 +352,7 @@ if (import.meta.main) {
 ========================================
   Federated MCP Gateway Server v${SERVER_INFO.version}
 ========================================
+  MCP Root:        http://localhost:${port}/
   Streamable HTTP: http://localhost:${port}/mcp
   SSE Transport:   http://localhost:${port}/sse
   Health Check:    http://localhost:${port}/health
