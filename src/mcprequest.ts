@@ -20,30 +20,42 @@ import {
 } from './validation/mcpValidation.ts';
 import type { BackendServer } from './types.ts';
 import { logger } from './logger.ts';
+import * as kv from './kv.ts';
 
 /**
- * Get a server by ID from static or dynamic registry
+ * Get a server by ID from static, dynamic, or KV registry
  */
 export function createGetServer(
   staticServers: BackendServer[],
-  dynamicServers: Map<string, BackendServer>
+  dynamicServers: Map<string, BackendServer>,
+  kvServers: BackendServer[]
 ) {
   return (id: string): BackendServer | undefined => {
-    return staticServers.find((s) => s.id === id) || dynamicServers.get(id);
+    // Check KV first (highest priority), then dynamic, then static
+    return (
+      kvServers.find((s) => s.id === id) ||
+      dynamicServers.get(id) ||
+      staticServers.find((s) => s.id === id)
+    );
   };
 }
 
 /**
- * Get all servers (static + dynamic)
+ * Get all servers (static + dynamic + KV)
  */
-export function getAllServers(
+export async function getAllServers(
   staticServers: BackendServer[],
   dynamicServers: Map<string, BackendServer>
-): BackendServer[] {
-  // Deduplicate by ID (dynamic servers can override static ones)
+): Promise<BackendServer[]> {
+  // Deduplicate by ID (KV servers override dynamic, which override static)
   const serverMap = new Map<string, BackendServer>();
   staticServers.forEach((s) => serverMap.set(s.id, s));
   Array.from(dynamicServers.values()).forEach((s) => serverMap.set(s.id, s));
+
+  // Add servers from KV storage
+  const kvServers = await kv.listServers();
+  kvServers.forEach((s) => serverMap.set(s.id, s));
+
   return Array.from(serverMap.values());
 }
 
@@ -56,8 +68,10 @@ export async function handleJsonRpcRequest(
   staticServers: BackendServer[],
   dynamicServers: Map<string, BackendServer>
 ): Promise<unknown> {
-  const getServer = createGetServer(staticServers, dynamicServers);
-  const allServers = getAllServers(staticServers, dynamicServers);
+  // Fetch servers from KV for cross-isolate persistence
+  const kvServers = await kv.listServers();
+  const getServer = createGetServer(staticServers, dynamicServers, kvServers);
+  const allServers = await getAllServers(staticServers, dynamicServers);
 
   // Log MCP method call
   logger.info('MCP request', {

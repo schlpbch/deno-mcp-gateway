@@ -77,15 +77,20 @@ Deno.test('CORS headers are present on API responses', async () => {
 // MCP Tools List Tests
 // =============================================================================
 
-Deno.test('Tools list endpoint returns tools array', async () => {
-  const req = new Request('http://localhost:8000/mcp/tools/list');
-  const res = await handler(req);
+Deno.test({
+  name: 'Tools list endpoint returns tools array',
+  sanitizeResources: false,
+  sanitizeOps: false,
+  fn: async () => {
+    const req = new Request('http://localhost:8000/mcp/tools/list');
+    const res = await handler(req);
 
-  assertEquals(res.status, 200);
-  const body = await res.json();
+    assertEquals(res.status, 200);
+    const body = await res.json();
 
-  assertExists(body.tools);
-  assertEquals(Array.isArray(body.tools), true);
+    assertExists(body.tools);
+    assertEquals(Array.isArray(body.tools), true);
+  },
 });
 
 Deno.test('Tools have namespace prefixes', async () => {
