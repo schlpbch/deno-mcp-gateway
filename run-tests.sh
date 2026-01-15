@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Cross-platform test runner for MCP Gateway project
+# Cross-platform test runner for Federated MCP Gateway project
 # Usage: ./run-tests.sh [backend|ui-unit|e2e|all] [--coverage] [--watch]
 
 set -e
@@ -92,7 +92,7 @@ if [[ ! -d "$UI_DIR" ]]; then
     exit 1
 fi
 
-print_header "MCP Gateway Test Suite"
+print_header "Federated MCP Gateway Test Suite"
 echo -e "${CYAN}Backend Directory: $BACKEND_DIR${NC}"
 echo -e "${CYAN}UI Directory: $UI_DIR${NC}"
 echo -e "${CYAN}Test Type: $TEST_TYPE${NC}"

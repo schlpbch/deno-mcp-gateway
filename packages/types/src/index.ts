@@ -1,5 +1,5 @@
 /**
- * Shared type definitions for MCP Gateway
+ * Shared type definitions for Federated MCP Gateway
  * Used across backend and frontend packages
  *
  * This package provides unified types for:

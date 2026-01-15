@@ -1,6 +1,6 @@
-# deno MCP Gateway
+# deno Federated MCP Gateway
 
-**Unified MCP Gateway** deployed on deno Edge Functions, providing a single
+**Unified Federated MCP Gateway** deployed on deno Edge Functions, providing a single
 entry point for AI assistants to access federated Model Context Protocol (MCP)
 servers.
 
@@ -24,7 +24,7 @@ Claude Desktop
      ↓
 deno Edge Functions (Global)
      ↓
-MCP Gateway
+Federated MCP Gateway
      ├── journey-service-mcp
      ├── swiss-mobility-mcp
      ├── aareguru-mcp

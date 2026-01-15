@@ -1,7 +1,7 @@
 ﻿/**
- * MCP Gateway Server for Deno Deploy
+ * Federated MCP Gateway Server for Deno Deploy
  *
- * A stateful MCP gateway that aggregates multiple backend MCP servers
+ * A stateful Federated MCP Gateway that aggregates multiple backend MCP servers
  * and exposes them via SSE transport for claude.ai integration.
  *
  * Run locally: deno run --allow-net --allow-env main.ts
@@ -342,7 +342,7 @@ if (import.meta.main) {
 
   console.log(`
 ========================================
-  MCP Gateway Server v${SERVER_INFO.version}
+  Federated MCP Gateway Server v${SERVER_INFO.version}
 ========================================
   Streamable HTTP: http://localhost:${port}/mcp
   SSE Transport:   http://localhost:${port}/sse

@@ -2,7 +2,7 @@
 
 ## What Was Implemented
 
-A complete server configuration upload feature for the MCP Gateway with the following components:
+A complete server configuration upload feature for the Federated MCP Gateway with the following components:
 
 ### 1. Backend API Endpoints (3 endpoints)
 

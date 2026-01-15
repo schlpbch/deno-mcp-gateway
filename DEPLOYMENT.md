@@ -1,6 +1,6 @@
-# MCP Gateway Deployment Guide
+# Federated MCP Gateway Deployment Guide
 
-This guide covers deploying the MCP Gateway on deno Edge Functions and
+This guide covers deploying the Federated MCP Gateway on deno Edge Functions and
 alternative platforms.
 
 ## Prerequisites

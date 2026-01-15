@@ -1,5 +1,5 @@
 /**
- * Centralized type definitions for MCP Gateway
+ * Centralized type definitions for Federated MCP Gateway
  * Re-exports and extends shared types from packages/types
  */
 

@@ -64,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial release
-- MCP Gateway with Java records (Lombok-free)
+- Federated MCP Gateway with Java records (Lombok-free)
 - Server registry and namespace routing
 - Backend HTTP client with retry logic
 - Two-tier caching (memory + Deno Blobs)

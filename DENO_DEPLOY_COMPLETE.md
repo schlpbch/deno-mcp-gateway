@@ -1,4 +1,4 @@
-# Deno Deploy Setup Guide - Complete MCP Gateway
+# Deno Deploy Setup Guide - Complete Federated MCP Gateway
 
 This guide covers deploying all MCP services and the gateway on Deno Deploy so everything works together.
 

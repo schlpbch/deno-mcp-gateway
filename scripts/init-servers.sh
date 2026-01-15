@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Initialize MCP Gateway with server configuration
+# Initialize Federated MCP Gateway with server configuration
 # This script registers all backend servers with the gateway
 
 set -e
@@ -8,7 +8,7 @@ set -e
 GATEWAY_URL="${GATEWAY_URL:-http://localhost:8000}"
 CONFIG_FILE="${CONFIG_FILE:-./servers-config.json}"
 
-echo "=== MCP Gateway Server Configuration ==="
+echo "=== Federated MCP Gateway Server Configuration ==="
 echo "Gateway URL: $GATEWAY_URL"
 echo "Config File: $CONFIG_FILE"
 echo ""

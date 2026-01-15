@@ -1,10 +1,10 @@
 #!/usr/bin/env powershell
 <#
 .SYNOPSIS
-    Comprehensive test runner for MCP Gateway project
+    Comprehensive test runner for Federated MCP Gateway project
     
 .DESCRIPTION
-    Runs all tests for the MCP Gateway project including:
+    Runs all tests for the Federated MCP Gateway project including:
     - Backend Deno tests (unit/integration)
     - UI unit tests (Vitest)
     - End-to-end tests (Playwright)
@@ -93,7 +93,7 @@ if (-not (Test-Path $UIDir)) {
     exit 1
 }
 
-Write-TestHeader "MCP Gateway Test Suite"
+Write-TestHeader "Federated MCP Gateway Test Suite"
 Write-Host "Backend Directory: $BackendDir" -ForegroundColor $Colors.Info
 Write-Host "UI Directory: $UIDir" -ForegroundColor $Colors.Info
 Write-Host "Test Type: $TestType" -ForegroundColor $Colors.Info

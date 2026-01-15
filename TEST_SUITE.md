@@ -1,6 +1,6 @@
-# MCP Gateway Test Suite
+# Federated MCP Gateway Test Suite
 
-This document outlines the comprehensive testing strategy for the MCP Gateway project, which includes both backend (Deno) and frontend (Astro) components with end-to-end integration tests.
+This document outlines the comprehensive testing strategy for the Federated MCP Gateway project, which includes both backend (Deno) and frontend (Astro) components with end-to-end integration tests.
 
 ## Test Structure
 
@@ -28,7 +28,7 @@ mcp-gateway-ui/
 ### 1. Backend Tests (Deno)
 - **Location**: `deno-mcp-gateway/src/**/*_test.ts`
 - **Runner**: Deno's built-in test runner
-- **Purpose**: Unit and integration tests for the MCP Gateway backend
+- **Purpose**: Unit and integration tests for the Federated MCP Gateway backend
 - **Command**: `deno task test`
 
 **Features tested:**

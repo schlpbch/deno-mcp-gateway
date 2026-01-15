@@ -2,7 +2,7 @@
 
 ## What Was Added
 
-I've successfully integrated end-to-end tests into the overall test suite for the MCP Gateway project. Here's what was implemented:
+I've successfully integrated end-to-end tests into the overall test suite for the Federated MCP Gateway project. Here's what was implemented:
 
 ### 🔧 Test Infrastructure
 

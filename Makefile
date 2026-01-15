@@ -1,4 +1,4 @@
-# Makefile for MCP Gateway Test Suite
+# Makefile for Federated MCP Gateway Test Suite
 # Cross-platform test runner shortcuts
 
 .PHONY: test test-all test-backend test-ui test-e2e test-coverage test-watch help
@@ -62,7 +62,7 @@ clean:
 
 # Show help
 help:
-	@echo "MCP Gateway Test Suite"
+	@echo "Federated MCP Gateway Test Suite"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  test          - Run all tests (default)"

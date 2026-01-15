@@ -1,6 +1,6 @@
-# Contributing to MCP Gateway
+# Contributing to Federated MCP Gateway
 
-Thank you for your interest in contributing to the MCP Gateway! This document
+Thank you for your interest in contributing to the Federated MCP Gateway! This document
 provides guidelines and instructions for contributing.
 
 ## Code of Conduct

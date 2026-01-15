@@ -1,11 +1,11 @@
-# MCP Gateway Architecture
+# Federated MCP Gateway Architecture
 
 This document describes the architecture, design decisions, and implementation
-details of the MCP Gateway.
+details of the Federated MCP Gateway.
 
 ## Overview
 
-The MCP Gateway is a globally-distributed edge function that serves as a unified
+The Federated MCP Gateway is a globally-distributed edge function that serves as a unified
 entry point for MCP protocol requests. Deployed on **deno Edge Functions**, it
 provides:
 

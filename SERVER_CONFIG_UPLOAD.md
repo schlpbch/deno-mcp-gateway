@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the complete implementation of the server configuration upload feature for the MCP Gateway, including backend API endpoints, validation, and testing.
+This document describes the complete implementation of the server configuration upload feature for the Federated MCP Gateway, including backend API endpoints, validation, and testing.
 
 ## Architecture
 

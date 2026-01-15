@@ -1,5 +1,5 @@
 /**
- * Unit tests for MCP Gateway
+ * Unit tests for Federated MCP Gateway
  * Tests core functionality including routing, aggregation, and error handling
  */
 

@@ -1,5 +1,5 @@
 /**
- * Configuration module for MCP Gateway
+ * Configuration module for Federated MCP Gateway
  * Handles environment-based server initialization and constants
  */
 

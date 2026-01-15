@@ -1,5 +1,5 @@
 /**
- * Dynamic Server Registry for MCP Gateway
+ * Dynamic Server Registry for Federated MCP Gateway
  *
  * Manages registration, unregistration, and resolution of backend MCP servers.
  * Supports dynamic runtime registration without restart.
