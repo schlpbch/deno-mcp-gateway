@@ -10,7 +10,7 @@ export type { BackendServer };
 export const SERVER_INFO = {
   name: 'mcp-gateway',
   version: '2.0.0',
-  protocolVersion: '2024-11-05',
+  protocolVersion: '2025-06-18',
 };
 
 /**
