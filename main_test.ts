@@ -433,6 +433,161 @@ Deno.test('POST / returns JSON-RPC error code -32601 for unknown method', async 
   assertStringIncludes(data.error.message, 'Method not found');
 });
 
+Deno.test('POST / returns JSON-RPC error code -32600 for invalid content-type', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: '{"jsonrpc":"2.0","id":1,"method":"ping"}',
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 415);
+
+  const data = await res.json();
+  assertEquals(data.jsonrpc, '2.0');
+  assertExists(data.error);
+  assertEquals(data.error.code, -32600); // INVALID_REQUEST
+  assertStringIncludes(data.error.message, 'Content-Type');
+});
+
+Deno.test('POST / returns JSON-RPC error code -32602 for invalid tool call params', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'tools/call',
+      params: {
+        // Missing required 'name' field - should trigger INVALID_PARAMS
+      },
+    }),
+  });
+
+  const res = await handler(req);
+  const data = await res.json();
+
+  assertEquals(data.jsonrpc, '2.0');
+  assertEquals(data.id, 1);
+  assertExists(data.error);
+  assertEquals(data.error.code, -32602); // INVALID_PARAMS
+  assertStringIncludes(data.error.message, 'Invalid tool call');
+});
+
+Deno.test('POST / returns JSON-RPC error code -32602 for invalid resource read params', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'resources/read',
+      params: {
+        // Missing required 'uri' field - should trigger INVALID_PARAMS
+      },
+    }),
+  });
+
+  const res = await handler(req);
+  const data = await res.json();
+
+  assertEquals(data.jsonrpc, '2.0');
+  assertEquals(data.id, 1);
+  assertExists(data.error);
+  assertEquals(data.error.code, -32602); // INVALID_PARAMS
+  assertStringIncludes(data.error.message, 'Invalid resource read');
+});
+
+Deno.test('POST / returns JSON-RPC error code -32602 for invalid prompt get params', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'prompts/get',
+      params: {
+        // Missing required 'name' field - should trigger INVALID_PARAMS
+      },
+    }),
+  });
+
+  const res = await handler(req);
+  const data = await res.json();
+
+  assertEquals(data.jsonrpc, '2.0');
+  assertEquals(data.id, 1);
+  assertExists(data.error);
+  assertEquals(data.error.code, -32602); // INVALID_PARAMS
+  assertStringIncludes(data.error.message, 'Invalid prompt request');
+});
+
+Deno.test('POST /mcp returns JSON-RPC error code -32601 for unknown method', async () => {
+  const req = new Request('http://localhost:8000/mcp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'nonexistent/method',
+    }),
+  });
+
+  const res = await handler(req);
+  const data = await res.json();
+
+  assertEquals(data.jsonrpc, '2.0');
+  assertExists(data.error);
+  assertEquals(data.error.code, -32601); // METHOD_NOT_FOUND
+});
+
+Deno.test('POST /mcp returns error for invalid content-type (non-JSON body)', async () => {
+  const req = new Request('http://localhost:8000/mcp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/xml' },
+    body: '<request/>',
+  });
+
+  const res = await handler(req);
+  // JSON parse fails, returns 500 with error details
+  assertEquals(res.status, 500);
+
+  const data = await res.json();
+  assertExists(data.error);
+});
+
+Deno.test('POST / handles batch with mixed success and errors', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify([
+      { jsonrpc: '2.0', id: 1, method: 'ping' },
+      { jsonrpc: '2.0', id: 2, method: 'unknown/method' },
+      { jsonrpc: '2.0', id: 3, method: 'tools/list' },
+    ]),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 200);
+
+  const data = await res.json();
+  assertEquals(Array.isArray(data), true);
+  assertEquals(data.length, 3);
+
+  // First request should succeed
+  assertEquals(data[0].id, 1);
+  assertExists(data[0].result);
+
+  // Second request should fail with METHOD_NOT_FOUND
+  assertEquals(data[1].id, 2);
+  assertExists(data[1].error);
+  assertEquals(data[1].error.code, -32601);
+
+  // Third request should succeed
+  assertEquals(data[2].id, 3);
+  assertExists(data[2].result);
+});
+
 Deno.test('POST / handles batch requests', async () => {
   const req = new Request('http://localhost:8000/', {
     method: 'POST',
