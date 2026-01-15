@@ -173,6 +173,7 @@ export async function handler(req: Request): Promise<Response> {
       (path === '/mcp/tools/list' || path === '/tools/list') &&
       req.method === 'GET'
     ) {
+      logger.info('REST API call', { endpoint: path, method: 'GET', operation: 'tools/list' });
       const result = await handleJsonRpcRequest(
         'tools/list',
         undefined,
@@ -188,6 +189,7 @@ export async function handler(req: Request): Promise<Response> {
       (path === '/mcp/tools/call' || path === '/tools/call') &&
       req.method === 'POST'
     ) {
+      logger.info('REST API call', { endpoint: path, method: 'POST', operation: 'tools/call' });
       const body = await req.json();
       const result = await handleJsonRpcRequest(
         'tools/call',
@@ -204,6 +206,7 @@ export async function handler(req: Request): Promise<Response> {
       (path === '/mcp/resources/list' || path === '/resources/list') &&
       req.method === 'GET'
     ) {
+      logger.info('REST API call', { endpoint: path, method: 'GET', operation: 'resources/list' });
       const result = await handleJsonRpcRequest(
         'resources/list',
         undefined,
@@ -219,6 +222,7 @@ export async function handler(req: Request): Promise<Response> {
       (path === '/mcp/prompts/list' || path === '/prompts/list') &&
       req.method === 'GET'
     ) {
+      logger.info('REST API call', { endpoint: path, method: 'GET', operation: 'prompts/list' });
       const result = await handleJsonRpcRequest(
         'prompts/list',
         undefined,
@@ -234,6 +238,7 @@ export async function handler(req: Request): Promise<Response> {
       (path === '/mcp/resources/read' || path === '/resources/read') &&
       req.method === 'POST'
     ) {
+      logger.info('REST API call', { endpoint: path, method: 'POST', operation: 'resources/read' });
       const body = await req.json();
       const result = await handleJsonRpcRequest(
         'resources/read',
@@ -250,6 +255,7 @@ export async function handler(req: Request): Promise<Response> {
       (path === '/mcp/prompts/get' || path === '/prompts/get') &&
       req.method === 'POST'
     ) {
+      logger.info('REST API call', { endpoint: path, method: 'POST', operation: 'prompts/get' });
       const body = await req.json();
       const result = await handleJsonRpcRequest(
         'prompts/get',
@@ -264,6 +270,7 @@ export async function handler(req: Request): Promise<Response> {
 
     // Register new server dynamically - POST /servers/register
     if (path === '/servers/register' && req.method === 'POST') {
+      logger.info('REST API call', { endpoint: path, method: 'POST', operation: 'server/register' });
       try {
         const body = await req.json();
         return handleRegisterServer(body, dynamicServers);
@@ -278,6 +285,7 @@ export async function handler(req: Request): Promise<Response> {
 
     // List dynamically registered servers - GET /mcp/servers/register
     if (path === '/mcp/servers/register' && req.method === 'GET') {
+      logger.info('REST API call', { endpoint: path, method: 'GET', operation: 'servers/list' });
       // Read from KV storage for persistence across isolates
       const servers = await kv.listServers();
       return new Response(JSON.stringify({ servers }), {
@@ -288,6 +296,7 @@ export async function handler(req: Request): Promise<Response> {
 
     // Upload server configuration via multipart form - POST /mcp/servers/upload
     if (path === '/mcp/servers/upload' && req.method === 'POST') {
+      logger.info('REST API call', { endpoint: path, method: 'POST', operation: 'servers/upload' });
       try {
         return await handleUploadConfig(req, dynamicServers);
       } catch (error) {
@@ -306,6 +315,7 @@ export async function handler(req: Request): Promise<Response> {
     const deleteServerMatch = path.match(/^\/mcp\/servers\/([^/]+)$/);
     if (deleteServerMatch && req.method === 'DELETE') {
       const serverId = deleteServerMatch[1];
+      logger.info('REST API call', { endpoint: path, method: 'DELETE', operation: 'server/delete', serverId });
       return handleDeleteServer(serverId, dynamicServers);
     }
 
@@ -313,10 +323,12 @@ export async function handler(req: Request): Promise<Response> {
     const healthCheckMatch = path.match(/^\/mcp\/servers\/([^/]+)\/health$/);
     if (healthCheckMatch && req.method === 'GET') {
       const serverId = healthCheckMatch[1];
+      logger.info('REST API call', { endpoint: path, method: 'GET', operation: 'server/health', serverId });
       return await handleServerHealth(serverId, dynamicServers);
     }
 
     if (path === '/mcp/metrics' && req.method === 'GET') {
+      logger.info('REST API call', { endpoint: path, method: 'GET', operation: 'metrics' });
       const uptimeMs = Date.now() - metrics.startTime;
       return new Response(
         JSON.stringify({
@@ -388,14 +400,19 @@ if (import.meta.main) {
 ========================================
   Federated MCP Gateway Server v${SERVER_INFO.version}
 ========================================
-  MCP Root:        http://localhost:${port}/
-  Streamable HTTP: http://localhost:${port}/mcp
-  SSE Transport:   http://localhost:${port}/sse
-  Health Check:    http://localhost:${port}/health
-  Metrics:         http://localhost:${port}/metrics
-  Tools List:      http://localhost:${port}/mcp/tools/list
+  Port: ${port}
+
+  Endpoints:
+    /                    MCP Root (JSON-RPC)
+    /mcp                 Streamable HTTP
+    /sse                 SSE Transport
+    /health              Health Check
+    /metrics             Metrics
+    /mcp/tools/list      Tools
+    /mcp/resources/list  Resources
+    /mcp/prompts/list    Prompts
 ----------------------------------------
-  Log Level:       ${logLevel}
+  Log Level: ${logLevel}
   Backend Servers:
 ${BACKEND_SERVERS.map((s) => `    - ${s.name} (${s.id})`).join('\n')}
 ========================================
