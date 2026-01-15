@@ -16,6 +16,7 @@ servers.
 - **Mobile-Optimized UI**: Responsive design for all screen sizes (44px touch
   targets, mobile-first)
 - **Interactive Web Console**: Test MCP endpoints directly from your browser
+- **Gateway Switcher**: Dropdown menu to switch between production, local, and custom gateway URLs
 
 ## 🏗️ Architecture
 
@@ -72,19 +73,7 @@ curl -fsSL https://deno.land/install.sh | sh
 # Windows: choco install deno
 ```
 
-### 2. Configure Environment
-
-Create a `.env` file (optional) for backend URLs:
-
-```bash
-# Backend MCP server endpoints
-JOURNEY_SERVICE_URL=http://localhost:3001
-SWISS_MOBILITY_URL=http://localhost:3002
-AAREGURU_URL=http://localhost:3003
-OPEN_METEO_URL=http://localhost:3004
-```
-
-### 3. Run Locally
+### 2. Run Locally
 
 ```bash
 # Start dev server with hot reload
@@ -97,8 +86,10 @@ deno run --allow-net --allow-env --allow-read dev.ts
 The gateway will be available at:
 
 - **API**: `http://localhost:8888/mcp/*`
-- **Web UI**: `http://localhost:8888/`
+- **Web UI**: `http://localhost:8888/` (with gateway switcher dropdown)
 - **Health**: `http://localhost:8888/health`
+
+> **Tip**: The Web UI includes a gateway switcher dropdown in the navbar. Use it to quickly switch between production, local, and custom gateway endpoints. Your selection is persisted across page reloads.
 
 ### 4. Test Endpoints
 
@@ -212,14 +203,23 @@ With minimal changes, can deploy to Cloudflare Workers:
 
 ### Environment Variables
 
-| Variable              | Description             | Example                        |
-| --------------------- | ----------------------- | ------------------------------ |
-| `JOURNEY_SERVICE_URL` | Journey Service backend | `https://journey.example.com`  |
-| `SWISS_MOBILITY_URL`  | Swiss Mobility backend  | `https://mobility.example.com` |
-| `AAREGURU_URL`        | Aareguru backend        | `https://aareguru.example.com` |
-| `OPEN_METEO_URL`      | Open Meteo backend      | `https://meteo.example.com`    |
-| `PORT`                | Local dev server port   | `8888` (default)               |
-| `DEBUG`               | Enable debug logging    | `true` or `false`              |
+#### Gateway Configuration
+
+| Variable | Description           | Example          |
+| -------- | --------------------- | ---------------- |
+| `PORT`   | Local dev server port | `8888` (default) |
+| `DEBUG`  | Enable debug logging  | `true` or `false`|
+
+#### Web UI Gateway Switcher (mcp-gateway-ui)
+
+For the [mcp-gateway-ui](https://github.com/schlpbch/mcp-gateway-ui) frontend:
+
+| Variable                        | Description                      | Example                                |
+| ------------------------------- | -------------------------------- | -------------------------------------- |
+| `PUBLIC_API_PROD_API_BASE_URL`  | Production gateway URL (default) | `https://deno-mcp-gateway.deno.dev`    |
+| `PUBLIC_API_LOCAL_API_BASE_URL` | Local development gateway URL    | `http://localhost:8000`                |
+
+These populate the gateway switcher dropdown in the navbar, allowing users to quickly switch between production and local environments.
 
 ### Cache Configuration
 
@@ -245,12 +245,7 @@ deno deploy --prod
 
 ### Environment Variables
 
-Configure these in deno UI (Site settings → Environment variables):
-
-- `JOURNEY_SERVICE_URL`
-- `SWISS_MOBILITY_URL`
-- `AAREGURU_URL`
-- `OPEN_METEO_URL`
+Configure the Web UI gateway switcher environment variables in the deployment platform (see Configuration section above).
 
 ## 🔌 API Endpoints
 
@@ -365,6 +360,7 @@ MIT
 
 ## 🔗 Related Projects
 
+- [mcp-gateway-ui](https://github.com/schlpbch/mcp-gateway-ui) - Web UI for the MCP Gateway with gateway switcher
 - [journey-service-mcp](https://github.com/schlpbch/journey-service-mcp)
 - [swiss-mobility-mcp](https://github.com/schlpbch/swiss-mobility-mcp)
 - [aareguru-mcp](https://github.com/schlpbch/aareguru-mcp)
