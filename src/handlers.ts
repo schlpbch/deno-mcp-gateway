@@ -5,7 +5,7 @@
 
 import { corsHeaders } from './config.ts';
 import { logger } from './logger.ts';
-import { jsonRpcResponse, jsonRpcError } from './jsonrpc.ts';
+import { jsonRpcResponse, jsonRpcError, JsonRpcErrorCode } from './jsonrpc.ts';
 import { sessions, metrics, sendSSE } from './session.ts';
 import { checkBackendHealth, circuitBreakerRegistry } from './backend.ts';
 import {
@@ -220,7 +220,9 @@ export async function handleMessage(
   if (!sessionId) {
     logger.warn('Message received without sessionId', {});
     return new Response(
-      JSON.stringify(jsonRpcError(null, -32600, 'Missing sessionId')),
+      JSON.stringify(
+        jsonRpcError(null, JsonRpcErrorCode.INVALID_REQUEST, 'Missing sessionId')
+      ),
       {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -232,7 +234,9 @@ export async function handleMessage(
   if (!session) {
     logger.warn('Message received with invalid session', { sessionId });
     return new Response(
-      JSON.stringify(jsonRpcError(null, -32600, 'Invalid or expired session')),
+      JSON.stringify(
+        jsonRpcError(null, JsonRpcErrorCode.INVALID_REQUEST, 'Invalid or expired session')
+      ),
       {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -270,12 +274,20 @@ export async function handleMessage(
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
 
+    // Determine appropriate JSON-RPC error code
+    let errorCode: number = JsonRpcErrorCode.INTERNAL_ERROR;
+    if (errorMessage.startsWith('Method not found:')) {
+      errorCode = JsonRpcErrorCode.METHOD_NOT_FOUND;
+    } else if (
+      errorMessage.includes('Invalid tool call') ||
+      errorMessage.includes('Invalid resource read') ||
+      errorMessage.includes('Invalid prompt request')
+    ) {
+      errorCode = JsonRpcErrorCode.INVALID_PARAMS;
+    }
+
     if (id !== undefined && id !== null) {
-      sendSSE(
-        sessionId,
-        'message',
-        jsonRpcError(id as string | number, -32603, errorMessage)
-      );
+      sendSSE(sessionId, 'message', jsonRpcError(id as string | number, errorCode, errorMessage));
     }
 
     return new Response(null, { status: 202, headers: corsHeaders });
@@ -301,7 +313,11 @@ export async function handleStreamableHttp(
     logger.warn('Invalid content type for /mcp', { contentType });
     return new Response(
       JSON.stringify(
-        jsonRpcError(null, -32600, 'Content-Type must be application/json')
+        jsonRpcError(
+          null,
+          JsonRpcErrorCode.INVALID_REQUEST,
+          'Content-Type must be application/json'
+        )
       ),
       {
         status: 415,
@@ -351,10 +367,20 @@ export async function handleStreamableHttp(
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
 
+      // Determine appropriate JSON-RPC error code
+      let errorCode: number = JsonRpcErrorCode.INTERNAL_ERROR;
+      if (errorMessage.startsWith('Method not found:')) {
+        errorCode = JsonRpcErrorCode.METHOD_NOT_FOUND;
+      } else if (
+        errorMessage.includes('Invalid tool call') ||
+        errorMessage.includes('Invalid resource read') ||
+        errorMessage.includes('Invalid prompt request')
+      ) {
+        errorCode = JsonRpcErrorCode.INVALID_PARAMS;
+      }
+
       if (id !== undefined && id !== null) {
-        responses.push(
-          jsonRpcError(id as string | number, -32603, errorMessage)
-        );
+        responses.push(jsonRpcError(id as string | number, errorCode, errorMessage));
       }
     }
   }

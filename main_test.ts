@@ -412,6 +412,27 @@ Deno.test('POST / returns error for invalid method', async () => {
   assertEquals(typeof data.error.message, 'string');
 });
 
+Deno.test('POST / returns JSON-RPC error code -32601 for unknown method', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'unknown/nonexistent',
+    }),
+  });
+
+  const res = await handler(req);
+  const data = await res.json();
+
+  assertEquals(data.jsonrpc, '2.0');
+  assertEquals(data.id, 1);
+  assertExists(data.error);
+  assertEquals(data.error.code, -32601); // METHOD_NOT_FOUND
+  assertStringIncludes(data.error.message, 'Method not found');
+});
+
 Deno.test('POST / handles batch requests', async () => {
   const req = new Request('http://localhost:8000/', {
     method: 'POST',
