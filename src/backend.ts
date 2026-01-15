@@ -6,6 +6,7 @@
 import { CircuitBreakerRegistry, CircuitState } from './circuitbreaker/mod.ts';
 import type { BackendServer, ServerHealth } from './types.ts';
 import { metrics } from './session.ts';
+import { logger } from './logger.ts';
 
 export type { ServerHealth };
 
@@ -109,16 +110,27 @@ export async function sendToBackend(
     timeout: 30000,
   });
 
-  return circuitBreaker.execute(async () => {
-    const sessionId = await getBackendSession(server);
-    return sendJsonRpcRequest(
-      server.endpoint,
-      method,
-      params,
-      timeoutMs,
-      sessionId
-    );
-  });
+  const startTime = performance.now();
+  try {
+    const result = await circuitBreaker.execute(async () => {
+      const sessionId = await getBackendSession(server);
+      return sendJsonRpcRequest(
+        server.endpoint,
+        method,
+        params,
+        timeoutMs,
+        sessionId
+      );
+    });
+    const durationMs = performance.now() - startTime;
+    logger.logBackendCall(method, server.endpoint, server.id, durationMs, 200);
+    return result;
+  } catch (error) {
+    const durationMs = performance.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.logBackendCall(method, server.endpoint, server.id, durationMs, undefined, errorMessage);
+    throw error;
+  }
 }
 
 /**
@@ -263,6 +275,7 @@ export async function callToolOnServer(
   // Split on double underscore (namespace separator)
   const separatorIndex = toolName.indexOf('__');
   if (separatorIndex === -1) {
+    logger.warn('Invalid tool name format', { toolName });
     throw new Error(`Invalid tool name format: ${toolName}`);
   }
   const serverId = toolName.substring(0, separatorIndex);
@@ -270,14 +283,39 @@ export async function callToolOnServer(
 
   const server = getServer(serverId);
   if (!server) {
+    logger.warn('Unknown server for tool call', { serverId, toolName });
     throw new Error(`Unknown server: ${serverId}`);
   }
 
-  metrics.toolCalls++;
-  return await sendToBackend(server, 'tools/call', {
-    name: actualToolName,
-    arguments: args,
+  logger.info('Tool call', {
+    toolName: actualToolName,
+    serverId,
+    hasArguments: Object.keys(args).length > 0,
   });
+
+  metrics.toolCalls++;
+  const startTime = performance.now();
+  try {
+    const result = await sendToBackend(server, 'tools/call', {
+      name: actualToolName,
+      arguments: args,
+    });
+    logger.info('Tool call completed', {
+      toolName: actualToolName,
+      serverId,
+      durationMs: performance.now() - startTime,
+    });
+    return result;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error('Tool call failed', {
+      toolName: actualToolName,
+      serverId,
+      durationMs: performance.now() - startTime,
+      error: errorMessage,
+    });
+    throw error;
+  }
 }
 
 /**

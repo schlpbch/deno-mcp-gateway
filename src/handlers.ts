@@ -554,9 +554,12 @@ export function handleRegisterServer(
 
   // Add to dynamic registry
   dynamicServers.set(id as string, newServer);
-  console.log(
-    `✅ Registered dynamic server: ${newServer.name} (${newServer.id})`
-  );
+  logger.info('Server registered', {
+    serverId: newServer.id,
+    name: newServer.name,
+    endpoint: newServer.endpoint,
+    requiresSession: newServer.requiresSession,
+  });
 
   return new Response(
     JSON.stringify({
@@ -665,6 +668,7 @@ export function handleDeleteServer(
   dynamicServers: Map<string, BackendServer>
 ): Response {
   if (!dynamicServers.has(serverId)) {
+    logger.warn('Server deletion failed - not found', { serverId });
     return jsonResponse(
       { error: `Server not found: ${serverId}` },
       404,
@@ -673,6 +677,7 @@ export function handleDeleteServer(
   }
 
   dynamicServers.delete(serverId);
+  logger.info('Server deleted', { serverId });
   return jsonResponse(
     { success: true, message: `Server ${serverId} deleted` },
     200,

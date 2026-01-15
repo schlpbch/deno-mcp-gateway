@@ -17,11 +17,28 @@ interface LogEntry {
   data?: Record<string, unknown>;
 }
 
+/**
+ * Get log level from environment variable LOG_LEVEL
+ * Valid values: DEBUG, INFO, WARN, ERROR (case-insensitive)
+ * Defaults to INFO if not set or invalid
+ */
+function getLogLevelFromEnv(): LogLevel {
+  const envLevel = Deno.env.get('LOG_LEVEL')?.toUpperCase();
+  if (envLevel && Object.values(LogLevel).includes(envLevel as LogLevel)) {
+    return envLevel as LogLevel;
+  }
+  return LogLevel.INFO;
+}
+
 class Logger {
-  private minLevel: LogLevel = LogLevel.INFO;
+  private minLevel: LogLevel = getLogLevelFromEnv();
 
   setMinLevel(level: LogLevel): void {
     this.minLevel = level;
+  }
+
+  getMinLevel(): LogLevel {
+    return this.minLevel;
   }
 
   private shouldLog(level: LogLevel): boolean {
@@ -235,7 +252,7 @@ class Logger {
       data.paramsType = typeof params;
     }
 
-    this.debug('MCP method call', data);
+    this.info('MCP method call', data);
   }
 
   /**
