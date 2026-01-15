@@ -806,16 +806,20 @@ Deno.test('POST to unknown path handling', async () => {
 // Server Management Endpoints Tests
 // =============================================================================
 
-Deno.test('GET /mcp/servers/register returns empty servers list', async () => {
-  const req = new Request('http://localhost:8000/mcp/servers/register', {
-    method: 'GET',
-  });
+Deno.test({
+  name: 'GET /mcp/servers/register returns empty servers list',
+  sanitizeResources: false,
+  fn: async () => {
+    const req = new Request('http://localhost:8000/mcp/servers/register', {
+      method: 'GET',
+    });
 
-  const res = await handler(req);
-  assertEquals(res.status, 200);
-  const body = await res.json();
-  assertExists(body.servers);
-  assertEquals(Array.isArray(body.servers), true);
+    const res = await handler(req);
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    assertExists(body.servers);
+    assertEquals(Array.isArray(body.servers), true);
+  },
 });
 
 Deno.test('POST /servers/register with valid server data', async () => {

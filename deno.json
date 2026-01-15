@@ -3,16 +3,17 @@
     "lib": ["deno.window", "deno.unstable"],
     "strict": true
   },
+  "unstable": ["kv"],
   "imports": {
     "@deno/edge-functions": "https://edge.deno.com/v1/index.ts",
     "@deno/blobs": "https://edge.deno.com/blobs/index.ts"
   },
   "tasks": {
-    "dev": "deno run --allow-net --allow-env --allow-read --allow-import --watch dev.ts",
-    "start": "deno run --allow-net --allow-env --allow-read --allow-import dev.ts",
-    "test": "deno test --allow-net --allow-env --allow-read --allow-import",
-    "test:coverage": "deno test --allow-net --allow-env --allow-read --allow-import --coverage",
-    "test:watch": "deno test --allow-net --allow-env --allow-read --allow-import --watch",
+    "dev": "deno run --allow-net --allow-env --allow-read --allow-import --unstable-kv --watch dev.ts",
+    "start": "deno run --allow-net --allow-env --allow-read --allow-import --unstable-kv dev.ts",
+    "test": "deno test --allow-net --allow-env --allow-read --allow-import --unstable-kv",
+    "test:coverage": "deno test --allow-net --allow-env --allow-read --allow-import --unstable-kv --coverage",
+    "test:watch": "deno test --allow-net --allow-env --allow-read --allow-import --unstable-kv --watch",
     "test:all": "bash run-tests.sh all",
     "test:e2e": "bash run-tests.sh e2e",
     "test:ui": "bash run-tests.sh ui-unit",

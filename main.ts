@@ -18,6 +18,7 @@ import {
   initializeServersFromEnv,
 } from './src/config.ts';
 import type { BackendServer } from './src/types.ts';
+import * as kv from './src/kv.ts';
 import { jsonRpcResponse, jsonRpcError, JsonRpcErrorCode } from './src/jsonrpc.ts';
 import { logger } from './src/logger.ts';
 import { sessions, metrics, sendSSE } from './src/session.ts';
@@ -277,10 +278,11 @@ export async function handler(req: Request): Promise<Response> {
 
     // List dynamically registered servers - GET /mcp/servers/register
     if (path === '/mcp/servers/register' && req.method === 'GET') {
-      const servers = Array.from(dynamicServers.values());
+      // Read from KV storage for persistence across isolates
+      const servers = await kv.listServers();
       return new Response(JSON.stringify({ servers }), {
         status: 200,
-        headers: corsHeaders,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 

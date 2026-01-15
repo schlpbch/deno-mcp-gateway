@@ -16,6 +16,7 @@ import {
   jsonResponse,
 } from './endpoints/serverConfigUpload.ts';
 import type { BackendServer, ServerHealth } from './types.ts';
+import * as kv from './kv.ts';
 
 /**
  * Handle CORS preflight requests
@@ -516,10 +517,10 @@ export function handleMcpDeleteSession(sessionId: string | null): Response {
 /**
  * Handle registering a new server
  */
-export function handleRegisterServer(
+export async function handleRegisterServer(
   body: unknown,
   dynamicServers: Map<string, BackendServer>
-): Response {
+): Promise<Response> {
   const { id, name, endpoint, requiresSession } = body as Record<
     string,
     unknown
@@ -552,8 +553,12 @@ export function handleRegisterServer(
     requiresSession: (requiresSession as boolean) || false,
   };
 
-  // Add to dynamic registry
+  // Add to dynamic registry (in-memory)
   dynamicServers.set(id as string, newServer);
+
+  // Persist to KV storage
+  await kv.saveServer(newServer);
+
   logger.info('Server registered', {
     serverId: newServer.id,
     name: newServer.name,
@@ -644,12 +649,16 @@ export async function handleUploadConfig(
   for (let i = 0; i < servers.length; i++) {
     try {
       const server = servers[i];
-      dynamicServers.set(server.id, {
+      const backendServer: BackendServer = {
         id: server.id,
         name: server.name,
         endpoint: server.endpoint,
         requiresSession: server.requiresSession ?? false,
-      });
+      };
+      // Add to in-memory map
+      dynamicServers.set(server.id, backendServer);
+      // Persist to KV storage
+      await kv.saveServer(backendServer);
     } catch (error) {
       failedIndices.push(i);
       errors.push(String(error));
@@ -663,11 +672,14 @@ export async function handleUploadConfig(
 /**
  * Handle deleting a registered server
  */
-export function handleDeleteServer(
+export async function handleDeleteServer(
   serverId: string,
   dynamicServers: Map<string, BackendServer>
-): Response {
-  if (!dynamicServers.has(serverId)) {
+): Promise<Response> {
+  // Try to delete from KV first
+  const deleted = await kv.deleteServer(serverId);
+
+  if (!deleted && !dynamicServers.has(serverId)) {
     logger.warn('Server deletion failed - not found', { serverId });
     return jsonResponse(
       { error: `Server not found: ${serverId}` },
@@ -676,6 +688,7 @@ export function handleDeleteServer(
     );
   }
 
+  // Also remove from in-memory map
   dynamicServers.delete(serverId);
   logger.info('Server deleted', { serverId });
   return jsonResponse(

@@ -112,6 +112,7 @@ export interface BackendServer {
   id: string;
   name: string;
   endpoint: string;
+  requiresSession?: boolean;
   capabilities?: ServerCapabilities;
 }
 
