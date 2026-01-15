@@ -1007,3 +1007,340 @@ Deno.test('Metrics endpoint includes error tracking', async () => {
   assertExists(body.totalRequests);
   assertEquals(typeof body.totalErrors === 'number', true);
 });
+
+// =============================================================================
+// Server Registration Tests
+// =============================================================================
+
+Deno.test('POST /servers/register creates new server', async () => {
+  const req = new Request('http://localhost:8000/servers/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'test-server-1',
+      name: 'Test Server 1',
+      endpoint: 'http://localhost:9000/mcp',
+      requiresSession: false,
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 200);
+
+  const data = await res.json();
+  assertEquals(data.success, true);
+  assertEquals(data.serverId, 'test-server-1');
+});
+
+Deno.test('POST /servers/register fails with missing id', async () => {
+  const req = new Request('http://localhost:8000/servers/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: 'Test Server',
+      endpoint: 'http://localhost:9000/mcp',
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 400);
+
+  const data = await res.json();
+  assertExists(data.error);
+  assertStringIncludes(data.error, 'Missing required fields');
+});
+
+Deno.test('POST /servers/register fails with missing name', async () => {
+  const req = new Request('http://localhost:8000/servers/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'test-server',
+      endpoint: 'http://localhost:9000/mcp',
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 400);
+
+  const data = await res.json();
+  assertExists(data.error);
+});
+
+Deno.test('POST /servers/register fails with missing endpoint', async () => {
+  const req = new Request('http://localhost:8000/servers/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'test-server',
+      name: 'Test Server',
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 400);
+
+  const data = await res.json();
+  assertExists(data.error);
+});
+
+Deno.test('POST /servers/register fails with invalid endpoint URL', async () => {
+  const req = new Request('http://localhost:8000/servers/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'test-server',
+      name: 'Test Server',
+      endpoint: 'not-a-valid-url',
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 400);
+
+  const data = await res.json();
+  assertExists(data.error);
+  assertStringIncludes(data.error, 'Invalid endpoint URL');
+});
+
+Deno.test('GET /mcp/servers/register lists registered servers', async () => {
+  // First register a server
+  const registerReq = new Request('http://localhost:8000/servers/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'list-test-server',
+      name: 'List Test Server',
+      endpoint: 'http://localhost:9001/mcp',
+    }),
+  });
+  await handler(registerReq);
+
+  // Then list servers
+  const req = new Request('http://localhost:8000/mcp/servers/register', {
+    method: 'GET',
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 200);
+
+  const data = await res.json();
+  assertExists(data.servers);
+  assertEquals(Array.isArray(data.servers), true);
+});
+
+// =============================================================================
+// Server Deletion Tests
+// =============================================================================
+
+Deno.test('DELETE /mcp/servers/{id} deletes registered server', async () => {
+  // First register a server
+  const registerReq = new Request('http://localhost:8000/servers/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'delete-test-server',
+      name: 'Delete Test Server',
+      endpoint: 'http://localhost:9002/mcp',
+    }),
+  });
+  await handler(registerReq);
+
+  // Then delete it
+  const req = new Request('http://localhost:8000/mcp/servers/delete-test-server', {
+    method: 'DELETE',
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 200);
+
+  const data = await res.json();
+  assertEquals(data.success, true);
+});
+
+Deno.test('DELETE /mcp/servers/{id} returns 404 for non-existent server', async () => {
+  const req = new Request('http://localhost:8000/mcp/servers/non-existent-server', {
+    method: 'DELETE',
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 404);
+
+  const data = await res.json();
+  assertExists(data.error);
+  assertStringIncludes(data.error, 'Server not found');
+});
+
+// =============================================================================
+// Server Health Check Tests
+// =============================================================================
+
+Deno.test('GET /mcp/servers/{id}/health returns 404 for non-existent server', async () => {
+  const req = new Request('http://localhost:8000/mcp/servers/non-existent/health', {
+    method: 'GET',
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 404);
+
+  const data = await res.json();
+  assertExists(data.error);
+  assertStringIncludes(data.error, 'Server not found');
+});
+
+// =============================================================================
+// Session Management Tests
+// =============================================================================
+
+Deno.test('GET /mcp without session ID returns 400', async () => {
+  const req = new Request('http://localhost:8000/mcp', {
+    method: 'GET',
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 400);
+
+  const data = await res.json();
+  assertExists(data.error);
+  assertStringIncludes(data.error, 'Mcp-Session-Id');
+});
+
+Deno.test({
+  name: 'GET /mcp with session ID returns SSE stream',
+  sanitizeResources: false,
+  sanitizeOps: false,
+  async fn() {
+    const req = new Request('http://localhost:8000/mcp', {
+      method: 'GET',
+      headers: { 'Mcp-Session-Id': 'test-session-123' },
+    });
+
+    const res = await handler(req);
+    assertEquals(res.status, 200);
+    assertEquals(res.headers.get('Content-Type'), 'text/event-stream');
+    assertEquals(res.headers.get('Mcp-Session-Id'), 'test-session-123');
+  },
+});
+
+Deno.test('DELETE /mcp closes session and returns 204', async () => {
+  const req = new Request('http://localhost:8000/mcp', {
+    method: 'DELETE',
+    headers: { 'Mcp-Session-Id': 'session-to-delete' },
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 204);
+});
+
+Deno.test('DELETE /mcp without session ID still returns 204', async () => {
+  const req = new Request('http://localhost:8000/mcp', {
+    method: 'DELETE',
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 204);
+});
+
+// =============================================================================
+// Message Endpoint Tests
+// =============================================================================
+
+Deno.test('POST /message without sessionId returns 400', async () => {
+  const req = new Request('http://localhost:8000/message', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'ping',
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 400);
+
+  const data = await res.json();
+  assertExists(data.error);
+});
+
+Deno.test('POST /message with invalid sessionId returns 400', async () => {
+  const req = new Request('http://localhost:8000/message?sessionId=invalid-session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'ping',
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 400);
+
+  const data = await res.json();
+  assertExists(data.error);
+  assertStringIncludes(data.error.message, 'Invalid or expired session');
+});
+
+// =============================================================================
+// SSE Endpoint Tests
+// =============================================================================
+
+Deno.test({
+  name: 'GET /sse returns SSE stream',
+  sanitizeResources: false,
+  sanitizeOps: false,
+  async fn() {
+    const req = new Request('http://localhost:8000/sse', {
+      method: 'GET',
+    });
+
+    const res = await handler(req);
+    assertEquals(res.status, 200);
+    assertEquals(res.headers.get('Content-Type'), 'text/event-stream');
+    // Session ID is returned in body, not header for /sse endpoint
+  },
+});
+
+// =============================================================================
+// MCP Metrics Endpoint Tests
+// =============================================================================
+
+Deno.test('GET /mcp/metrics returns detailed metrics', async () => {
+  const req = new Request('http://localhost:8000/mcp/metrics', {
+    method: 'GET',
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 200);
+
+  const data = await res.json();
+  assertExists(data.timestamp);
+  assertExists(data.uptime);
+  assertExists(data.requests);
+  assertExists(data.requests.total);
+  assertExists(data.requests.errors);
+});
+
+// =============================================================================
+// Trailing Slash Handling Tests
+// =============================================================================
+
+Deno.test('POST /mcp/ (with trailing slash) works same as /mcp', async () => {
+  const req = new Request('http://localhost:8000/mcp/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'ping',
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 200);
+
+  const data = await res.json();
+  assertEquals(data.jsonrpc, '2.0');
+  assertExists(data.result);
+});
