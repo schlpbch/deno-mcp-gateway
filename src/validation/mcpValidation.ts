@@ -20,8 +20,8 @@ export interface ValidationResult {
  * Example: journey-service-mcp__findTrips
  */
 const NAMESPACE_PATTERN = /^[a-zA-Z0-9_-]+$/;
-const TOOL_NAME_PATTERN = /^[a-zA-Z0-9_]+$/;
-const NAMESPACED_NAME_PATTERN = /^[a-zA-Z0-9_-]+__[a-zA-Z0-9_]+$/;
+const TOOL_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
+const NAMESPACED_NAME_PATTERN = /^[a-zA-Z0-9_-]+__[a-zA-Z0-9_-]+$/;
 
 /**
  * Dangerous URI schemes that should be blocked
@@ -71,7 +71,7 @@ export function validateToolCall(params: unknown): ValidationResult {
         );
       }
       if (!TOOL_NAME_PATTERN.test(toolName)) {
-        errors.push('tool name must be alphanumeric with underscores only');
+        errors.push('tool name must be alphanumeric with underscores and hyphens');
       }
     }
   }
@@ -172,7 +172,7 @@ export function validatePromptGet(params: unknown): ValidationResult {
         );
       }
       if (!TOOL_NAME_PATTERN.test(promptName)) {
-        errors.push('prompt name must be alphanumeric with underscores only');
+        errors.push('prompt name must be alphanumeric with underscores and hyphens');
       }
     }
   }

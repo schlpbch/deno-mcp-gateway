@@ -173,11 +173,21 @@ export async function fetchToolsFromServer(
     const result = (await sendToBackend(server, 'tools/list')) as {
       tools?: unknown[];
     };
-    return (result.tools || []).map((tool: unknown) => ({
-      ...(tool as Record<string, unknown>),
-      // Use double underscore as namespace separator (dots not allowed in MCP tool names)
-      name: `${server.id}__${(tool as Record<string, unknown>).name}`,
-    }));
+    return (result.tools || []).map((tool: unknown) => {
+      const t = tool as Record<string, unknown>;
+      const toolName = t.name as string;
+      
+      // Check if the tool name already starts with the server ID
+      // This prevents double-prefixing when backends use v2.0.0 namespacing
+      const namespacedName = toolName.startsWith(`${server.id}__`)
+        ? toolName
+        : `${server.id}__${toolName}`;
+      
+      return {
+        ...t,
+        name: namespacedName,
+      };
+    });
   } catch (e) {
     console.error(`Failed to fetch tools from ${server.name}:`, e);
     return [];
@@ -221,11 +231,21 @@ export async function fetchPromptsFromServer(
     const result = (await sendToBackend(server, 'prompts/list')) as {
       prompts?: unknown[];
     };
-    return (result.prompts || []).map((prompt: unknown) => ({
-      ...(prompt as Record<string, unknown>),
-      // Use double underscore as namespace separator (dots not allowed in MCP prompt names)
-      name: `${server.id}__${(prompt as Record<string, unknown>).name}`,
-    }));
+    return (result.prompts || []).map((prompt: unknown) => {
+      const p = prompt as Record<string, unknown>;
+      const promptName = p.name as string;
+      
+      // Check if the prompt name already starts with the server ID
+      // This prevents double-prefixing when backends use v2.0.0 namespacing
+      const namespacedName = promptName.startsWith(`${server.id}__`)
+        ? promptName
+        : `${server.id}__${promptName}`;
+      
+      return {
+        ...p,
+        name: namespacedName,
+      };
+    });
   } catch (e) {
     console.error(`Failed to fetch prompts from ${server.name}:`, e);
     return [];
