@@ -266,6 +266,29 @@ Deno.test('POST / accepts JSON-RPC initialize request', async () => {
   assertExists(data.result.serverInfo);
 });
 
+Deno.test('POST / initialize returns correct protocol version 2025-06-18', async () => {
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-06-18',
+        capabilities: {},
+        clientInfo: { name: 'test', version: '1.0' },
+      },
+    }),
+  });
+
+  const res = await handler(req);
+  const data = await res.json();
+
+  assertEquals(data.result.protocolVersion, '2025-06-18');
+  assertEquals(data.result.serverInfo.name, 'mcp-gateway');
+});
+
 Deno.test('POST / accepts JSON-RPC ping request', async () => {
   const req = new Request('http://localhost:8000/', {
     method: 'POST',
