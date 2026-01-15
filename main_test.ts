@@ -289,6 +289,29 @@ Deno.test('POST / initialize returns correct protocol version 2025-06-18', async
   assertEquals(data.result.serverInfo.name, 'mcp-gateway');
 });
 
+Deno.test('POST / handles notifications/initialized without error', async () => {
+  // notifications/initialized is sent by client after initialize
+  // It's a notification (no id), so no response is expected
+  const req = new Request('http://localhost:8000/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      method: 'notifications/initialized',
+      // No id - this is a notification, not a request
+    }),
+  });
+
+  const res = await handler(req);
+  assertEquals(res.status, 200);
+
+  // For notifications, the response should still be valid JSON-RPC
+  // but with null/undefined result
+  const data = await res.json();
+  assertEquals(data.jsonrpc, '2.0');
+  // Notifications don't have an id in the response
+});
+
 Deno.test('POST / accepts JSON-RPC ping request', async () => {
   const req = new Request('http://localhost:8000/', {
     method: 'POST',
