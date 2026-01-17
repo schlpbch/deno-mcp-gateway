@@ -114,8 +114,7 @@ export async function handleHealth(
     JSON.stringify({
       status: allHealthy ? 'UP' : anyHealthy ? 'DEGRADED' : 'DOWN',
       server: allHealthy ? 'UP' : anyHealthy ? 'DEGRADED' : 'DOWN',
-      backends: servers,
-      servers: servers, // Added for UI compatibility
+      servers: servers,
     }),
     {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
