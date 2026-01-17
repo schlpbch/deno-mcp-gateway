@@ -39,6 +39,7 @@ import {
   handleServerHealth,
   handle404,
 } from './src/handlers.ts';
+import { circuitBreakerRegistry } from './src/circuitbreaker/mod.ts';
 
 // ============================================================================
 // Global State
@@ -325,6 +326,24 @@ export async function handler(req: Request): Promise<Response> {
       const serverId = healthCheckMatch[1];
       logger.info('REST API call', { endpoint: path, method: 'GET', operation: 'server/health', serverId });
       return await handleServerHealth(serverId, dynamicServers);
+    }
+
+    // Reset all circuit breakers - POST /mcp/circuit-breakers/reset
+    if (path === '/mcp/circuit-breakers/reset' && req.method === 'POST') {
+      logger.info('REST API call', { endpoint: path, method: 'POST', operation: 'reset-circuit-breakers' });
+      circuitBreakerRegistry.resetAll();
+      logger.info('All circuit breakers reset');
+      return new Response(
+        JSON.stringify({
+          status: 'success',
+          message: 'All circuit breakers have been reset',
+          circuitBreakers: circuitBreakerRegistry.getAllStatuses(),
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     if (path === '/mcp/metrics' && req.method === 'GET') {
