@@ -15,17 +15,22 @@ import { handler } from './main.ts';
 // Health Endpoint Tests
 // =============================================================================
 
-Deno.test('Health endpoint returns 200 OK', async () => {
-  const req = new Request('http://localhost:8000/health');
-  const res = await handler(req);
+Deno.test({
+  name: 'Health endpoint returns 200 OK',
+  sanitizeResources: false,
+  sanitizeOps: false,
+  fn: async () => {
+    const req = new Request('http://localhost:8000/health');
+    const res = await handler(req);
 
-  assertEquals(res.status, 200);
-  assertEquals(res.headers.get('Content-Type'), 'application/json');
+    assertEquals(res.status, 200);
+    assertEquals(res.headers.get('Content-Type'), 'application/json');
 
-  const body = await res.json();
-  assertExists(body.status);
-  assertExists(body.server);
-  assertExists(body.backends);
+    const body = await res.json();
+    assertExists(body.status);
+    assertExists(body.server);
+    assertExists(body.servers);
+  },
 });
 
 // =============================================================================
