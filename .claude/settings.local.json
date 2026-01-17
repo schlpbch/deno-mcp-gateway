@@ -13,7 +13,16 @@
       "Bash(npx deno status)",
       "Bash(cat:*)",
       "Bash(wc:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm run build:*)",
+      "Bash(deno test:*)",
+      "Bash(npm test)",
+      "Bash(pnpm test:*)",
+      "Bash(export PATH=\"/c/Users/schlp/.deno/bin:$PATH\")",
+      "Bash(deno --version:*)",
+      "Bash(/c/Users/schlp/.deno/bin/deno --version)",
+      "Bash(/c/Users/schlp/.deno/bin/deno test -A --unstable-kv)",
+      "Bash(pnpm build:*)"
     ]
   }
 }
