@@ -373,3 +373,139 @@ export interface HealthStatus {
   servers: Record<string, ServerHealth>;
   timestamp: Date;
 }
+
+// ============================================================================
+// Health Check Response Types
+// ============================================================================
+
+/**
+ * Server info returned in health check response
+ */
+export interface HealthCheckServer {
+  id: string;
+  name: string;
+  endpoint: string;
+  status: HealthStatusEnum | 'HEALTHY' | 'DEGRADED' | 'DOWN' | 'UNKNOWN';
+  latency?: number;
+  errorMessage?: string | null;
+}
+
+/**
+ * Health check endpoint response
+ * GET /health
+ */
+export interface HealthCheckResponse {
+  status: HealthStatusEnum | 'UP' | 'DEGRADED' | 'DOWN';
+  server: HealthStatusEnum | 'UP' | 'DEGRADED' | 'DOWN';
+  servers: HealthCheckServer[];
+}
+
+// ============================================================================
+// API Response Types
+// ============================================================================
+
+/**
+ * List Tools response from gateway
+ * GET /mcp/tools/list
+ */
+export interface ListToolsResponse {
+  tools: McpTool[];
+}
+
+/**
+ * Call Tool response from gateway
+ * POST /mcp/tools/call
+ */
+export interface CallToolRequest {
+  toolName: string;
+  arguments?: Record<string, unknown>;
+}
+
+export interface CallToolResponse {
+  content: McpContent[];
+  isError?: boolean;
+}
+
+/**
+ * List Resources response from gateway
+ * GET /mcp/resources/list
+ */
+export interface ListResourcesResponse {
+  resources: McpResource[];
+}
+
+/**
+ * Read Resource response from gateway
+ * POST /mcp/resources/read
+ */
+export interface ReadResourceRequest {
+  uri: string;
+}
+
+export interface ReadResourceResponse {
+  contents: Array<{
+    uri: string;
+    mimeType?: string;
+    text?: string;
+  }>;
+}
+
+/**
+ * List Prompts response from gateway
+ * GET /mcp/prompts/list
+ */
+export interface ListPromptsResponse {
+  prompts: McpPrompt[];
+}
+
+/**
+ * Get Prompt response from gateway
+ * POST /mcp/prompts/get
+ */
+export interface GetPromptRequest {
+  name: string;
+  arguments?: Record<string, unknown>;
+}
+
+export interface GetPromptResponse {
+  description?: string;
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: McpContent;
+  }>;
+}
+
+/**
+ * Gateway metrics response
+ * GET /mcp/metrics
+ */
+export interface MetricsResponse {
+  timestamp: string;
+  uptime: string;
+  requests: {
+    total: number;
+    errors: number;
+    errorRate: string;
+  };
+  latency: {
+    avg: string;
+    p50: string;
+    p95: string;
+    p99: string;
+  };
+  cache: {
+    hitRate: string;
+    memorySize: number;
+  };
+  circuitBreakers: Record<string, unknown>;
+  endpoints: Record<string, unknown>;
+}
+
+/**
+ * Error response from gateway
+ */
+export interface ErrorResponse {
+  error: string;
+  code?: number;
+  details?: unknown;
+}
