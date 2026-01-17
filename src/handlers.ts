@@ -81,8 +81,12 @@ export async function handleHealth(
     backendsCount: staticServers.length,
   });
 
+  // Get both static and dynamic servers
+  const dynamicServers = await kv.listServers();
+  const allServers = [...staticServers, ...dynamicServers];
+
   const backendHealth = await Promise.all(
-    staticServers.map((server) => checkBackendHealth(server))
+    allServers.map((server) => checkBackendHealth(server))
   );
   const allHealthy = backendHealth.every((b) => b.status === 'healthy');
   const anyHealthy = backendHealth.some((b) => b.status === 'healthy');
@@ -94,21 +98,24 @@ export async function handleHealth(
     total: backendHealth.length,
   });
 
+  const servers = backendHealth.map((b) => {
+    const server = allServers.find((s) => s.id === b.id);
+    return {
+      id: b.id,
+      name: b.name,
+      endpoint: server?.endpoint,
+      status: b.status === 'healthy' ? 'HEALTHY' : 'DOWN',
+      latency: b.latencyMs,
+      errorMessage: b.error,
+    };
+  });
+
   return new Response(
     JSON.stringify({
       status: allHealthy ? 'UP' : anyHealthy ? 'DEGRADED' : 'DOWN',
       server: allHealthy ? 'UP' : anyHealthy ? 'DEGRADED' : 'DOWN',
-      backends: backendHealth.map((b) => {
-        const server = staticServers.find((s) => s.id === b.id);
-        return {
-          id: b.id,
-          name: b.name,
-          endpoint: server?.endpoint,
-          status: b.status === 'healthy' ? 'HEALTHY' : 'DOWN',
-          latency: b.latencyMs,
-          errorMessage: b.error,
-        };
-      }),
+      backends: servers,
+      servers: servers, // Added for UI compatibility
     }),
     {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
